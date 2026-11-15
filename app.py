@@ -1,6 +1,7 @@
 import os
 from flask import Flask, render_template
 from db import close_db, init_db
+from auth import bp as auth_bp, login_required
 
 
 def create_app():
@@ -13,7 +14,10 @@ def create_app():
     with app.app_context():
         init_db()
 
+    app.register_blueprint(auth_bp)
+
     @app.route("/")
+    @login_required
     def home():
         return render_template("home.html")
 

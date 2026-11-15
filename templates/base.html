@@ -9,6 +9,15 @@
 <body>
   <nav>
     <a href="{{ url_for('home') }}" class="brand">EM OS</a>
+    {% if g.user %}
+      <span class="who">{{ g.user['name'] }}</span>
+      <form method="post" action="{{ url_for('auth.logout') }}" class="inline">
+        <button class="link">Log out</button>
+      </form>
+    {% else %}
+      <a href="{{ url_for('auth.login') }}">Log in</a>
+      <a href="{{ url_for('auth.register') }}">Sign up</a>
+    {% endif %}
   </nav>
 
   <main>
