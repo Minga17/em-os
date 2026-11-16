@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Habits · EM OS{% endblock %}
+
+{% block content %}
+  <h1>Habits</h1>
+
+  <form method="post" class="card add-habit">
+    <input name="icon" value="✅" maxlength="4" class="icon-input" title="Pick an emoji with Win + .">
+    <input name="name" placeholder="New habit, e.g. Read 20 minutes" required maxlength="60">
+    <button>Add habit</button>
+  </form>
+
+  {% for card in cards %}
+    {% set h = card.habit %}
+    <div class="card habit {% if card.done_today %}done{% endif %}">
+      <div class="habit-main">
+        <span class="habit-icon">{{ h['icon'] }}</span>
+        <div>
+          <div class="habit-name">{{ h['name'] }}</div>
+          <div class="sub">🔥 {{ card.current }}-day streak · best {{ card.best }}</div>
+        </div>
+      </div>
+
+      <div class="week">
+        {% for day, done in card.week %}
+          <span class="dot {% if done %}on{% endif %}" title="{{ day.isoformat() }}">{{ day.strftime('%a')[0] }}</span>
+        {% endfor %}
+      </div>
+
+      <div class="habit-actions">
+        <form method="post" action="{{ url_for('habits.toggle', habit_id=h['id']) }}" class="inline">
+          {% if card.done_today %}
+            <button class="secondary">✓ Done</button>
+          {% else %}
+            <button>Mark done</button>
+          {% endif %}
+        </form>
+        <form method="post" action="{{ url_for('habits.archive', habit_id=h['id']) }}" class="inline">
+          <button class="link">Archive</button>
+        </form>
+      </div>
+    </div>
+  {% else %}
+    <p class="muted">No habits yet. Add your first one above.</p>
+  {% endfor %}
+{% endblock %}

@@ -68,3 +68,27 @@ table { width: 100%; border-collapse: collapse; background: var(--card); border-
 th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
 th { color: var(--sub); font-weight: 500; font-size: 14px; }
 .sub { font-size: 12px; color: var(--sub); margin-top: 2px; }
+
+.add-habit { display: flex; gap: 10px; margin: 16px 0 24px; }
+.add-habit input[name="name"] { flex: 1; }
+.icon-input { width: 60px; text-align: center; font-size: 20px; }
+
+.habit {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap; margin-bottom: 12px; padding: 16px 20px;
+}
+.habit.done { border-color: var(--green); }
+.habit-main { display: flex; align-items: center; gap: 12px; min-width: 220px; }
+.habit-icon { font-size: 28px; }
+.habit-name { font-weight: 600; }
+
+.week { display: flex; gap: 6px; }
+.dot {
+  width: 26px; height: 26px; line-height: 26px; text-align: center;
+  border-radius: 50%; font-size: 11px; color: var(--sub); border: 1px solid var(--border);
+}
+.dot.on { background: var(--green); border-color: var(--green); color: white; }
+
+.habit-actions { display: flex; gap: 12px; align-items: center; }
+button.secondary { background: transparent; border: 1px solid var(--green); color: var(--green); }
+

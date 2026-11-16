@@ -23,3 +23,18 @@ CREATE TABLE IF NOT EXISTS checkins (
     updated_at    TEXT NOT NULL DEFAULT (datetime('now')),
     UNIQUE (user_id, log_date)
 );
+
+CREATE TABLE IF NOT EXISTS habits (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name       TEXT    NOT NULL,
+    icon       TEXT    NOT NULL DEFAULT '✅',
+    is_active  INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS habit_logs (
+    habit_id INTEGER NOT NULL REFERENCES habits(id) ON DELETE CASCADE,
+    log_date TEXT    NOT NULL,
+    PRIMARY KEY (habit_id, log_date)
+);

@@ -5,6 +5,7 @@ from flask import Flask, g, render_template
 
 from auth import bp as auth_bp, login_required
 from checkin import bp as checkin_bp
+from habits import bp as habits_bp
 from db import close_db, get_db, init_db
 
 
@@ -20,6 +21,7 @@ def create_app():
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(checkin_bp)
+    app.register_blueprint(habits_bp)
 
     @app.template_filter("day_label")
     def day_label(iso_date):
@@ -37,10 +39,13 @@ def create_app():
     def home():
         db = get_db()
         user_id = g.user["id"]
+        today = date.today().isoformat()
+
         today_checkin = db.execute(
             "SELECT score FROM checkins WHERE user_id = ? AND log_date = ?",
-            (user_id, date.today().isoformat()),
+            (user_id, today),
         ).fetchone()
+
         recent = db.execute(
             """
             SELECT log_date, energy, mood, focus, focused_hours, score
@@ -51,7 +56,24 @@ def create_app():
             """,
             (user_id,),
         ).fetchall()
-        return render_template("home.html", today_checkin=today_checkin, recent=recent)
+
+        habit_stats = db.execute(
+            """
+            SELECT COUNT(h.id) AS total, COUNT(hl.habit_id) AS done
+            FROM habits h
+            LEFT JOIN habit_logs hl
+                   ON hl.habit_id = h.id AND hl.log_date = ?
+            WHERE h.user_id = ? AND h.is_active = 1
+            """,
+            (today, user_id),
+        ).fetchone()
+
+        return render_template(
+            "home.html",
+            today_checkin=today_checkin,
+            recent=recent,
+            habit_stats=habit_stats,
+        )
 
     return app
 

@@ -19,6 +19,16 @@
     {% endif %}
   </div>
 
+  {% if habit_stats['total'] %}
+    <div class="card today">
+      <div>
+        <div class="muted">Habits today</div>
+        <div class="big">{{ habit_stats['done'] }}<span class="muted">/{{ habit_stats['total'] }}</span></div>
+      </div>
+      <a class="btn secondary" href="{{ url_for('habits.index') }}">Open habits</a>
+    </div>
+  {% endif %}
+
   <h2>Last 7 check-ins</h2>
   {% if recent %}
     <table>
