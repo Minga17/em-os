@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · EM OS{% endblock %}
+
+{% macro delta_badge(value, unit='') %}
+  {% if value is not none %}
+    {% if value > 0 %}<span class="delta up">▲ {{ value }}{{ unit }}</span>
+    {% elif value < 0 %}<span class="delta down">▼ {{ -value }}{{ unit }}</span>
+    {% else %}<span class="delta">= same</span>{% endif %}
+  {% endif %}
+{% endmacro %}
+
+{% block content %}
+  <div class="dash-head">
+    <h1>Dashboard</h1>
+    <nav class="tabs">
+      {% for p in periods %}
+        <a href="{{ url_for('dashboard.index', days=p) }}" class="{% if p == days %}active{% endif %}">{{ p }} days</a>
+      {% endfor %}
+    </nav>
+  </div>
+
+  {% if not now['days_logged'] %}
+    <div class="card"><p class="muted">No check-ins in the last {{ days }} days yet. Check in for a few days and your stats will appear here.</p></div>
+  {% else %}
+
+  <!-- 1. KPI tiles -->
+  <div class="kpis">
+    <div class="card kpi">
+      <div class="muted">Avg score</div>
+      <div class="big">{{ now['avg_score'] }}</div>
+      {{ delta_badge(deltas.score) }}
+    </div>
+    <div class="card kpi">
+      <div class="muted">Focused hours</div>
+      <div class="big">{{ now['total_hours'] }}</div>
+      {{ delta_badge(deltas.hours, 'h') }}
+    </div>
+    <div class="card kpi">
+      <div class="muted">Days logged</div>
+      <div class="big">{{ now['days_logged'] }}<span class="muted">/{{ days }}</span></div>
+      <span class="sub">{{ (now['days_logged'] * 100 // days) }}% consistency</span>
+    </div>
+    <div class="card kpi">
+      <div class="muted">Energy · Mood · Focus</div>
+      <div class="big small-big">{{ now['avg_energy'] }} · {{ now['avg_mood'] }} · {{ now['avg_focus'] }}</div>
+      <span class="sub">averages out of 5</span>
+    </div>
+  </div>
+  <p class="sub compare-note">▲▼ compared with the {{ days }} days before.</p>
+
+  <!-- 2. Daily score chart -->
+  <div class="card chart-card">
+    <h2>Daily score</h2>
+    <div class="bars {% if days > 30 %}dense{% endif %}">
+      {% for d in daily %}
+        <div class="bar-col" title="{{ d.date.isoformat() }}: {{ d.score if d.score is not none else 'no check-in' }}">
+          <div class="bar {% if d.score is none %}empty{% endif %}" style="height: {{ d.score or 2 }}%"></div>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="axis"><span>{{ daily[0].date.strftime('%b %d') }}</span><span>Today</span></div>
+  </div>
+
+  <!-- 3. Focused hours chart -->
+  <div class="card chart-card">
+    <h2>Focused hours</h2>
+    <div class="bars {% if days > 30 %}dense{% endif %}">
+      {% for d in daily %}
+        <div class="bar-col" title="{{ d.date.isoformat() }}: {{ d.hours if d.hours is not none else 'no check-in' }}h">
+          <div class="bar hours {% if d.hours is none %}empty{% endif %}" style="height: {{ d.hours_pct or 2 }}%"></div>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="axis"><span>{{ daily[0].date.strftime('%b %d') }}</span><span>Today</span></div>
+  </div>
+
+  <div class="two-col">
+    <!-- 4. Best weekday -->
+    <div class="card">
+      <h2>By day of week</h2>
+      {% if best_day %}<p class="sub">Your best day: <strong>{{ best_day.name }}</strong> (avg {{ best_day.avg }})</p>{% endif %}
+      {% for w in weekdays %}
+        <div class="hbar-row">
+          <span class="hbar-label">{{ w.name[:3] }}</span>
+          <div class="hbar"><div style="width: {{ w.avg or 0 }}%" class="{% if best_day and w.name == best_day.name %}best{% endif %}"></div></div>
+          <span class="hbar-value">{{ w.avg if w.avg is not none else '–' }}</span>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- 5. Habits -->
+    <div class="card">
+      <h2>Habit completion</h2>
+      {% for h in habits %}
+        <div class="hbar-row">
+          <span class="hbar-label wide">{{ h.icon }} {{ h.name }}</span>
+          <div class="hbar"><div style="width: {{ h.rate }}%" class="habit-fill"></div></div>
+          <span class="hbar-value" title="{{ h.done }} of {{ h.possible }} days">{{ h.rate }}%</span>
+        </div>
+      {% else %}
+        <p class="muted">No active habits.</p>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- 6. Tasks per week (shown even without check-ins) -->
+  <div class="card chart-card">
+    <h2>Tasks finished per week</h2>
+    <div class="bars weeks">
+      {% for w in weeks %}
+        <div class="bar-col" title="Week of {{ w.start.strftime('%b %d') }}: {{ w.finished }} tasks">
+          <span class="bar-num">{{ w.finished }}</span>
+          <div class="bar tasks" style="height: {{ (w.finished * 100 // max_week) if w.finished else 2 }}%"></div>
+          <span class="bar-label">{{ w.start.strftime('%b %d') }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}

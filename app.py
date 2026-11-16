@@ -8,6 +8,7 @@ from habits import bp as habits_bp
 from projects import bp as projects_bp
 from tasks import bp as tasks_bp
 from goals import bp as goals_bp
+from dashboard import bp as dashboard_bp
 from db import close_db, get_db, init_db
 
 
@@ -27,7 +28,7 @@ def create_app():
     app.register_blueprint(projects_bp)
     app.register_blueprint(tasks_bp)
     app.register_blueprint(goals_bp)
-
+    app.register_blueprint(dashboard_bp)
     @app.template_filter("day_label")
     def day_label(iso_date):
         """Turn '2026-11-15' into 'Today', 'Yesterday', or a weekday name."""
