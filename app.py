@@ -2,12 +2,12 @@ import os
 from datetime import date
 
 from flask import Flask, g, render_template
-
 from auth import bp as auth_bp, login_required
 from checkin import bp as checkin_bp
 from habits import bp as habits_bp
 from projects import bp as projects_bp
 from tasks import bp as tasks_bp
+from goals import bp as goals_bp
 from db import close_db, get_db, init_db
 
 
@@ -26,6 +26,7 @@ def create_app():
     app.register_blueprint(habits_bp)
     app.register_blueprint(projects_bp)
     app.register_blueprint(tasks_bp)
+    app.register_blueprint(goals_bp)
 
     @app.template_filter("day_label")
     def day_label(iso_date):
@@ -84,12 +85,29 @@ def create_app():
             (today, today, user_id),
         ).fetchone()
 
+        active_goals = db.execute(
+            "SELECT COUNT(*) FROM goals WHERE user_id = ? AND status = 'active'",
+            (user_id,),
+        ).fetchone()[0]
+
+        next_goal = db.execute(
+            """
+            SELECT title, target_date FROM goals
+            WHERE user_id = ? AND status = 'active' AND target_date IS NOT NULL
+            ORDER BY target_date
+            LIMIT 1
+            """,
+            (user_id,),
+        ).fetchone()
+
         return render_template(
             "home.html",
             today_checkin=today_checkin,
             recent=recent,
             habit_stats=habit_stats,
             task_stats=task_stats,
+            active_goals=active_goals,
+            next_goal=next_goal,
         )
 
     return app

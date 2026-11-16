@@ -3,6 +3,19 @@
 
 {% block content %}
   <h1>Hi, {{ g.user['name'] }} 👋</h1>
+  
+  {% if active_goals %}
+    <div class="card today">
+      <div>
+        <div class="muted">Active goals</div>
+        <div class="big">{{ active_goals }}</div>
+        {% if next_goal %}
+          <div class="sub">Next target: 🎯 {{ next_goal['title'] }} · {{ next_goal['target_date'] }}</div>
+        {% endif %}
+      </div>
+      <a class="btn secondary" href="{{ url_for('goals.index') }}">Open goals</a>
+    </div>
+  {% endif %}
 
   <div class="card today">
     {% if today_checkin %}

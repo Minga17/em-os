@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Goals · EM OS{% endblock %}
+
+{% block content %}
+  <h1>Goals</h1>
+
+  <details class="card add-project">
+    <summary>🎯 New goal</summary>
+    <form method="post" class="stack">
+      <input name="title" placeholder="e.g. Land a data engineering internship" required maxlength="150">
+      <div class="row">
+        <select name="area_id">
+          <option value="">No area</option>
+          {% for a in areas %}
+            <option value="{{ a['id'] }}">{{ a['icon'] }} {{ a['name'] }}</option>
+          {% endfor %}
+        </select>
+        <input name="target_date" type="date" title="Target date">
+      </div>
+      <textarea name="why" rows="2" placeholder="Why does this matter to you?"></textarea>
+      <button>Add goal</button>
+    </form>
+  </details>
+
+  {% for section in sections %}
+    {% set area = section.area %}
+    <section class="area" style="--area-color: {{ area['color'] if area else '#94a3b8' }}">
+      <h2 class="area-title">
+        {% if area %}{{ area['icon'] }} {{ area['name'] }}{% else %}📂 No area{% endif %}
+        <span class="sub">{{ section['items']|length }} goal{{ '' if section['items']|length == 1 else 's' }}</span>
+      </h2>
+
+      {% for item in section['items'] %}
+        {% set goal = item.goal %}
+        <div class="card goal status-{{ goal['status'] }}">
+          <div class="project-top">
+            <div class="goal-title">{{ goal['title'] }}</div>
+            <div>
+              <span class="badge {{ goal['status'] }}">{{ goal['status']|capitalize }}</span>
+              <a class="link-btn" href="{{ url_for('goals.edit', goal_id=goal['id']) }}">Edit</a>
+            </div>
+          </div>
+
+          {% if goal['why'] %}<p class="muted why">“{{ goal['why'] }}”</p>{% endif %}
+
+          <div class="progress"><div style="width: {{ item.percent }}%"></div></div>
+          <div class="sub">
+            <strong>{{ item.percent }}%</strong>
+            {% if item.auto %}
+              · from {{ goal['done_tasks'] }}/{{ goal['total_tasks'] }} tasks
+            {% endif %}
+            {% if item.days_left is not none and goal['status'] == 'active' %}
+              ·
+              {% if item.days_left < 0 %}<span class="overdue-text">⚠️ {{ -item.days_left }} days past target</span>
+              {% elif item.days_left == 0 %}📅 Target is today
+              {% else %}📅 {{ item.days_left }} days left{% endif %}
+            {% endif %}
+            {% if item.projects %} · 📁 {{ item.projects|join(', ') }}{% endif %}
+          </div>
+        </div>
+      {% else %}
+        <p class="muted empty-area">No goals here yet.</p>
+      {% endfor %}
+    </section>
+  {% endfor %}
+
+  <details class="card manage-areas">
+    <summary>⚙️ Manage life areas</summary>
+    <ul class="area-list">
+      {% for a in areas %}
+        <li>
+          <span>{{ a['icon'] }} {{ a['name'] }}</span>
+          <form method="post" action="{{ url_for('goals.delete_area', area_id=a['id']) }}" class="inline">
+            <button class="link">Delete</button>
+          </form>
+        </li>
+      {% endfor %}
+    </ul>
+    <form method="post" action="{{ url_for('goals.add_area') }}" class="add-habit">
+      <input name="icon" value="📁" maxlength="4" class="icon-input" title="Pick an emoji with Win + .">
+      <input name="name" placeholder="New area, e.g. Music" required maxlength="40">
+      <button>Add area</button>
+    </form>
+  </details>
+{% endblock %}

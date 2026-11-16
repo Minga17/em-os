@@ -16,6 +16,12 @@
         </select>
         <input name="github_url" type="url" placeholder="https://github.com/...">
       </div>
+      <select name="goal_id">
+        <option value="">No goal</option>
+        {% for gl in goals %}
+          <option value="{{ gl['id'] }}">🎯 {{ gl['title'] }}</option>
+        {% endfor %}
+      </select>
       <input name="next_action" placeholder="Next action (the very next step)">
       <textarea name="description" rows="2" placeholder="Short description"></textarea>
       <button>Add project</button>
@@ -30,6 +36,7 @@
           <a class="link-btn" href="{{ url_for('projects.edit', project_id=p['id']) }}">Edit</a>
         </div>
         <h3>{{ p['title'] }}</h3>
+        {% if p['goal_title'] %}<div class="sub">🎯 {{ p['goal_title'] }}</div>{% endif %}
         {% if p['description'] %}<p class="muted">{{ p['description'] }}</p>{% endif %}
         {% if p['next_action'] %}<p class="next">→ {{ p['next_action'] }}</p>{% endif %}
 

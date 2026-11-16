@@ -66,3 +66,27 @@ CREATE TABLE IF NOT EXISTS tasks (
     created_at   TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS life_areas (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name       TEXT    NOT NULL,
+    icon       TEXT    NOT NULL DEFAULT '📁',
+    color      TEXT    NOT NULL DEFAULT '#4a9eff',
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    UNIQUE (user_id, name)
+);
+
+CREATE TABLE IF NOT EXISTS goals (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    area_id     INTEGER REFERENCES life_areas(id) ON DELETE SET NULL,
+    title       TEXT    NOT NULL,
+    why         TEXT,
+    target_date TEXT,
+    status      TEXT    NOT NULL DEFAULT 'active'
+                CHECK (status IN ('active', 'achieved', 'paused', 'dropped')),
+    progress    INTEGER NOT NULL DEFAULT 0 CHECK (progress BETWEEN 0 AND 100),
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+    updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+

@@ -20,6 +20,14 @@
           <input name="github_url" type="url" value="{{ project['github_url'] or '' }}">
         </label>
       </div>
+      <label>Goal
+        <select name="goal_id">
+          <option value="">No goal</option>
+          {% for gl in goals %}
+            <option value="{{ gl['id'] }}" {% if project['goal_id']|string == gl['id']|string %}selected{% endif %}>🎯 {{ gl['title'] }}</option>
+          {% endfor %}
+        </select>
+      </label>
       <label>Next action
         <input name="next_action" value="{{ project['next_action'] or '' }}">
       </label>

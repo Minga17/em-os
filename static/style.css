@@ -141,3 +141,25 @@ button.danger { background: transparent; border: 1px solid var(--red); color: va
 .progress { height: 6px; background: var(--bg); border-radius: 999px; overflow: hidden; margin: 12px 0 8px; }
 .progress div { height: 100%; background: var(--green); }
 
+.area { margin: 28px 0; }
+.area-title {
+  display: flex; align-items: baseline; gap: 10px;
+  border-left: 4px solid var(--area-color); padding-left: 10px;
+}
+.goal { margin-bottom: 12px; border-left: 3px solid var(--area-color); }
+.goal-title { font-weight: 600; font-size: 17px; }
+.why { font-style: italic; margin: 8px 0 0; }
+.goal.status-achieved .goal-title { color: var(--green); }
+.goal.status-paused, .goal.status-dropped { opacity: 0.6; }
+.badge.achieved { background: #22c55e22; color: var(--green); }
+.badge.dropped  { background: #94a3b822; color: var(--sub); }
+.empty-area { margin: 0 0 0 14px; }
+
+.manage-areas { margin-top: 32px; padding: 16px 20px; }
+.manage-areas summary { cursor: pointer; font-weight: 600; }
+.area-list { list-style: none; padding: 0; margin: 12px 0; }
+.area-list li {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 0; border-bottom: 1px solid var(--border);
+}
+
