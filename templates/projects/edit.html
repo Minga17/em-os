@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Edit project · EM OS{% endblock %}
+
+{% block content %}
+  <div class="card narrow-wide">
+    <h1>Edit project</h1>
+    <form method="post" class="stack">
+      <label>Title
+        <input name="title" required maxlength="120" value="{{ project['title'] }}">
+      </label>
+      <div class="row">
+        <label>Status
+          <select name="status">
+            {% for s in statuses %}
+              <option value="{{ s }}" {% if project['status'] == s %}selected{% endif %}>{{ s|capitalize }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>GitHub link
+          <input name="github_url" type="url" value="{{ project['github_url'] or '' }}">
+        </label>
+      </div>
+      <label>Next action
+        <input name="next_action" value="{{ project['next_action'] or '' }}">
+      </label>
+      <label>Description
+        <textarea name="description" rows="3">{{ project['description'] or '' }}</textarea>
+      </label>
+      <div class="row-actions">
+        <button>Save changes</button>
+        <a href="{{ url_for('projects.index') }}" class="muted">Cancel</a>
+      </div>
+    </form>
+
+    <form method="post" action="{{ url_for('projects.delete', project_id=project_id) }}" class="danger-zone">
+      <button class="danger">Delete this project</button>
+      <span class="sub">Its tasks are kept, just unassigned.</span>
+    </form>
+  </div>
+{% endblock %}

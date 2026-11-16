@@ -6,6 +6,8 @@ from flask import Flask, g, render_template
 from auth import bp as auth_bp, login_required
 from checkin import bp as checkin_bp
 from habits import bp as habits_bp
+from projects import bp as projects_bp
+from tasks import bp as tasks_bp
 from db import close_db, get_db, init_db
 
 
@@ -22,6 +24,8 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(checkin_bp)
     app.register_blueprint(habits_bp)
+    app.register_blueprint(projects_bp)
+    app.register_blueprint(tasks_bp)
 
     @app.template_filter("day_label")
     def day_label(iso_date):
@@ -68,11 +72,24 @@ def create_app():
             (today, user_id),
         ).fetchone()
 
+        task_stats = db.execute(
+            """
+            SELECT
+                COALESCE(SUM(CASE WHEN due_date <  ? THEN 1 ELSE 0 END), 0) AS overdue,
+                COALESCE(SUM(CASE WHEN due_date =  ? THEN 1 ELSE 0 END), 0) AS due_today,
+                COUNT(*) AS open_tasks
+            FROM tasks
+            WHERE user_id = ? AND status != 'done'
+            """,
+            (today, today, user_id),
+        ).fetchone()
+
         return render_template(
             "home.html",
             today_checkin=today_checkin,
             recent=recent,
             habit_stats=habit_stats,
+            task_stats=task_stats,
         )
 
     return app

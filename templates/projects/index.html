@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Projects · EM OS{% endblock %}
+
+{% block content %}
+  <h1>Projects</h1>
+
+  <details class="card add-project">
+    <summary>➕ New project</summary>
+    <form method="post" class="stack">
+      <input name="title" placeholder="Project title" required maxlength="120">
+      <div class="row">
+        <select name="status">
+          {% for s in statuses %}
+            <option value="{{ s }}" {% if s == 'active' %}selected{% endif %}>{{ s|capitalize }}</option>
+          {% endfor %}
+        </select>
+        <input name="github_url" type="url" placeholder="https://github.com/...">
+      </div>
+      <input name="next_action" placeholder="Next action (the very next step)">
+      <textarea name="description" rows="2" placeholder="Short description"></textarea>
+      <button>Add project</button>
+    </form>
+  </details>
+
+  <div class="project-grid">
+    {% for p in projects %}
+      <div class="card project status-{{ p['status'] }}">
+        <div class="project-top">
+          <span class="badge {{ p['status'] }}">{{ p['status']|capitalize }}</span>
+          <a class="link-btn" href="{{ url_for('projects.edit', project_id=p['id']) }}">Edit</a>
+        </div>
+        <h3>{{ p['title'] }}</h3>
+        {% if p['description'] %}<p class="muted">{{ p['description'] }}</p>{% endif %}
+        {% if p['next_action'] %}<p class="next">→ {{ p['next_action'] }}</p>{% endif %}
+
+        {% set pct = (p['done_tasks'] * 100 // p['total_tasks']) if p['total_tasks'] else 0 %}
+        <div class="progress"><div style="width: {{ pct }}%"></div></div>
+        <div class="sub">
+          <a href="{{ url_for('tasks.index', project=p['id'], show='all') }}">{{ p['done_tasks'] }}/{{ p['total_tasks'] }} tasks done</a>
+          {% if p['github_url'] %} · <a href="{{ p['github_url'] }}" target="_blank" rel="noopener">GitHub ↗</a>{% endif %}
+        </div>
+      </div>
+    {% else %}
+      <p class="muted">No projects yet. Add one above.</p>
+    {% endfor %}
+  </div>
+{% endblock %}

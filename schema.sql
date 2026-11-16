@@ -38,3 +38,31 @@ CREATE TABLE IF NOT EXISTS habit_logs (
     log_date TEXT    NOT NULL,
     PRIMARY KEY (habit_id, log_date)
 );
+
+CREATE TABLE IF NOT EXISTS projects (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title       TEXT    NOT NULL,
+    description TEXT,
+    status      TEXT    NOT NULL DEFAULT 'active'
+                CHECK (status IN ('planned', 'active', 'paused', 'complete')),
+    next_action TEXT,
+    github_url  TEXT,
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+    updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS tasks (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id      INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    project_id   INTEGER REFERENCES projects(id) ON DELETE SET NULL,
+    title        TEXT    NOT NULL,
+    notes        TEXT,
+    priority     INTEGER NOT NULL DEFAULT 2 CHECK (priority BETWEEN 1 AND 3),
+    due_date     TEXT,
+    status       TEXT    NOT NULL DEFAULT 'todo'
+                 CHECK (status IN ('todo', 'doing', 'done')),
+    completed_at TEXT,
+    created_at   TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+

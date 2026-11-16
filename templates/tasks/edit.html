@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Edit task · EM OS{% endblock %}
+
+{% block content %}
+  <div class="card narrow-wide">
+    <h1>Edit task</h1>
+    <form method="post" class="stack">
+      <label>Title
+        <input name="title" required maxlength="200" value="{{ task['title'] }}">
+      </label>
+
+      <div class="row">
+        <label>Status
+          <select name="status">
+            {% for s in statuses %}
+              <option value="{{ s }}" {% if task['status'] == s %}selected{% endif %}>{{ s|capitalize }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>Priority
+          <select name="priority">
+            {% for value, label in priorities.items() %}
+              <option value="{{ value }}" {% if task['priority']|string == value|string %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>Due date
+          <input name="due_date" type="date" value="{{ task['due_date'] or '' }}">
+        </label>
+      </div>
+
+      <label>Project
+        <select name="project_id">
+          <option value="">No project</option>
+          {% for p in projects %}
+            <option value="{{ p['id'] }}" {% if task['project_id']|string == p['id']|string %}selected{% endif %}>{{ p['title'] }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label>Notes
+        <textarea name="notes" rows="4">{{ task['notes'] or '' }}</textarea>
+      </label>
+
+      <div class="row-actions">
+        <button>Save changes</button>
+        <a href="{{ url_for('tasks.index') }}" class="muted">Cancel</a>
+      </div>
+    </form>
+
+    <form method="post" action="{{ url_for('tasks.delete', task_id=task_id) }}" class="danger-zone">
+      <button class="danger">Delete this task</button>
+    </form>
+  </div>
+{% endblock %}

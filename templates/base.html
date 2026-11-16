@@ -12,6 +12,8 @@
     {% if g.user %}
       <a href="{{ url_for('checkin.today') }}">Check in</a>
       <a href="{{ url_for('habits.index') }}">Habits</a>
+      <a href="{{ url_for('tasks.index') }}">Tasks</a>
+      <a href="{{ url_for('projects.index') }}">Projects</a>
       <span class="who">{{ g.user['name'] }}</span>
       <form method="post" action="{{ url_for('auth.logout') }}" class="inline">
         <button class="link">Log out</button>

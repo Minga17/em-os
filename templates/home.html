@@ -29,6 +29,20 @@
     </div>
   {% endif %}
 
+  {% if task_stats['open_tasks'] %}
+    <div class="card today">
+      <div>
+        <div class="muted">Open tasks</div>
+        <div class="big">{{ task_stats['open_tasks'] }}</div>
+        <div class="sub">
+          {% if task_stats['overdue'] %}<span class="overdue-text">⚠️ {{ task_stats['overdue'] }} overdue</span>{% endif %}
+          {% if task_stats['due_today'] %} 📅 {{ task_stats['due_today'] }} due today{% endif %}
+        </div>
+      </div>
+      <a class="btn secondary" href="{{ url_for('tasks.index') }}">Open tasks</a>
+    </div>
+  {% endif %}
+
   <h2>Last 7 check-ins</h2>
   {% if recent %}
     <table>
