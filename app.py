@@ -1,7 +1,11 @@
 import os
-from flask import Flask, render_template
-from db import close_db, init_db
+from datetime import date
+
+from flask import Flask, g, render_template
+
 from auth import bp as auth_bp, login_required
+from checkin import bp as checkin_bp
+from db import close_db, get_db, init_db
 
 
 def create_app():
@@ -15,11 +19,28 @@ def create_app():
         init_db()
 
     app.register_blueprint(auth_bp)
+    app.register_blueprint(checkin_bp)
 
     @app.route("/")
     @login_required
     def home():
-        return render_template("home.html")
+        db = get_db()
+        user_id = g.user["id"]
+        today_checkin = db.execute(
+            "SELECT score FROM checkins WHERE user_id = ? AND log_date = ?",
+            (user_id, date.today().isoformat()),
+        ).fetchone()
+        recent = db.execute(
+            """
+            SELECT log_date, energy, mood, focus, focused_hours, score
+            FROM checkins
+            WHERE user_id = ?
+            ORDER BY log_date DESC
+            LIMIT 7
+            """,
+            (user_id,),
+        ).fetchall()
+        return render_template("home.html", today_checkin=today_checkin, recent=recent)
 
     return app
 

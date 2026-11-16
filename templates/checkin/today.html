@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Daily check-in · EM OS{% endblock %}
+
+{% macro rating(name, label) %}
+  <fieldset class="rating">
+    <legend>{{ label }}</legend>
+    {% for n in range(1, 6) %}
+      <label>
+        <input type="radio" name="{{ name }}" value="{{ n }}" required
+          {% if values.get(name)|string == n|string %}checked{% endif %}>
+        <span>{{ n }}</span>
+      </label>
+    {% endfor %}
+  </fieldset>
+{% endmacro %}
+
+{% block content %}
+  <div class="card">
+    <h1>Daily check-in</h1>
+    <p class="muted">{{ today }}</p>
+
+    <form method="post" class="stack">
+      <div class="ratings">
+        {{ rating("energy", "Energy") }}
+        {{ rating("mood", "Mood") }}
+        {{ rating("focus", "Focus") }}
+      </div>
+
+      <label>Focused hours
+        <input name="focused_hours" type="number" step="0.25" min="0" max="24"
+               value="{{ values.get('focused_hours', '') }}">
+      </label>
+
+      <label>What did you accomplish?
+        <textarea name="accomplished" rows="3">{{ values.get('accomplished') or '' }}</textarea>
+      </label>
+
+      <label>Wins 🏆
+        <textarea name="wins" rows="2">{{ values.get('wins') or '' }}</textarea>
+      </label>
+
+      <label>Blockers
+        <textarea name="blockers" rows="2">{{ values.get('blockers') or '' }}</textarea>
+      </label>
+
+      <label>Top priorities for tomorrow (one per line)
+        <textarea name="priorities" rows="3">{{ values.get('priorities') or '' }}</textarea>
+      </label>
+
+      <button>Save check-in</button>
+    </form>
+  </div>
+{% endblock %}

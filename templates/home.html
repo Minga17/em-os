@@ -3,5 +3,38 @@
 
 {% block content %}
   <h1>Hi, {{ g.user['name'] }} 👋</h1>
-  <p>Your personal operating system for habits, goals, and growth.</p>
+
+  <div class="card today">
+    {% if today_checkin %}
+      <div>
+        <div class="muted">Today's score</div>
+        <div class="big">{{ today_checkin['score'] }}<span class="muted">/100</span></div>
+      </div>
+      <a class="btn secondary" href="{{ url_for('checkin.today') }}">Edit check-in</a>
+    {% else %}
+      <div>
+        <div class="muted">You haven't checked in today.</div>
+      </div>
+      <a class="btn" href="{{ url_for('checkin.today') }}">Check in now</a>
+    {% endif %}
+  </div>
+
+  <h2>Last 7 check-ins</h2>
+  {% if recent %}
+    <table>
+      <tr><th>Date</th><th>Energy</th><th>Mood</th><th>Focus</th><th>Hours</th><th>Score</th></tr>
+      {% for c in recent %}
+        <tr>
+          <td>{{ c['log_date'] }}</td>
+          <td>{{ c['energy'] }}</td>
+          <td>{{ c['mood'] }}</td>
+          <td>{{ c['focus'] }}</td>
+          <td>{{ c['focused_hours'] }}</td>
+          <td><strong>{{ c['score'] }}</strong></td>
+        </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p class="muted">No check-ins yet. Your history will show up here.</p>
+  {% endif %}
 {% endblock %}

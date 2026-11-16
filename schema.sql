@@ -5,3 +5,21 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash TEXT NOT NULL,
     created_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS checkins (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    log_date      TEXT    NOT NULL,                 -- YYYY-MM-DD
+    energy        INTEGER NOT NULL CHECK (energy BETWEEN 1 AND 5),
+    mood          INTEGER NOT NULL CHECK (mood   BETWEEN 1 AND 5),
+    focus         INTEGER NOT NULL CHECK (focus  BETWEEN 1 AND 5),
+    focused_hours REAL    NOT NULL DEFAULT 0 CHECK (focused_hours BETWEEN 0 AND 24),
+    accomplished  TEXT,
+    wins          TEXT,
+    blockers      TEXT,
+    priorities    TEXT,                             -- one per line
+    score         INTEGER NOT NULL DEFAULT 0,
+    created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at    TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (user_id, log_date)
+);
