@@ -21,6 +21,17 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(checkin_bp)
 
+    @app.template_filter("day_label")
+    def day_label(iso_date):
+        """Turn '2026-11-15' into 'Today', 'Yesterday', or a weekday name."""
+        d = date.fromisoformat(iso_date)
+        days_ago = (date.today() - d).days
+        if days_ago == 0:
+            return "Today"
+        if days_ago == 1:
+            return "Yesterday"
+        return d.strftime("%A")
+
     @app.route("/")
     @login_required
     def home():

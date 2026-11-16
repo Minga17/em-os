@@ -25,7 +25,10 @@
       <tr><th>Date</th><th>Energy</th><th>Mood</th><th>Focus</th><th>Hours</th><th>Score</th></tr>
       {% for c in recent %}
         <tr>
-          <td>{{ c['log_date'] }}</td>
+          <td>
+            {{ c['log_date'] }}
+            <div class="sub">{{ c['log_date']|day_label }}</div>
+          </td>
           <td>{{ c['energy'] }}</td>
           <td>{{ c['mood'] }}</td>
           <td>{{ c['focus'] }}</td>
