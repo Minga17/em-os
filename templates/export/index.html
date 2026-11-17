@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Export data · EM OS{% endblock %}
+
+{% block content %}
+  <h1>Export your data</h1>
+  <p class="muted">Download CSV files to open in Excel, Google Sheets, or Power BI. Only your own data is included.</p>
+
+  <div class="export-list">
+    {% for name, (description, _) in datasets.items() %}
+      <div class="card export-row">
+        <div>
+          <div class="goal-title">{{ name|replace('_', ' ')|capitalize }}</div>
+          <div class="sub">{{ description }} · {{ counts[name] }} rows</div>
+        </div>
+        {% if counts[name] %}
+          <a class="btn" href="{{ url_for('export.download', name=name) }}">⬇ CSV</a>
+        {% else %}
+          <span class="muted">No data yet</span>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+{% endblock %}

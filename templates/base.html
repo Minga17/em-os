@@ -16,6 +16,7 @@
       <a href="{{ url_for('tasks.index') }}">Tasks</a>
       <a href="{{ url_for('projects.index') }}">Projects</a>
       <a href="{{ url_for('goals.index') }}">Goals</a>
+      <a href="{{ url_for('review.week') }}">Review</a>
       <span class="who">{{ g.user['name'] }}</span>
       <form method="post" action="{{ url_for('auth.logout') }}" class="inline">
         <button class="link">Log out</button>

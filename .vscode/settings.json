@@ -1,0 +1,11 @@
+{
+  "files.associations": {
+    "**/templates/**/*.html": "jinja-html"
+  },
+  "html.validate.styles": false,
+  "cSpell.words": [
+    "checkin", "checkins", "appcontext", "executescript", "AUTOINCREMENT",
+    "endmacro", "isoformat", "werkzeug", "pycache", "prio", "strftime",
+    "fetchone", "fetchall", "executemany"
+  ]
+}

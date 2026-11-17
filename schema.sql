@@ -90,3 +90,16 @@ CREATE TABLE IF NOT EXISTS goals (
     updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS weekly_reviews (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    week_start TEXT    NOT NULL,                  -- the Monday of that week
+    rating     INTEGER CHECK (rating BETWEEN 1 AND 5),
+    went_well  TEXT,
+    challenges TEXT,
+    lessons    TEXT,
+    next_focus TEXT,
+    updated_at TEXT    NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (user_id, week_start)
+);
+
