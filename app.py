@@ -14,10 +14,12 @@ from dashboard import bp as dashboard_bp
 from db import close_db, get_db, init_db
 
 
-def create_app():
+def create_app(test_config=None):
     app = Flask(__name__)
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-only-change-me")
     app.config["DATABASE"] = os.path.join(app.instance_path, "em_os.db")
+    if test_config:
+        app.config.update(test_config)   # tests use their own temporary database
     os.makedirs(app.instance_path, exist_ok=True)
 
     app.teardown_appcontext(close_db)
