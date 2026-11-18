@@ -21,6 +21,11 @@ def create_app(test_config=None):
     app = Flask(__name__)
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-only-change-me")
     app.config["DATABASE"] = os.path.join(app.instance_path, "em_os.db")
+    app.config.update(
+        SESSION_COOKIE_HTTPONLY=True,      # JavaScript can't read the login cookie
+        SESSION_COOKIE_SAMESITE="Lax",     # other websites can't submit forms as you
+        SESSION_COOKIE_SECURE=os.environ.get("SESSION_COOKIE_SECURE") == "1",  # HTTPS only (online)
+    )
     if test_config:
         app.config.update(test_config)   # tests use their own temporary database
     os.makedirs(app.instance_path, exist_ok=True)
