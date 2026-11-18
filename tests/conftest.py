@@ -27,9 +27,11 @@ class Auth:
     def __init__(self, client):
         self.client = client
 
-    def register(self, name="Ema", email="ema@example.com", password="password123"):
+    def register(self, name="Ema", email="ema@example.com", password="password123",
+                 timezone="UTC"):
         return self.client.post("/auth/register",
-                                data={"name": name, "email": email, "password": password})
+                                data={"name": name, "email": email,
+                                      "password": password, "timezone": timezone})
 
     def login(self, email="ema@example.com", password="password123"):
         return self.client.post("/auth/login", data={"email": email, "password": password})

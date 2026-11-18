@@ -41,6 +41,7 @@
       </div>
       <div class="side-footer">
         <div class="who">👤 {{ g.user['name'] }}</div>
+        <a href="{{ url_for('settings.index') }}" class="side-settings {% if request.blueprint == 'settings' %}active{% endif %}">⚙️ Settings</a>
         <form method="post" action="{{ url_for('auth.logout') }}">
           <button class="link">Log out</button>
         </form>

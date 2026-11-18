@@ -1,9 +1,8 @@
-from datetime import date, timedelta
+from datetime import timedelta
 
 
-def current_streak(done_dates, today=None):
+def current_streak(done_dates, today):
     """Days in a row, ending today (or yesterday, if today isn't done yet)."""
-    today = today or date.today()
     done = set(done_dates)
     day = today if today in done else today - timedelta(days=1)
     streak = 0

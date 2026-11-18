@@ -4,6 +4,7 @@ from flask import Blueprint, g, render_template, request
 
 from auth import login_required
 from db import get_db
+from timeutil import user_today
 
 bp = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 
@@ -46,7 +47,7 @@ def index():
     if days not in PERIODS:
         days = 30
 
-    today = date.today()
+    today = user_today()
     start = today - timedelta(days=days - 1)
     prev_end = start - timedelta(days=1)
     prev_start = prev_end - timedelta(days=days - 1)
@@ -159,4 +160,3 @@ def index():
         daily=daily, weekdays=weekdays, best_day=best_day,
         habits=habits, weeks=weeks, max_week=max_week,
     )
-

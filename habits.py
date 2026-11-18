@@ -6,6 +6,7 @@ from flask import Blueprint, abort, flash, g, redirect, render_template, request
 from auth import login_required
 from db import get_db
 from streaks import best_streak, current_streak
+from timeutil import user_today
 
 bp = Blueprint("habits", __name__, url_prefix="/habits")
 
@@ -63,7 +64,7 @@ def index():
     for row in rows:
         done_by_habit[row["habit_id"]].add(date.fromisoformat(row["log_date"]))
 
-    today = date.today()
+    today = user_today()
     last_7 = [today - timedelta(days=i) for i in range(6, -1, -1)]
 
     cards = []
@@ -85,7 +86,7 @@ def index():
 def toggle(habit_id):
     get_own_habit(habit_id)
     db = get_db()
-    today = date.today().isoformat()
+    today = user_today().isoformat()
 
     already_done = db.execute(
         "SELECT 1 FROM habit_logs WHERE habit_id = ? AND log_date = ?",

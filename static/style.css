@@ -275,3 +275,8 @@ nav { flex-wrap: wrap; }
   .nav-toggle:checked ~ .backdrop { display: block; }
 }
 
+.side-settings { display: block; color: var(--sub); text-decoration: none; margin: 4px 0 8px; font-size: 14px; }
+.side-settings:hover, .side-settings.active { color: var(--text); }
+.settings-card { margin-bottom: 16px; }
+.danger-card { border-color: #ef444466; }
+

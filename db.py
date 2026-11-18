@@ -33,10 +33,12 @@ def column_exists(db, table, column):
 
 def run_migrations(db):
     """Change tables that already exist. CREATE TABLE IF NOT EXISTS can't do this."""
+    if not column_exists(db, "users", "timezone"):
+        db.execute("ALTER TABLE users ADD COLUMN timezone TEXT NOT NULL DEFAULT 'UTC'")
+        db.commit()
     if not column_exists(db, "projects", "goal_id"):
         db.execute(
             "ALTER TABLE projects ADD COLUMN goal_id INTEGER "
             "REFERENCES goals(id) ON DELETE SET NULL"
         )
         db.commit()
-

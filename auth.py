@@ -7,6 +7,7 @@ from flask import (
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from db import get_db
+from timeutil import all_timezones, is_valid_timezone
 
 bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -18,7 +19,7 @@ def load_logged_in_user():
     g.user = None
     if user_id is not None:
         g.user = get_db().execute(
-            "SELECT id, name, email FROM users WHERE id = ?", (user_id,)
+            "SELECT id, name, email, timezone FROM users WHERE id = ?", (user_id,)
         ).fetchone()
 
 
@@ -39,7 +40,7 @@ def register():
         name = request.form["name"].strip()
         email = request.form["email"].strip().lower()
         password = request.form["password"]
-
+        timezone = request.form.get("timezone", "UTC")
         error = None
         if not name:
             error = "Name is required."
@@ -47,13 +48,14 @@ def register():
             error = "Email is required."
         elif len(password) < 8:
             error = "Password must be at least 8 characters."
-
+        elif not is_valid_timezone(timezone):
+            error = "Please pick a valid time zone."
         if error is None:
             try:
                 db = get_db()
                 db.execute(
-                    "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
-                    (name, email, generate_password_hash(password)),
+                    "INSERT INTO users (name, email, password_hash, timezone) VALUES (?, ?, ?, ?)",
+                    (name, email, generate_password_hash(password), timezone),
                 )
                 db.commit()
             except sqlite3.IntegrityError:
@@ -61,10 +63,8 @@ def register():
             else:
                 flash("Account created! Please log in.", "success")
                 return redirect(url_for("auth.login"))
-
         flash(error, "error")
-
-    return render_template("auth/register.html")
+    return render_template("auth/register.html", timezones=all_timezones())
 
 
 @bp.route("/login", methods=["GET", "POST"])
@@ -72,11 +72,9 @@ def login():
     if request.method == "POST":
         email = request.form["email"].strip().lower()
         password = request.form["password"]
-
         user = get_db().execute(
             "SELECT * FROM users WHERE email = ?", (email,)
         ).fetchone()
-
         if user is None or not check_password_hash(user["password_hash"], password):
             flash("Incorrect email or password.", "error")
         else:
@@ -84,7 +82,6 @@ def login():
             session["user_id"] = user["id"]
             flash(f"Welcome back, {user['name']}!", "success")
             return redirect(url_for("home"))
-
     return render_template("auth/login.html")
 
 

@@ -1,9 +1,10 @@
-from datetime import date, datetime
+from datetime import date
 
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
 
 from auth import login_required
 from db import get_db
+from timeutil import user_now_str, user_today
 
 bp = Blueprint("tasks", __name__, url_prefix="/tasks")
 
@@ -136,7 +137,7 @@ def index():
         priorities=PRIORITIES,
         show=show,
         project_filter=project_filter,
-        today=date.today().isoformat(),
+        today=user_today().isoformat(),
     )
 
 
@@ -156,7 +157,7 @@ def edit(task_id):
 
         completed_at = task["completed_at"]
         if data["status"] == "done" and not completed_at:
-            completed_at = datetime.now().isoformat(timespec="seconds")
+            completed_at = user_now_str()
         elif data["status"] != "done":
             completed_at = None
 
@@ -190,7 +191,7 @@ def toggle(task_id):
     else:
         db.execute(
             "UPDATE tasks SET status = 'done', completed_at = ? WHERE id = ?",
-            (datetime.now().isoformat(timespec="seconds"), task_id),
+            (user_now_str(), task_id),
         )
     db.commit()
     return redirect(url_for("tasks.index"))

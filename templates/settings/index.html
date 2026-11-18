@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Settings · EM OS{% endblock %}
+
+{% macro timezone_select(selected) %}
+  <select name="timezone" required>
+    {% for tz in timezones %}
+      <option value="{{ tz }}" {% if tz == selected %}selected{% endif %}>{{ tz.replace('_', ' ') }}</option>
+    {% endfor %}
+  </select>
+{% endmacro %}
+
+{% block content %}
+  <h1>Settings</h1>
+
+  <div class="card settings-card">
+    <h2>👤 Profile</h2>
+    <form method="post" action="{{ url_for('settings.profile') }}" class="stack">
+      <label>Name
+        <input name="name" required maxlength="80" value="{{ g.user['name'] }}">
+      </label>
+      <label>Time zone
+        {{ timezone_select(g.user['timezone']) }}
+      </label>
+      <p class="sub">Your "today" is <strong>{{ local_today.strftime('%A, %B %d') }}</strong>.
+        Check-ins, habits and streaks follow this date.</p>
+      <button>Save profile</button>
+    </form>
+  </div>
+
+  <div class="card settings-card">
+    <h2>🔒 Change password</h2>
+    <form method="post" action="{{ url_for('settings.password') }}" class="stack">
+      <label>Current password
+        <input name="current_password" type="password" required autocomplete="current-password">
+      </label>
+      <div class="row">
+        <label>New password
+          <input name="new_password" type="password" minlength="8" required autocomplete="new-password">
+        </label>
+        <label>Confirm new password
+          <input name="confirm_password" type="password" minlength="8" required autocomplete="new-password">
+        </label>
+      </div>
+      <button>Change password</button>
+    </form>
+  </div>
+
+  <div class="card settings-card danger-card">
+    <h2>⚠️ Delete account</h2>
+    <p class="muted">This permanently deletes your account and <strong>everything</strong> in it:
+      check-ins, habits, tasks, projects, goals and reviews. It cannot be undone.
+      <a href="{{ url_for('export.index') }}">Export your data first</a> if you want a copy.</p>
+    <form method="post" action="{{ url_for('settings.delete_account') }}" class="stack">
+      <div class="row">
+        <label>Type DELETE to confirm
+          <input name="confirm" required autocomplete="off" placeholder="DELETE">
+        </label>
+        <label>Your password
+          <input name="password" type="password" required autocomplete="current-password">
+        </label>
+      </div>
+      <button class="danger">Permanently delete my account</button>
+    </form>
+  </div>
+{% endblock %}

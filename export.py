@@ -1,11 +1,11 @@
 import csv
 import io
-from datetime import date
 
 from flask import Blueprint, Response, abort, g, render_template
 
 from auth import login_required
 from db import get_db
+from timeutil import user_today
 
 bp = Blueprint("export", __name__, url_prefix="/export")
 
@@ -98,9 +98,9 @@ def download(name):
     for row in cursor:
         writer.writerow([safe_cell(value) for value in row])
 
-    filename = f"em-os-{name}-{date.today().isoformat()}.csv"
+    filename = f"em-os-{name}-{user_today().isoformat()}.csv"
     return Response(
-        "\ufeff" + buffer.getvalue(),            # BOM so Excel reads emoji/accents correctly
+        "﻿" + buffer.getvalue(),            # BOM so Excel reads emoji/accents correctly
         mimetype="text/csv",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )

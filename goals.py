@@ -6,6 +6,7 @@ from flask import Blueprint, abort, flash, g, redirect, render_template, request
 
 from auth import login_required
 from db import get_db
+from timeutil import user_today
 
 bp = Blueprint("goals", __name__, url_prefix="/goals")
 
@@ -160,7 +161,7 @@ def index():
     ):
         projects_by_goal[row["goal_id"]].append(row["title"])
 
-    today = date.today()
+    today = user_today()
     goals_by_area = defaultdict(list)
     for goal in goals:
         if goal["total_tasks"]:

@@ -1,10 +1,11 @@
-from datetime import date, timedelta
+from datetime import timedelta
 
 from flask import Blueprint, flash, g, redirect, render_template, request, url_for
 
 from auth import login_required
 from db import get_db
 from scoring import compute_score
+from timeutil import user_today
 
 bp = Blueprint("checkin", __name__, url_prefix="/checkin")
 
@@ -27,7 +28,7 @@ def parse_rating(value, label, errors):
 def today():
     db = get_db()
     user_id = g.user["id"]
-    today_str = date.today().isoformat()
+    today_str = user_today().isoformat()
 
     if request.method == "POST":
         errors = []
@@ -84,12 +85,11 @@ def today():
             "SELECT * FROM checkins WHERE user_id = ? AND log_date = ?",
             (user_id, today_str),
         ).fetchone()
-
         if existing:
             values = dict(existing)
         else:
             # Start today with yesterday's priorities pre-filled
-            yesterday = (date.today() - timedelta(days=1)).isoformat()
+            yesterday = (user_today() - timedelta(days=1)).isoformat()
             prev = db.execute(
                 "SELECT priorities FROM checkins WHERE user_id = ? AND log_date = ?",
                 (user_id, yesterday),

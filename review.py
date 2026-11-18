@@ -5,6 +5,7 @@ from flask import Blueprint, flash, g, redirect, render_template, request, url_f
 from auth import login_required
 from dashboard import checkin_summary
 from db import get_db
+from timeutil import user_today
 
 bp = Blueprint("review", __name__, url_prefix="/review")
 
@@ -19,8 +20,8 @@ def parse_week(value):
     try:
         day = date.fromisoformat(value)
     except (TypeError, ValueError):
-        day = date.today()
-    return monday_of(min(day, date.today()))   # no future weeks
+        day = user_today()
+    return monday_of(min(day, user_today()))   # no future weeks
 
 
 @bp.route("/", methods=["GET", "POST"])
@@ -30,7 +31,7 @@ def week():
     user_id = g.user["id"]
     start = parse_week(request.args.get("week"))
     end = start + timedelta(days=6)
-    today = date.today()
+    today = user_today()
 
     # ── Save reflections (upsert, like check-ins) ────────────────
     if request.method == "POST":
@@ -138,4 +139,3 @@ def week():
         next_week=next_week if next_week <= today else None,
         is_current=(start == monday_of(today)),
     )
-

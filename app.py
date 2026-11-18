@@ -2,16 +2,19 @@ import os
 from datetime import date
 
 from flask import Flask, g, render_template
+
 from auth import bp as auth_bp, login_required
 from checkin import bp as checkin_bp
+from dashboard import bp as dashboard_bp
+from export import bp as export_bp
+from goals import bp as goals_bp
 from habits import bp as habits_bp
+from review import bp as review_bp
 from projects import bp as projects_bp
 from tasks import bp as tasks_bp
-from goals import bp as goals_bp
-from review import bp as review_bp
-from export import bp as export_bp
-from dashboard import bp as dashboard_bp
 from db import close_db, get_db, init_db
+from settings import bp as settings_bp
+from timeutil import user_today
 
 
 def create_app(test_config=None):
@@ -35,11 +38,13 @@ def create_app(test_config=None):
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(review_bp)
     app.register_blueprint(export_bp)
+    app.register_blueprint(settings_bp)
+
     @app.template_filter("day_label")
     def day_label(iso_date):
         """Turn '2026-11-15' into 'Today', 'Yesterday', or a weekday name."""
         d = date.fromisoformat(iso_date)
-        days_ago = (date.today() - d).days
+        days_ago = (user_today() - d).days
         if days_ago == 0:
             return "Today"
         if days_ago == 1:
@@ -51,7 +56,7 @@ def create_app(test_config=None):
     def home():
         db = get_db()
         user_id = g.user["id"]
-        today = date.today().isoformat()
+        today = user_today().isoformat()
 
         today_checkin = db.execute(
             "SELECT score FROM checkins WHERE user_id = ? AND log_date = ?",
@@ -109,12 +114,12 @@ def create_app(test_config=None):
 
         return render_template(
             "home.html",
+            active_goals=active_goals,
+            next_goal=next_goal,
             today_checkin=today_checkin,
             recent=recent,
             habit_stats=habit_stats,
             task_stats=task_stats,
-            active_goals=active_goals,
-            next_goal=next_goal,
         )
 
     return app
