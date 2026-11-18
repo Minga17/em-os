@@ -280,3 +280,56 @@ nav { flex-wrap: wrap; }
 .settings-card { margin-bottom: 16px; }
 .danger-card { border-color: #ef444466; }
 
+/* ── Achievements & levels ─────────────────────────────── */
+.level-card { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; margin-bottom: 12px; }
+.level-badge {
+  width: 92px; height: 92px; border-radius: 50%; flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 30% 30%, #6db4ff, var(--accent) 60%, #2b6fd6);
+  box-shadow: 0 0 24px #4a9eff55;
+}
+.level-number { font-size: 36px; font-weight: 800; line-height: 1; color: white; }
+.level-label { font-size: 10px; letter-spacing: 2px; color: #ffffffcc; }
+.level-info { flex: 1; min-width: 220px; }
+.level-title { font-size: 22px; font-weight: 700; }
+.xp-bar { display: block; height: 12px; background: var(--bg); border-radius: 999px; overflow: hidden; margin: 10px 0 6px; }
+.xp-bar > * { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), #a855f7); border-radius: 999px; }
+.xp-bar.small { height: 8px; margin: 0; flex: 1; min-width: 80px; }
+.badge-count { text-align: center; }
+.xp-details { margin-bottom: 8px; padding: 14px 20px; }
+.xp-details summary { cursor: pointer; font-weight: 600; }
+.xp-details table { margin-top: 12px; }
+
+.badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 12px; margin-bottom: 8px; }
+.badge-tile { padding: 16px; text-align: center; transition: transform 0.15s ease; }
+.badge-tile:hover { transform: translateY(-2px); }
+.badge-icon { font-size: 38px; line-height: 1.2; }
+.badge-name { font-weight: 700; margin: 6px 0 2px; }
+.badge-tile.unlocked { border-color: #f59e0b88; box-shadow: 0 0 18px #f59e0b22; }
+.badge-tile.locked .badge-icon { filter: grayscale(1); opacity: 0.35; }
+.badge-tile.locked .badge-name { color: var(--sub); }
+.badge-date { margin-top: 8px; font-size: 12px; color: #f59e0b; font-weight: 600; }
+.mini-bar { height: 5px; background: var(--bg); border-radius: 999px; overflow: hidden; margin: 10px 0 4px; }
+.mini-bar div { height: 100%; background: var(--sub); }
+
+/* Home page level strip */
+.level-mini {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 12px 18px; margin: 16px 0; text-decoration: none; color: var(--text);
+}
+.level-mini:hover { border-color: var(--accent); }
+.level-pill { background: var(--accent); color: white; font-weight: 800; border-radius: 999px; padding: 2px 12px; }
+
+/* The "Achievement unlocked!" message pops in and glows */
+.flash.achievement {
+  background: linear-gradient(90deg, #f59e0b26, #a855f726); border: 1px solid #f59e0b;
+  font-weight: 600; animation: pop 0.5s ease-out, glow 2s ease-in-out 0.5s 2;
+}
+@keyframes pop {
+  0%   { transform: scale(0.8); opacity: 0; }
+  70%  { transform: scale(1.03); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@keyframes glow {
+  50% { box-shadow: 0 0 22px #f59e0b88; }
+}

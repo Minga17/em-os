@@ -2,6 +2,12 @@
 {% block title %}Home · EM OS{% endblock %}
 
 {% block content %}
+  <a class="card level-mini" href="{{ url_for('achievements.index') }}">
+    <span class="level-pill">Lv {{ progress.level }}</span>
+    <span class="level-mini-text"><strong>{{ progress.title }}</strong> · {{ progress.xp }} XP</span>
+    <span class="xp-bar small"><span style="width: {{ progress.percent }}%"></span></span>
+    <span class="sub">{{ progress.to_next }} XP to Lv {{ progress.level + 1 }}</span>
+  </a>
   <h1>Hi, {{ g.user['name'] }} 👋</h1>
   
   {% if active_goals %}

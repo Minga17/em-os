@@ -103,3 +103,10 @@ CREATE TABLE IF NOT EXISTS weekly_reviews (
     UNIQUE (user_id, week_start)
 );
 
+CREATE TABLE IF NOT EXISTS user_achievements (
+    user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    code        TEXT    NOT NULL,
+    unlocked_at TEXT    NOT NULL,
+    PRIMARY KEY (user_id, code)
+);
+

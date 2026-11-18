@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Achievements · EM OS{% endblock %}
+
+{% block content %}
+  <h1>Achievements</h1>
+
+  <!-- Level card -->
+  <div class="card level-card">
+    <div class="level-badge">
+      <div class="level-number">{{ progress.level }}</div>
+      <div class="level-label">LEVEL</div>
+    </div>
+    <div class="level-info">
+      <div class="level-title">{{ progress.title }}</div>
+      <div class="sub">{{ progress.xp }} XP total · {{ progress.to_next }} XP to level {{ progress.level + 1 }}</div>
+      <div class="xp-bar"><div style="width: {{ progress.percent }}%"></div></div>
+      <div class="sub">{{ progress.into_level }} / {{ progress.level_size }} XP</div>
+    </div>
+    <div class="badge-count">
+      <div class="big">{{ unlocked_count }}<span class="muted">/{{ total }}</span></div>
+      <div class="sub">badges</div>
+    </div>
+  </div>
+
+  <details class="card xp-details">
+    <summary>Where your XP comes from</summary>
+    <table>
+      <tr><th>Action</th><th>Count</th><th>XP</th></tr>
+      {% for label, count, xp in progress.breakdown %}
+        <tr><td>{{ label|capitalize }}</td><td>{{ count }}</td><td><strong>{{ xp }}</strong></td></tr>
+      {% endfor %}
+    </table>
+  </details>
+
+  <!-- Badges -->
+  {% for group, badges in groups.items() %}
+    <h2>{{ group }}</h2>
+    <div class="badge-grid">
+      {% for b in badges %}
+        <div class="card badge-tile {% if b.unlocked_at %}unlocked{% else %}locked{% endif %}">
+          <div class="badge-icon">{{ b.icon }}</div>
+          <div class="badge-name">{{ b.name }}</div>
+          <div class="sub">{{ b.description }}</div>
+          {% if b.unlocked_at %}
+            <div class="badge-date">✓ {{ b.unlocked_at[:10] }}</div>
+          {% else %}
+            <div class="mini-bar"><div style="width: {{ b.percent }}%"></div></div>
+            <div class="sub">{{ b.current }} / {{ b.target }}</div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+{% endblock %}

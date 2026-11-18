@@ -3,6 +3,7 @@ from datetime import date
 
 from flask import Flask, g, render_template
 
+from achievements import bp as achievements_bp, player_progress
 from auth import bp as auth_bp, login_required
 from checkin import bp as checkin_bp
 from dashboard import bp as dashboard_bp
@@ -44,6 +45,7 @@ def create_app(test_config=None):
     app.register_blueprint(review_bp)
     app.register_blueprint(export_bp)
     app.register_blueprint(settings_bp)
+    app.register_blueprint(achievements_bp)
 
     @app.template_filter("day_label")
     def day_label(iso_date):
@@ -117,8 +119,11 @@ def create_app(test_config=None):
             (user_id,),
         ).fetchone()
 
+        progress = player_progress(db, user_id)
+
         return render_template(
             "home.html",
+            progress=progress,
             active_goals=active_goals,
             next_goal=next_goal,
             today_checkin=today_checkin,
