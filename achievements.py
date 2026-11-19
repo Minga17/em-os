@@ -12,6 +12,7 @@ from flask import Blueprint, flash, g, render_template, request
 from auth import login_required
 from db import get_db
 from streaks import best_streak
+from notify import send_toasts, toast
 from timeutil import user_now_str
 
 bp = Blueprint("achievements", __name__, url_prefix="/achievements")
@@ -141,14 +142,18 @@ def check_achievements(user_id):
     return new
 
 
-def celebrate(new_badges):
-    """Show one message per new badge, or a single summary if there are many."""
+def badge_messages(new_badges):
+    """One message per new badge, or a single summary if there are many."""
     if len(new_badges) > 3:
         icons = " ".join(badge[1] for badge in new_badges)
-        flash(f"🏆 You unlocked {len(new_badges)} achievements! {icons}", "achievement")
-    else:
-        for code, icon, name, *_ in new_badges:
-            flash(f"{icon} Achievement unlocked: {name}!", "achievement")
+        return [f"🏆 You unlocked {len(new_badges)} achievements! {icons}"]
+    return [f"{icon} Achievement unlocked: {name}!" for code, icon, name, *_ in new_badges]
+
+
+def celebrate(new_badges):
+    """Celebrate on the next page (normal form submit)."""
+    for message in badge_messages(new_badges):
+        flash(message, "achievement")
 
 
 @bp.after_app_request
@@ -158,8 +163,13 @@ def unlock_after_actions(response):
             and g.get("user")
             and response.status_code < 400
             and request.blueprint not in ("auth", "settings", "achievements")):
-        celebrate(check_achievements(g.user["id"]))
-    return response
+        new_badges = check_achievements(g.user["id"])
+        if request.headers.get("HX-Request"):           # instant action: pop-up instead
+            for message in badge_messages(new_badges):
+                toast(message)
+        else:
+            celebrate(new_badges)
+    return send_toasts(response)
 
 
 # ── Trophies page ───────────────────────────────────────────────

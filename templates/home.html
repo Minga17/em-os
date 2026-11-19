@@ -1,28 +1,32 @@
 {% extends "base.html" %}
-{% block title %}Home · EM OS{% endblock %}
+{% block title %}Today · EM OS{% endblock %}
 
 {% block content %}
+  <!-- Hero: greeting, progress ring, streak -->
+  <section class="today-hero">
+    <div class="today-text">
+      <div class="muted">{{ summary.today.strftime('%A, %B %d') }}</div>
+      <h1>{{ summary.greeting }}, {{ g.user['name'].split()[0] }} 👋</h1>
+      {% if summary.streak and summary.checked_in %}
+        <div class="flame lit">🔥 {{ summary.streak }}-day streak, keep it going!</div>
+      {% elif summary.streak %}
+        <div class="flame">🔥 Check in today to keep your {{ summary.streak }}-day streak</div>
+      {% else %}
+        <div class="flame">✨ Check in today to start a streak</div>
+      {% endif %}
+    </div>
+    {% include "today/_ring.html" %}
+  </section>
+
+  <!-- Level strip -->
   <a class="card level-mini" href="{{ url_for('achievements.index') }}">
     <span class="level-pill">Lv {{ progress.level }}</span>
     <span class="level-mini-text"><strong>{{ progress.title }}</strong> · {{ progress.xp }} XP</span>
     <span class="xp-bar small"><span style="width: {{ progress.percent }}%"></span></span>
     <span class="sub">{{ progress.to_next }} XP to Lv {{ progress.level + 1 }}</span>
   </a>
-  <h1>Hi, {{ g.user['name'] }} 👋</h1>
-  
-  {% if active_goals %}
-    <div class="card today">
-      <div>
-        <div class="muted">Active goals</div>
-        <div class="big">{{ active_goals }}</div>
-        {% if next_goal %}
-          <div class="sub">Next target: 🎯 {{ next_goal['title'] }} · {{ next_goal['target_date'] }}</div>
-        {% endif %}
-      </div>
-      <a class="btn secondary" href="{{ url_for('goals.index') }}">Open goals</a>
-    </div>
-  {% endif %}
 
+  <!-- Check-in -->
   <div class="card today">
     {% if today_checkin %}
       <div>
@@ -32,22 +36,32 @@
       <a class="btn secondary" href="{{ url_for('checkin.today') }}">Edit check-in</a>
     {% else %}
       <div>
-        <div class="muted">You haven't checked in today.</div>
+        <div class="muted">Daily check-in</div>
+        <div><strong>How did today go?</strong></div>
       </div>
       <a class="btn" href="{{ url_for('checkin.today') }}">Check in now</a>
     {% endif %}
   </div>
 
-  {% if habit_stats['total'] %}
-    <div class="card today">
-      <div>
-        <div class="muted">Habits today</div>
-        <div class="big">{{ habit_stats['done'] }}<span class="muted">/{{ habit_stats['total'] }}</span></div>
-      </div>
-      <a class="btn secondary" href="{{ url_for('habits.index') }}">Open habits</a>
+  <!-- Today's habits: one tap, no page reload -->
+  <div class="section-head">
+    <h2>Today's habits</h2>
+    <a class="link-btn" href="{{ url_for('habits.index') }}">Manage</a>
+  </div>
+  {% if summary.habits %}
+    <ul class="habit-list">
+      {% for item in summary.habits %}
+        {% include "today/_habit_row.html" %}
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="card empty-state">
+      <p>No habits yet. Small daily habits are where streaks begin.</p>
+      <a class="btn" href="{{ url_for('habits.index') }}">Add your first habit</a>
     </div>
   {% endif %}
 
+  <!-- Tasks -->
   {% if task_stats['open_tasks'] %}
     <div class="card today">
       <div>
@@ -62,16 +76,28 @@
     </div>
   {% endif %}
 
+  <!-- Goals -->
+  {% if active_goals %}
+    <div class="card today">
+      <div>
+        <div class="muted">Active goals</div>
+        <div class="big">{{ active_goals }}</div>
+        {% if next_goal %}
+          <div class="sub">Next target: 🎯 {{ next_goal['title'] }} · {{ next_goal['target_date'] }}</div>
+        {% endif %}
+      </div>
+      <a class="btn secondary" href="{{ url_for('goals.index') }}">Open goals</a>
+    </div>
+  {% endif %}
+
+  <!-- History -->
   <h2>Last 7 check-ins</h2>
   {% if recent %}
     <table>
       <tr><th>Date</th><th>Energy</th><th>Mood</th><th>Focus</th><th>Hours</th><th>Score</th></tr>
       {% for c in recent %}
         <tr>
-          <td>
-            {{ c['log_date'] }}
-            <div class="sub">{{ c['log_date']|day_label }}</div>
-          </td>
+          <td>{{ c['log_date'] }}<div class="sub">{{ c['log_date']|day_label }}</div></td>
           <td>{{ c['energy'] }}</td>
           <td>{{ c['mood'] }}</td>
           <td>{{ c['focus'] }}</td>

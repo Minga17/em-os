@@ -7,6 +7,8 @@ from auth import login_required
 from db import get_db
 from streaks import best_streak, current_streak
 from timeutil import user_today
+from today import today_summary
+from notify import toast
 
 bp = Blueprint("habits", __name__, url_prefix="/habits")
 
@@ -104,6 +106,17 @@ def toggle(habit_id):
             (habit_id, today),
         )
     db.commit()
+
+    # Tapped on the Today screen (htmx)? Send back just the updated pieces, not a whole page.
+    if request.headers.get("HX-Request"):
+        summary = today_summary(db, g.user["id"])
+        item = next(h for h in summary["habits"] if h["id"] == habit_id)
+        if not already_done:
+            toast(f"+5 XP · {item['icon']} {item['name']}")
+            if summary["all_done"]:
+                toast("🎉 Everything done today. Amazing!")
+        return render_template("today/_habit_toggle.html", item=item, summary=summary)
+
     return redirect(url_for("habits.index"))
 
 

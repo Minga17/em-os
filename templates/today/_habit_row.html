@@ -1,0 +1,14 @@
+<li class="habit-row {% if item.done %}done{% endif %}" id="habit-{{ item.id }}">
+  <form method="post" action="{{ url_for('habits.toggle', habit_id=item.id) }}"
+        hx-post="{{ url_for('habits.toggle', habit_id=item.id) }}"
+        hx-target="#habit-{{ item.id }}" hx-swap="outerHTML">
+    <button class="tick" aria-label="{{ 'Undo' if item.done else 'Mark done' }}: {{ item.name }}">
+      {% if item.done %}✓{% endif %}
+    </button>
+  </form>
+  <span class="habit-emoji">{{ item.icon }}</span>
+  <span class="habit-text">
+    <strong>{{ item.name }}</strong>
+    <span class="sub">{% if item.streak %}🔥 {{ item.streak }}-day streak{% else %}Start a streak today{% endif %}</span>
+  </span>
+</li>

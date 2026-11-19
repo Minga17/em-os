@@ -36,6 +36,11 @@ def user_tz():
         return ZoneInfo(DEFAULT_TZ)
 
 
+def user_now() -> datetime:
+    """The current moment, on the user's clock."""
+    return datetime.now(user_tz())
+
+
 def user_today() -> date:
     """Today's date where the user lives."""
     return datetime.now(user_tz()).date()

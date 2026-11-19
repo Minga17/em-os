@@ -1,0 +1,11 @@
+<div id="today-ring" class="ring {% if summary.all_done %}complete{% endif %}"
+     style="--p: {{ summary.percent }}" {% if oob %}hx-swap-oob="true"{% endif %}>
+  <div class="ring-inner">
+    {% if summary.all_done %}
+      <span class="ring-emoji">🎉</span>
+    {% else %}
+      <strong>{{ summary.steps_done }}/{{ summary.steps_total }}</strong>
+    {% endif %}
+    <span>today</span>
+  </div>
+</div>

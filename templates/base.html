@@ -2,24 +2,39 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{% block title %}EM OS{% endblock %}</title>
+
+  <!-- App install (PWA) -->
+  <link rel="manifest" href="{{ url_for('manifest') }}">
+  <meta name="theme-color" content="#161b25">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/favicon.png') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="EM OS">
+
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   {% if g.user %}
     {% set links = [
-      ("home",            "🏠", "Home"),
-      ("dashboard.index", "📊", "Dashboard"),
-      ("checkin.today",   "📝", "Check-in"),
-      ("habits.index",    "🔥", "Habits"),
-      ("tasks.index",     "✅", "Tasks"),
-      ("projects.index",  "📁", "Projects"),
-      ("goals.index",     "🎯", "Goals"),
-      ("review.week",     "🗓️", "Weekly review"),
+      ("home",               "🏠", "Today"),
+      ("dashboard.index",    "📊", "Dashboard"),
+      ("checkin.today",      "📝", "Check-in"),
+      ("habits.index",       "🔥", "Habits"),
+      ("tasks.index",        "✅", "Tasks"),
+      ("projects.index",     "📁", "Projects"),
+      ("goals.index",        "🎯", "Goals"),
+      ("review.week",        "🗓️", "Weekly review"),
       ("achievements.index", "🏆", "Achievements"),
-      ("export.index",    "⬇️", "Export"),
+      ("export.index",       "⬇️", "Export"),
     ] %}
+    {% macro is_active(endpoint) -%}
+      {{ 'active' if request.endpoint == endpoint
+           or (request.blueprint and endpoint.startswith(request.blueprint ~ '.')) else '' }}
+    {%- endmacro %}
 
     <!-- Hidden checkbox: remembers if the mobile menu is open (no JavaScript needed) -->
     <input type="checkbox" id="nav-toggle" class="nav-toggle">
@@ -33,16 +48,14 @@
       <a href="{{ url_for('home') }}" class="brand">EM OS</a>
       <div class="side-links">
         {% for endpoint, icon, label in links %}
-          {% set active = request.endpoint == endpoint
-               or (request.blueprint and endpoint.startswith(request.blueprint ~ '.')) %}
-          <a href="{{ url_for(endpoint) }}" class="{% if active %}active{% endif %}">
+          <a href="{{ url_for(endpoint) }}" class="{{ is_active(endpoint) }}">
             <span class="icon">{{ icon }}</span>{{ label }}
           </a>
         {% endfor %}
       </div>
       <div class="side-footer">
         <div class="who">👤 {{ g.user['name'] }}</div>
-        <a href="{{ url_for('settings.index') }}" class="side-settings {% if request.blueprint == 'settings' %}active{% endif %}">⚙️ Settings</a>
+        <a href="{{ url_for('settings.index') }}" class="side-settings {{ is_active('settings.index') }}">⚙️ Settings</a>
         <form method="post" action="{{ url_for('auth.logout') }}">
           <button class="link">Log out</button>
         </form>
@@ -51,6 +64,15 @@
 
     <!-- Dark layer behind the open mobile menu; tapping it closes the menu -->
     <label for="nav-toggle" class="backdrop"></label>
+
+    <!-- Bottom tab bar (phones), like a native app -->
+    <nav class="tabbar">
+      <a href="{{ url_for('home') }}" class="{{ is_active('home') }}"><span>🏠</span>Today</a>
+      <a href="{{ url_for('habits.index') }}" class="{{ is_active('habits.index') }}"><span>🔥</span>Habits</a>
+      <a href="{{ url_for('checkin.today') }}" class="tab-main {{ is_active('checkin.today') }}"><span>＋</span>Check-in</a>
+      <a href="{{ url_for('tasks.index') }}" class="{{ is_active('tasks.index') }}"><span>✅</span>Tasks</a>
+      <a href="{{ url_for('achievements.index') }}" class="{{ is_active('achievements.index') }}"><span>🏆</span>Trophies</a>
+    </nav>
   {% else %}
     <nav class="topnav">
       <a href="{{ url_for('auth.login') }}" class="brand">EM OS</a>
@@ -70,5 +92,11 @@
       {% block content %}{% endblock %}
     </main>
   </div>
+
+  <!-- Pop-up messages after instant actions appear here -->
+  <div id="toasts" aria-live="polite"></div>
+
+  <script src="{{ url_for('static', filename='js/htmx.min.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
 </body>
 </html>

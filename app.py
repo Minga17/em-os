@@ -16,6 +16,7 @@ from tasks import bp as tasks_bp
 from db import close_db, get_db, init_db
 from settings import bp as settings_bp
 from timeutil import user_today
+from today import today_summary
 
 
 def create_app(test_config=None):
@@ -81,17 +82,6 @@ def create_app(test_config=None):
             (user_id,),
         ).fetchall()
 
-        habit_stats = db.execute(
-            """
-            SELECT COUNT(h.id) AS total, COUNT(hl.habit_id) AS done
-            FROM habits h
-            LEFT JOIN habit_logs hl
-                   ON hl.habit_id = h.id AND hl.log_date = ?
-            WHERE h.user_id = ? AND h.is_active = 1
-            """,
-            (today, user_id),
-        ).fetchone()
-
         task_stats = db.execute(
             """
             SELECT
@@ -120,17 +110,32 @@ def create_app(test_config=None):
         ).fetchone()
 
         progress = player_progress(db, user_id)
+        summary = today_summary(db, user_id)
 
         return render_template(
             "home.html",
             progress=progress,
+            summary=summary,
             active_goals=active_goals,
             next_goal=next_goal,
             today_checkin=today_checkin,
             recent=recent,
-            habit_stats=habit_stats,
             task_stats=task_stats,
         )
+
+    # ── App install (PWA) files: must be served from the site root ──
+    @app.route("/sw.js")
+    def service_worker():
+        response = app.send_static_file("sw.js")
+        response.headers["Content-Type"] = "application/javascript"
+        response.headers["Cache-Control"] = "no-cache"   # phones always check for a new version
+        return response
+
+    @app.route("/manifest.webmanifest")
+    def manifest():
+        response = app.send_static_file("manifest.webmanifest")
+        response.headers["Content-Type"] = "application/manifest+json"
+        return response
 
     return app
 

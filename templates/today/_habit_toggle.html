@@ -1,0 +1,3 @@
+{# Sent back after an instant tap: the updated habit row, plus the ring (swapped "out of band") #}
+{% include "today/_habit_row.html" %}
+{% with oob = true %}{% include "today/_ring.html" %}{% endwith %}
