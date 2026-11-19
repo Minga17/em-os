@@ -2,7 +2,7 @@
 // - Caches the app's look (CSS, scripts, icons) so it opens instantly.
 // - Shows a friendly offline screen when there's no internet.
 // - NEVER caches your personal pages: those always come fresh from the server.
-const CACHE = "emos-v1";
+const CACHE = "emos-v2";
 const ASSETS = [
   "/static/style.css",
   "/static/js/htmx.min.js",
