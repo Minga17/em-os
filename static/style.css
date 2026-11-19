@@ -433,3 +433,48 @@ a, button, label { -webkit-tap-highlight-color: transparent; }   /* no grey flas
   .ring-inner { width: 68px; height: 68px; }
   th, td { padding: 8px 6px; font-size: 13px; }
 }
+
+/* ── Small screens: nothing may stick out past the edge ──────── */
+input, select, textarea { min-width: 0; max-width: 100%; }
+button, .btn { white-space: nowrap; }
+img, table { max-width: 100%; }
+
+/* Add habit / add area form */
+.add-habit { flex-wrap: wrap; }
+.add-habit input[name="name"] { flex: 1 1 160px; min-width: 0; }
+.icon-input { flex: 0 0 56px; }
+
+/* Habit cards */
+.habit-main { min-width: 0; flex: 1 1 220px; }
+.habit-main > div { min-width: 0; overflow-wrap: anywhere; }
+.habit-icon { flex: none; }
+.week { flex-wrap: nowrap; min-width: 0; }
+
+/* Grids: never ask for more width than the screen has */
+.two-col     { grid-template-columns: repeat(auto-fit,  minmax(min(300px, 100%), 1fr)); }
+.project-grid{ grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); }
+.past-reviews{ grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr)); }
+.task-add input[name="title"] { min-width: min(220px, 100%); }
+.row > * { min-width: min(150px, 100%); }
+.task-body, .task-title { min-width: 0; overflow-wrap: anywhere; }
+
+@media (max-width: 600px) {
+  /* Wide tables scroll sideways inside their card instead of the page */
+  table { display: block; overflow-x: auto; white-space: nowrap; }
+  .export-row { flex-wrap: wrap; gap: 10px; }
+}
+
+@media (max-width: 480px) {
+  main { padding: 0 12px; margin-top: 20px; }
+  .card { padding: 16px; }
+  .habit { padding: 14px; gap: 12px; }
+  .add-habit button { flex: 1 1 100%; }          /* full-width button on its own line */
+  .week { width: 100%; justify-content: space-between; gap: 4px; }
+  .dot { flex: 0 1 32px; width: auto; height: auto; aspect-ratio: 1;
+         display: grid; place-items: center; line-height: 1; }
+  .habit-actions { width: 100%; }
+  .habit-actions form:first-child { flex: 1; }
+  .habit-actions form:first-child button { width: 100%; }
+  .rating span { width: 32px; height: 32px; line-height: 32px; }
+  .big { font-size: 32px; }
+}
