@@ -4,7 +4,7 @@ How it works:
 1. On the Settings page a person picks a reminder time and taps
    "Turn on for this device". The phone gives us a "subscription":
    a private address where we can deliver notifications to that phone.
-2. A small background loop wakes up every minute. For everyone whose
+2. The background loop in jobs.py wakes up every minute. For everyone whose
    reminder time has come (on their own clock) and who hasn't checked in
    today, it sends one notification, at most once per day.
 
@@ -13,8 +13,6 @@ If either is missing (for example on a laptop that blocks the package),
 the rest of the app still works: reminders are just switched off.
 """
 import json
-import threading
-import time
 from datetime import date, datetime, timezone
 from urllib.parse import urlparse
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -186,20 +184,6 @@ def run_reminders(db, now_utc=None, sender=None):
         if message and send_to_user(db, user["id"], message, sender):
             sent_to += 1
     return sent_to
-
-
-def start_reminder_loop(app):
-    """Background thread: check for due reminders once a minute."""
-    def loop():
-        while True:
-            time.sleep(60 - datetime.now().second)    # wake up at the start of each minute
-            try:
-                with app.app_context():
-                    run_reminders(get_db())
-            except Exception:
-                app.logger.exception("Reminder loop error")
-
-    threading.Thread(target=loop, name="reminders", daemon=True).start()
 
 
 # ── Pages and buttons ───────────────────────────────────────────

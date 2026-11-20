@@ -58,8 +58,21 @@
     {% endif %}
   </div>
 
-  <div class="card settings-card">
-    <h2>🔒 Change password</h2>
+  <div class="card settings-card" id="security">
+    <h2>🔒 Password & security</h2>
+    <p class="sub">
+      {% if g.user['email_verified'] %}
+        ✅ Email confirmed: {{ g.user['email'] }}
+      {% else %}
+        📧 {{ g.user['email'] }} isn't confirmed yet.
+      {% endif %}
+    </p>
+    {% if not g.user['email_verified'] %}
+      <form method="post" action="{{ url_for('auth.resend_verification') }}" class="inline">
+        <button class="link">Send the confirmation email again</button>
+      </form>
+    {% endif %}
+    <h3>Change password</h3>
     <form method="post" action="{{ url_for('settings.password') }}" class="stack">
       <label>Current password
         <input name="current_password" type="password" required autocomplete="current-password">
@@ -74,6 +87,16 @@
       </div>
       <button>Change password</button>
     </form>
+
+    <div class="logout-others">
+      <div>
+        <h3>Logged in somewhere else?</h3>
+        <p class="sub">Log out of EM OS on every other phone and computer. This one stays logged in.</p>
+      </div>
+      <form method="post" action="{{ url_for('settings.logout_others') }}">
+        <button class="secondary-plain">Log out other devices</button>
+      </form>
+    </div>
   </div>
 
   <div class="card settings-card danger-card">

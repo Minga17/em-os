@@ -26,6 +26,17 @@
     <span class="sub">{{ progress.to_next }} XP to Lv {{ progress.level + 1 }}</span>
   </a>
 
+  {% if not g.user['email_verified'] %}
+    <div class="card verify-banner">
+      <span>📧</span>
+      <span><strong>Please confirm your email.</strong> We sent a link to {{ g.user['email'] }}.
+        It lets you reset your password if you ever forget it.</span>
+      <form method="post" action="{{ url_for('auth.resend_verification') }}">
+        <button class="link">Resend</button>
+      </form>
+    </div>
+  {% endif %}
+
   {% if reminder_tip %}
     <a class="card reminder-tip" href="{{ url_for('settings.index') }}#reminders">
       <span>🔔</span>

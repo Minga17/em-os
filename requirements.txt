@@ -3,3 +3,5 @@ pytest
 tzdata
 gunicorn
 pywebpush==2.5.0
+sentry-sdk[flask]==2.73.0
+pyzipper==0.4.0

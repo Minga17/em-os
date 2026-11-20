@@ -121,3 +121,27 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
     created_at TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_push_user ON push_subscriptions(user_id);
+
+-- Feedback people send from the app (ideas, problems, things they love)
+CREATE TABLE IF NOT EXISTS feedback (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind       TEXT    NOT NULL CHECK (kind IN ('idea', 'problem', 'love')),
+    message    TEXT    NOT NULL,
+    page       TEXT,
+    created_at TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Private analytics: which days each person used the app (nothing else)
+CREATE TABLE IF NOT EXISTS activity_days (
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    day     TEXT    NOT NULL,          -- YYYY-MM-DD on the person's own clock
+    PRIMARY KEY (user_id, day)
+) WITHOUT ROWID;
+CREATE INDEX IF NOT EXISTS idx_activity_day ON activity_days(day);
+
+-- Small settings the app keeps for itself (e.g. the date of the last backup)
+CREATE TABLE IF NOT EXISTS app_state (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);

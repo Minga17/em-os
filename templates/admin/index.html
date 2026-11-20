@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Owner stats · EM OS{% endblock %}
+
+{% macro rate(r) -%}
+  {% if r.percent is none %}<span class="nodata">Not enough data yet</span>
+  {%- else %}{{ r.percent }}%<span class="label"> ({{ r.came_back }} of {{ r.eligible }})</span>{% endif %}
+{%- endmacro %}
+
+{% block content %}
+  <h1>📈 Owner stats</h1>
+  <p class="muted">Only you can see this page. Counts come from which days people opened the app,
+    plus data the app already stores. No outside trackers.</p>
+
+  <h2>People</h2>
+  <div class="stats-grid">
+    <div class="card stat"><div class="num">{{ s.users }}</div><div class="label">account{{ '' if s.users == 1 else 's' }}</div></div>
+    <div class="card stat"><div class="num">{{ s.new_7 }}</div><div class="label">new in the last 7 days ({{ s.new_30 }} in 30)</div></div>
+    <div class="card stat"><div class="num">{{ s.active_today }}</div><div class="label">used it today</div></div>
+    <div class="card stat"><div class="num">{{ s.active_7 }}</div><div class="label">used it in the last 7 days</div></div>
+    <div class="card stat"><div class="num">{{ s.active_30 }}</div><div class="label">used it in the last 30 days</div></div>
+    <div class="card stat"><div class="num">{{ s.verified if s.verified is not none else '–' }}%</div><div class="label">confirmed their email</div></div>
+    <div class="card stat"><div class="num">{{ s.reminders if s.reminders is not none else '–' }}%</div><div class="label">turned on reminders</div></div>
+  </div>
+
+  <h2>Do people come back?</h2>
+  <p class="sub">Of everyone who started at least N days ago: how many opened EM OS exactly N days after their first day, and how many checked in that day.</p>
+  <div class="stats-grid">
+    {% for r in s.returns %}
+      <div class="card stat">
+        <div class="label">Day {{ r.days }}</div>
+        <div class="num">{{ rate(r) }}</div>
+        <div class="label">{% if r.checkin_percent is not none %}{{ r.checkin_percent }}% checked in{% endif %}</div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <h2>Last 14 days</h2>
+  <div class="card day-bars">
+    {% for day, n in s.last_14 %}
+      <div class="bar-row">
+        <span>{{ day|short_day }}</span>
+        <span class="track"><span class="fill" style="width: {{ (n * 100 / s.max_daily)|round|int }}%; display:block"></span></span>
+        <span class="n">{{ n }}</span>
+      </div>
+    {% endfor %}
+  </div>
+
+  <h2>Activity</h2>
+  <div class="stats-grid">
+    <div class="card stat"><div class="num">{{ s.checkins_7 }}</div><div class="label">check-ins this week</div></div>
+    <div class="card stat"><div class="num">{{ s.habit_ticks_7 }}</div><div class="label">habit ticks this week</div></div>
+    <div class="card stat"><div class="num">{{ s.tasks_done }}</div><div class="label">tasks finished (all time)</div></div>
+    <div class="card stat"><div class="num">{{ s.goals }}</div><div class="label">goals set (all time)</div></div>
+  </div>
+
+  <h2>Feedback</h2>
+  <div class="card">
+    {% for f in feedback %}
+      <div class="feedback-item">
+        <span class="pill {{ f['kind'] }}">{{ f['kind'] }}</span>
+        <strong>{{ f['name'] }}</strong> <span class="sub">{{ f['email'] }} · {{ f['created_at'][:16] }} UTC{% if f['page'] %} · {{ f['page'] }}{% endif %}</span>
+        <p>{{ f['message'] }}</p>
+      </div>
+    {% else %}
+      <p class="muted">No feedback yet.</p>
+    {% endfor %}
+  </div>
+{% endblock %}

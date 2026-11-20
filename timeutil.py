@@ -49,3 +49,11 @@ def user_today() -> date:
 def user_now_str() -> str:
     """The user's local date and time as text, e.g. '2026-11-17T23:19:05'."""
     return datetime.now(user_tz()).replace(tzinfo=None).isoformat(timespec="seconds")
+
+
+def local_today_for(name) -> date:
+    """Today's date in a given time zone (when no one is logged in yet)."""
+    try:
+        return datetime.now(ZoneInfo(name or DEFAULT_TZ)).date()
+    except (ZoneInfoNotFoundError, ValueError):
+        return datetime.now(ZoneInfo(DEFAULT_TZ)).date()

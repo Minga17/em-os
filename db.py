@@ -42,9 +42,34 @@ def run_migrations(db):
     if not column_exists(db, "users", "last_reminded_on"):
         db.execute("ALTER TABLE users ADD COLUMN last_reminded_on TEXT")   # stops double reminders
         db.commit()
+    for column, definition in [
+        ("email_verified", "INTEGER NOT NULL DEFAULT 0"),    # 1 once they click the email link
+        ("email_sent_at", "TEXT"),                          # stops email spam
+        ("session_version", "INTEGER NOT NULL DEFAULT 0"),  # "log out of all devices"
+    ]:
+        if not column_exists(db, "users", column):
+            db.execute(f"ALTER TABLE users ADD COLUMN {column} {definition}")
+            db.commit()
+    backfill_activity_days(db)
     if not column_exists(db, "projects", "goal_id"):
         db.execute(
             "ALTER TABLE projects ADD COLUMN goal_id INTEGER "
             "REFERENCES goals(id) ON DELETE SET NULL"
         )
         db.commit()
+
+
+def backfill_activity_days(db):
+    """One time only: fill the analytics table from the history we already have."""
+    if db.execute("SELECT 1 FROM app_state WHERE key = 'activity_backfilled'").fetchone():
+        return
+    db.executescript("""
+        INSERT OR IGNORE INTO activity_days (user_id, day)
+            SELECT id, date(created_at) FROM users;
+        INSERT OR IGNORE INTO activity_days (user_id, day)
+            SELECT user_id, log_date FROM checkins;
+        INSERT OR IGNORE INTO activity_days (user_id, day)
+            SELECT h.user_id, l.log_date FROM habit_logs l JOIN habits h ON h.id = l.habit_id;
+        INSERT INTO app_state (key, value) VALUES ('activity_backfilled', datetime('now'));
+    """)
+    db.commit()

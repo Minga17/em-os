@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Forgot password · EM OS{% endblock %}
+
+{% block content %}
+  <div class="card narrow">
+    <h1>Forgot your password?</h1>
+    <p class="muted">Type the email you signed up with. We'll send you a link to choose a new password.</p>
+    <form method="post" class="stack">
+      <label>Email
+        <input name="email" type="email" required autocomplete="email" autofocus>
+      </label>
+      <button>Send reset link</button>
+    </form>
+    <p class="muted"><a href="{{ url_for('auth.login') }}">← Back to log in</a></p>
+  </div>
+{% endblock %}

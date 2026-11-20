@@ -162,7 +162,7 @@ def unlock_after_actions(response):
     if (request.method == "POST"
             and g.get("user")
             and response.status_code < 400
-            and request.blueprint not in ("auth", "settings", "achievements", "reminders")):
+            and request.blueprint not in ("auth", "settings", "achievements", "reminders", "feedback", "admin")):
         new_badges = check_achievements(g.user["id"])
         if request.headers.get("HX-Request"):           # instant action: pop-up instead
             for message in badge_messages(new_badges):

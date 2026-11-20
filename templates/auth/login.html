@@ -9,8 +9,9 @@
         <input name="email" type="email" required value="{{ request.form.get('email', '') }}">
       </label>
       <label>Password
-        <input name="password" type="password" required>
+        <input name="password" type="password" required autocomplete="current-password">
       </label>
+      <a href="{{ url_for('auth.forgot') }}" class="forgot-link">Forgot password?</a>
       <button>Log in</button>
     </form>
     <p class="muted">New here? <a href="{{ url_for('auth.register') }}">Create an account</a></p>

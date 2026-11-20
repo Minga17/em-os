@@ -56,6 +56,10 @@
       <div class="side-footer">
         <div class="who">👤 {{ g.user['name'] }}</div>
         <a href="{{ url_for('settings.index') }}" class="side-settings {{ is_active('settings.index') }}">⚙️ Settings</a>
+        <a href="{{ url_for('feedback.index') }}" class="side-settings {{ is_active('feedback.index') }}">💬 Send feedback</a>
+        {% if is_admin %}
+          <a href="{{ url_for('admin.index') }}" class="side-settings {{ is_active('admin.index') }}">📈 Owner stats</a>
+        {% endif %}
         <form method="post" action="{{ url_for('auth.logout') }}">
           <button class="link">Log out</button>
         </form>

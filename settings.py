@@ -2,7 +2,7 @@ from flask import (Blueprint, current_app, flash, g, redirect, render_template, 
                    session, url_for)
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from auth import login_required
+from auth import login_required, sign_out_other_devices
 from db import get_db
 from reminders import REMINDER_TIMES, push_ready, time_label
 from timeutil import all_timezones, is_valid_timezone, user_today
@@ -69,8 +69,17 @@ def password():
         db.execute("UPDATE users SET password_hash = ? WHERE id = ?",
                    (generate_password_hash(new), g.user["id"]))
         db.commit()
-        flash("Password changed. 🔒", "success")
+        sign_out_other_devices(g.user["id"])
+        flash("Password changed. 🔒 Any other devices have been logged out.", "success")
     return redirect(url_for("settings.index"))
+
+
+@bp.route("/logout-others", methods=["POST"])
+@login_required
+def logout_others():
+    sign_out_other_devices(g.user["id"])
+    flash("Logged out of all other devices. This one stays logged in.", "success")
+    return redirect(url_for("settings.index") + "#security")
 
 
 @bp.route("/delete", methods=["POST"])

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Send feedback · EM OS{% endblock %}
+
+{% block content %}
+  <div class="card narrow-wide">
+    <h1>💬 Send feedback</h1>
+    <p class="muted">Got an idea, found a problem, or love something? Tell me. I read every message.</p>
+    <form method="post" class="stack">
+      <fieldset class="kinds">
+        <legend>What's it about?</legend>
+        {% for value, label in kinds.items() %}
+          <label><input type="radio" name="kind" value="{{ value }}" required
+                 {% if form.get('kind') == value %}checked{% endif %}>{{ label }}</label>
+        {% endfor %}
+      </fieldset>
+      <label for="message">Your message
+        <textarea id="message" name="message" rows="6" maxlength="{{ max_length }}" required
+          placeholder="e.g. I wish I could set habits for weekdays only">{{ form.get('message', '') }}</textarea>
+      </label>
+      <input type="hidden" name="page" value="{{ page or '' }}">
+      <p class="sub">Sent with your name and email so I can reply. {% if page %}You came from <code>{{ page }}</code>.{% endif %}</p>
+      <button>Send feedback</button>
+    </form>
+  </div>
+{% endblock %}
