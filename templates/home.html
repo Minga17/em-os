@@ -26,6 +26,14 @@
     <span class="sub">{{ progress.to_next }} XP to Lv {{ progress.level + 1 }}</span>
   </a>
 
+  {% if reminder_tip %}
+    <a class="card reminder-tip" href="{{ url_for('settings.index') }}#reminders">
+      <span>🔔</span>
+      <span><strong>Never lose your streak.</strong> Turn on a daily reminder.</span>
+      <span class="muted">Set up →</span>
+    </a>
+  {% endif %}
+
   <!-- Check-in -->
   <div class="card today">
     {% if today_checkin %}

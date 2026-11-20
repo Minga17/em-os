@@ -2,3 +2,4 @@ flask
 pytest
 tzdata
 gunicorn
+pywebpush==2.5.0

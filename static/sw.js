@@ -2,7 +2,8 @@
 // - Caches the app's look (CSS, scripts, icons) so it opens instantly.
 // - Shows a friendly offline screen when there's no internet.
 // - NEVER caches your personal pages: those always come fresh from the server.
-const CACHE = "emos-v3";
+// - Shows the daily reminder notifications, even when the app is closed.
+const CACHE = "emos-v4";
 const ASSETS = [
   "/static/style.css",
   "/static/js/htmx.min.js",
@@ -50,4 +51,39 @@ self.addEventListener("fetch", (event) => {
     // Pages: always from the network; offline screen if there's no connection
     event.respondWith(fetch(request).catch(() => caches.match("/static/offline.html")));
   }
+});
+
+// Daily reminders: the server sends a push message, we show it as a notification
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (error) {
+    data = { body: event.data ? event.data.text() : "" };
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title || "EM OS", {
+      body: data.body || "",
+      icon: "/static/icons/icon-192.png",
+      tag: data.tag || "emos",          // a new reminder replaces the old one
+      data: { url: data.url || "/" },
+    })
+  );
+});
+
+// Tapping the notification opens EM OS on the right page
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const path = (event.notification.data && event.notification.data.url) || "/";
+  const url = new URL(path, self.location.origin).href;   // only ever our own site
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
+      for (const win of windows) {
+        if (win.url.startsWith(self.location.origin) && "focus" in win) {
+          return win.focus().then((w) => (w && "navigate" in w ? w.navigate(url) : w));
+        }
+      }
+      return self.clients.openWindow(url);
+    })
+  );
 });

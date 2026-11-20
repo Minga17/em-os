@@ -478,3 +478,14 @@ img, table { max-width: 100%; }
   .rating span { width: 32px; height: 32px; line-height: 32px; }
   .big { font-size: 32px; }
 }
+/* ── Daily reminders ─────────────────────────────────────────── */
+.reminder-time { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 14px 0 4px; }
+.reminder-time label { flex-direction: row; align-items: center; color: var(--text); font-size: 15px; }
+.reminder-time select { flex: 0 1 160px; }
+.push-panel { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.push-buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 10px; }
+button.secondary[data-push-test] { border-color: var(--accent); color: var(--accent); }
+.reminder-tip { display: flex; align-items: center; gap: 12px; padding: 14px 18px; margin-bottom: 16px;
+  text-decoration: none; color: var(--text); }
+.reminder-tip > span:nth-child(2) { flex: 1; min-width: 0; }
+.reminder-tip:hover { border-color: var(--accent); }

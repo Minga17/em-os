@@ -36,6 +36,12 @@ def run_migrations(db):
     if not column_exists(db, "users", "timezone"):
         db.execute("ALTER TABLE users ADD COLUMN timezone TEXT NOT NULL DEFAULT 'UTC'")
         db.commit()
+    if not column_exists(db, "users", "reminder_time"):
+        db.execute("ALTER TABLE users ADD COLUMN reminder_time TEXT")      # '20:00', or NULL = off
+        db.commit()
+    if not column_exists(db, "users", "last_reminded_on"):
+        db.execute("ALTER TABLE users ADD COLUMN last_reminded_on TEXT")   # stops double reminders
+        db.commit()
     if not column_exists(db, "projects", "goal_id"):
         db.execute(
             "ALTER TABLE projects ADD COLUMN goal_id INTEGER "

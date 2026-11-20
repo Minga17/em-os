@@ -27,6 +27,37 @@
     </form>
   </div>
 
+  <div class="card settings-card" id="reminders">
+    <h2>🔔 Daily reminder</h2>
+    <p class="muted">Get one gentle nudge a day to check in, so you never lose your streak.
+      No reminder is sent if you've already checked in.</p>
+    <form method="post" action="{{ url_for('reminders.set_time') }}" class="reminder-time">
+      <label for="reminder_time">Remind me at</label>
+      <select name="reminder_time" id="reminder_time">
+        <option value="" {% if not reminder_time %}selected{% endif %}>Off</option>
+        {% for value, label in reminder_choices %}
+          <option value="{{ value }}" {% if value == reminder_time %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <button>Save</button>
+    </form>
+    <p class="sub">Times follow your time zone ({{ g.user['timezone'].replace('_', ' ') }}).</p>
+
+    {% if vapid_public_key %}
+      <div id="push-panel" class="push-panel" data-key="{{ vapid_public_key }}">
+        <p data-push-status class="muted">Checking this device…</p>
+        <div class="push-buttons">
+          <button type="button" data-push-on hidden>Turn on for this device</button>
+          <button type="button" data-push-test class="secondary" hidden>Send a test</button>
+          <button type="button" data-push-off class="link" hidden>Turn off for this device</button>
+        </div>
+      </div>
+      <p class="sub" data-push-count>{{ devices }} device{{ '' if devices == 1 else 's' }} signed up for reminders.</p>
+    {% else %}
+      <p class="sub">Notifications aren't set up on this server yet.</p>
+    {% endif %}
+  </div>
+
   <div class="card settings-card">
     <h2>🔒 Change password</h2>
     <form method="post" action="{{ url_for('settings.password') }}" class="stack">

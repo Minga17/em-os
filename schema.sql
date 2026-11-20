@@ -110,3 +110,14 @@ CREATE TABLE IF NOT EXISTS user_achievements (
     PRIMARY KEY (user_id, code)
 );
 
+
+-- Phones/browsers that turned on daily reminders (one row per device)
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    endpoint   TEXT    NOT NULL UNIQUE,     -- the device's private delivery address
+    p256dh     TEXT    NOT NULL,            -- encryption keys from the browser
+    auth       TEXT    NOT NULL,
+    created_at TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_push_user ON push_subscriptions(user_id);

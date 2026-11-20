@@ -12,6 +12,7 @@ from goals import bp as goals_bp
 from habits import bp as habits_bp
 from review import bp as review_bp
 from projects import bp as projects_bp
+from reminders import bp as reminders_bp, push_ready, run_reminders, start_reminder_loop
 from tasks import bp as tasks_bp
 from db import close_db, get_db, init_db
 from settings import bp as settings_bp
@@ -27,6 +28,10 @@ def create_app(test_config=None):
         SESSION_COOKIE_HTTPONLY=True,      # JavaScript can't read the login cookie
         SESSION_COOKIE_SAMESITE="Lax",     # other websites can't submit forms as you
         SESSION_COOKIE_SECURE=os.environ.get("SESSION_COOKIE_SECURE") == "1",  # HTTPS only (online)
+        # Daily reminders: keys made once with make_vapid_keys.py, kept in Render's settings
+        VAPID_PUBLIC_KEY=os.environ.get("VAPID_PUBLIC_KEY", ""),
+        VAPID_PRIVATE_KEY=os.environ.get("VAPID_PRIVATE_KEY", ""),
+        VAPID_SUBJECT=os.environ.get("VAPID_SUBJECT", "mailto:admin@example.com"),
     )
     if test_config:
         app.config.update(test_config)   # tests use their own temporary database
@@ -47,6 +52,17 @@ def create_app(test_config=None):
     app.register_blueprint(export_bp)
     app.register_blueprint(settings_bp)
     app.register_blueprint(achievements_bp)
+    app.register_blueprint(reminders_bp)
+
+    # Send daily reminders in the background (only online, where keys are set)
+    reloader_parent = app.debug and os.environ.get("WERKZEUG_RUN_MAIN") != "true"
+    if not app.testing and not reloader_parent and push_ready(app):
+        start_reminder_loop(app)
+
+    @app.cli.command("send-reminders")
+    def send_reminders_command():
+        """Send any reminders that are due right now (for testing)."""
+        print(f"Reminders sent to {run_reminders(get_db())} people.")
 
     @app.template_filter("day_label")
     def day_label(iso_date):
@@ -111,6 +127,8 @@ def create_app(test_config=None):
 
         progress = player_progress(db, user_id)
         summary = today_summary(db, user_id)
+        reminder_tip = push_ready() and db.execute(
+            "SELECT reminder_time IS NULL FROM users WHERE id = ?", (user_id,)).fetchone()[0]
 
         return render_template(
             "home.html",
@@ -121,6 +139,7 @@ def create_app(test_config=None):
             today_checkin=today_checkin,
             recent=recent,
             task_stats=task_stats,
+            reminder_tip=reminder_tip,
         )
 
     # ── App install (PWA) files: must be served from the site root ──

@@ -1,8 +1,10 @@
-from flask import Blueprint, flash, g, redirect, render_template, request, session, url_for
+from flask import (Blueprint, current_app, flash, g, redirect, render_template, request,
+                   session, url_for)
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from auth import login_required
 from db import get_db
+from reminders import REMINDER_TIMES, push_ready, time_label
 from timeutil import all_timezones, is_valid_timezone, user_today
 
 bp = Blueprint("settings", __name__, url_prefix="/settings")
@@ -19,8 +21,17 @@ def current_password_ok(password):
 @bp.route("/", methods=["GET"])
 @login_required
 def index():
-    return render_template("settings/index.html", timezones=all_timezones(),
-                           local_today=user_today())
+    db = get_db()
+    reminder_time = db.execute("SELECT reminder_time FROM users WHERE id = ?",
+                               (g.user["id"],)).fetchone()[0]
+    devices = db.execute("SELECT COUNT(*) FROM push_subscriptions WHERE user_id = ?",
+                         (g.user["id"],)).fetchone()[0]
+    return render_template(
+        "settings/index.html", timezones=all_timezones(), local_today=user_today(),
+        reminder_time=reminder_time, devices=devices,
+        reminder_choices=[(t, time_label(t)) for t in REMINDER_TIMES],
+        vapid_public_key=current_app.config["VAPID_PUBLIC_KEY"] if push_ready() else None,
+    )
 
 
 @bp.route("/profile", methods=["POST"])
