@@ -39,10 +39,15 @@ class Auth:
     def logout(self):
         return self.client.post("/auth/logout")
 
-    def register_and_login(self, **kwargs):
+    def register_and_login(self, welcome=False, **kwargs):
+        """Sign up and log in. New people see the welcome screen first;
+        most tests skip it (like tapping "Skip") unless welcome=True."""
         self.register(**kwargs)
         email = kwargs.get("email", "ema@example.com")
-        return self.login(email=email)
+        response = self.login(email=email)
+        if not welcome:
+            self.client.post("/welcome/skip")
+        return response
 
 
 @pytest.fixture

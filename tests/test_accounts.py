@@ -114,7 +114,7 @@ def test_password_reset_full_flow(app, client, auth):
     assert "Password changed" in response.get_data(as_text=True)
     assert "Incorrect" in auth.login(password="password123").get_data(as_text=True)
     auth.login(password="brandnew99")
-    assert client.get("/").status_code == 200
+    assert client.get("/settings/").status_code == 200
     with connect(app) as db:     # clicking the emailed link also proves the email is theirs
         assert db.execute("SELECT email_verified FROM users").fetchone()[0] == 1
 
@@ -171,11 +171,11 @@ def test_reset_logs_out_other_devices(app, auth):
     auth.register()
     phone = app.test_client()
     phone.post("/auth/login", data={"email": "ema@example.com", "password": "password123"})
-    assert phone.get("/").status_code == 200
+    assert phone.get("/settings/").status_code == 200
     laptop = app.test_client()
     path = reset_link(app, laptop)
     laptop.post(path, data={"new_password": "brandnew99", "confirm_password": "brandnew99"})
-    assert phone.get("/").status_code == 302    # phone was logged out
+    assert phone.get("/settings/").status_code == 302    # phone was logged out
 
 
 def test_links_use_app_url_when_set(app):
@@ -191,8 +191,8 @@ def test_logout_other_devices_keeps_this_one(app, auth):
     for device in (phone, laptop):
         device.post("/auth/login", data={"email": "ema@example.com", "password": "password123"})
     laptop.post("/settings/logout-others")
-    assert laptop.get("/").status_code == 200
-    assert phone.get("/").status_code == 302
+    assert laptop.get("/settings/").status_code == 200
+    assert phone.get("/settings/").status_code == 302
 
 
 def test_password_change_logs_out_other_devices(app, auth):
@@ -202,8 +202,8 @@ def test_password_change_logs_out_other_devices(app, auth):
         device.post("/auth/login", data={"email": "ema@example.com", "password": "password123"})
     laptop.post("/settings/password", data={"current_password": "password123",
                                             "new_password": "brandnew99", "confirm_password": "brandnew99"})
-    assert laptop.get("/").status_code == 200
-    assert phone.get("/").status_code == 302
+    assert laptop.get("/settings/").status_code == 200
+    assert phone.get("/settings/").status_code == 302
 
 
 def test_logout_others_needs_login(client):
@@ -215,7 +215,7 @@ def test_old_logins_from_before_this_update_still_work(app, client, auth):
     auth.register()
     with client.session_transaction() as session:
         session["user_id"] = 1                  # an old cookie: no "sv" in it
-    assert client.get("/").status_code == 200
+    assert client.get("/settings/").status_code == 200
 
 
 @pytest.mark.parametrize("bad", ["a@b.com\nBcc: x@y.com", "x@y.com\r\nSubject: hi"])

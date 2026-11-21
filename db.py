@@ -50,6 +50,17 @@ def run_migrations(db):
         if not column_exists(db, "users", column):
             db.execute(f"ALTER TABLE users ADD COLUMN {column} {definition}")
             db.commit()
+    if not column_exists(db, "users", "onboarded"):
+        db.execute("ALTER TABLE users ADD COLUMN onboarded INTEGER NOT NULL DEFAULT 0")
+        db.execute("UPDATE users SET onboarded = 1")      # people who already use EM OS skip the welcome
+        db.commit()
+    for column in ("morning_time", "last_morning_on"):     # morning "plan your day" reminder
+        if not column_exists(db, "users", column):
+            db.execute(f"ALTER TABLE users ADD COLUMN {column} TEXT")
+            db.commit()
+    if not column_exists(db, "tasks", "focus_date"):
+        db.execute("ALTER TABLE tasks ADD COLUMN focus_date TEXT")   # in that day's top 3
+        db.commit()
     backfill_activity_days(db)
     if not column_exists(db, "projects", "goal_id"):
         db.execute(

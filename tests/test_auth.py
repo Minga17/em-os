@@ -5,8 +5,10 @@ def test_register_then_login(client, auth):
     auth.register()
     response = auth.login()
     assert response.status_code == 302                 # redirected to home
-    home = client.get("/")
-    assert "Ema 👋" in home.get_data(as_text=True)
+    welcome = client.get("/", follow_redirects=True)   # brand-new: the welcome screen comes first
+    assert "Welcome to EM OS, Ema" in welcome.get_data(as_text=True)
+    client.post("/welcome/skip")
+    assert "Ema 👋" in client.get("/").get_data(as_text=True)
 
 
 def test_password_is_stored_as_a_hash_not_plain_text(app, auth):

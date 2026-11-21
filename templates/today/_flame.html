@@ -1,0 +1,10 @@
+<div id="today-flame" class="flame {% if summary.streak and summary.checked_in %}lit{% endif %}"
+     {% if oob %}hx-swap-oob="true"{% endif %}>
+  {% if summary.streak and summary.checked_in %}
+    🔥 {{ summary.streak }}-day streak, keep it going!
+  {% elif summary.streak %}
+    🔥 Check in today to keep your {{ summary.streak }}-day streak
+  {% else %}
+    ✨ Check in today to start a streak
+  {% endif %}
+</div>

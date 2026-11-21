@@ -25,6 +25,7 @@ XP_RULES = [
     ("tasks_done",     10, "tasks finished"),
     ("goals_achieved", 50, "goals achieved"),
     ("reviews",        20, "weekly reviews"),
+    ("days_closed",     5, "days closed"),
     ("badges",         25, "badges unlocked"),
 ]
 
@@ -53,6 +54,7 @@ ACHIEVEMENTS = [
     ("first_goal",     "🎯", "Dreamer",            "Set your first goal",                 "goals",             1,  "Goals & growth"),
     ("goal_achieved",  "🏆", "Goal Getter",        "Achieve a goal",                      "goals_achieved",    1,  "Goals & growth"),
     ("goals_5",        "👑", "Visionary",          "Achieve 5 goals",                     "goals_achieved",    5,  "Goals & growth"),
+    ("close_7",        "🌙", "Wind Down",          "Close your day 7 times",              "days_closed",       7,  "Consistency"),
     ("first_review",   "🪞", "Reflective",         "Write your first weekly review",      "reviews",           1,  "Goals & growth"),
     ("reviews_4",      "📖", "Steady Reflector",   "Write 4 weekly reviews",              "reviews",           4,  "Goals & growth"),
 ]
@@ -88,6 +90,7 @@ def gather_stats(db, user_id):
         "goals": one("SELECT COUNT(*) FROM goals WHERE user_id = ?"),
         "goals_achieved": one("SELECT COUNT(*) FROM goals WHERE user_id = ? AND status = 'achieved'"),
         "reviews": one("SELECT COUNT(*) FROM weekly_reviews WHERE user_id = ?"),
+        "days_closed": one("SELECT COUNT(*) FROM day_closes WHERE user_id = ?"),
         "badges": one("SELECT COUNT(*) FROM user_achievements WHERE user_id = ?"),
     }
 

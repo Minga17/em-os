@@ -176,7 +176,7 @@ def test_reminder_sent_at_the_time(app, user):
     assert run(app, "2026-11-19T20:00:00", sender) == 1
     endpoint, payload = sender.sent[0]
     assert endpoint == FCM
-    assert payload["url"] == "/checkin/"
+    assert payload["url"] == "/"                   # Today, where the 3-tap check-in is
     assert "check in" in (payload["title"] + payload["body"]).lower()
 
 

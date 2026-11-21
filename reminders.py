@@ -25,8 +25,9 @@ from streaks import current_streak
 
 bp = Blueprint("reminders", __name__, url_prefix="/reminders")
 
-# Reminder times people can pick: every 30 minutes from 6:00 AM to 11:00 PM
-REMINDER_TIMES = [f"{h:02d}:{m:02d}" for h in range(6, 24) for m in (0, 30) if (h, m) != (23, 30)]
+# Times people can pick, every 30 minutes
+REMINDER_TIMES = [f"{h:02d}:{m:02d}" for h in range(6, 24) for m in (0, 30) if (h, m) != (23, 30)]  # evening
+MORNING_TIMES = [f"{h:02d}:{m:02d}" for h in range(5, 12) for m in (0, 30)]                        # 5:00-11:30 AM
 
 SEND_WINDOW_MINUTES = 120   # if the server was busy or restarting, still send up to 2 hours late
 
@@ -136,22 +137,45 @@ def reminder_message(db, user_id, today):
     streak = current_streak(checkin_dates, today)
     if streak >= 2:
         title = f"🔥 Keep your {streak}-day streak alive!"
-        body = "Check in today before midnight." + habits_text
+        body = "3 taps to check in before midnight." + habits_text
     else:
-        title = "How did today go?"
-        body = "Take 1 minute to check in and earn +10 XP." + habits_text
-    return {"title": title, "body": body.strip(), "url": "/checkin/", "tag": "daily-reminder"}
+        title = "🌙 How did today go?"
+        body = "Check in with 3 taps and close your day." + habits_text
+    return {"title": title, "body": body.strip(), "url": "/", "tag": "daily-reminder"}
+
+
+def morning_message(db, user_id, today):
+    """Morning nudge to plan the day, or None if their top 3 is already set."""
+    planned = db.execute("SELECT COUNT(*) FROM tasks WHERE user_id = ? AND focus_date = ?",
+                         (user_id, today.isoformat())).fetchone()[0]
+    if planned:
+        return None
+    return {"title": "🌅 Good morning! What are your top 3?",
+            "body": "Pick the 3 things that would make today a win.",
+            "url": "/", "tag": "morning-plan"}
+
+
+# Each kind of reminder: (time column, "already sent today" column, message)
+KINDS = [
+    ("reminder_time", "last_reminded_on", reminder_message),
+    ("morning_time", "last_morning_on", morning_message),
+]
 
 
 # ── Who gets a reminder right now ───────────────────────────────
 def run_reminders(db, now_utc=None, sender=None):
     """Send every reminder that is due. Safe to run every minute, from several workers."""
     now_utc = now_utc or datetime.now(timezone.utc)
+    return sum(run_kind(db, now_utc, sender, *kind) for kind in KINDS)
+
+
+def run_kind(db, now_utc, sender, time_column, sent_column, make_message):
     sent_to = 0
+    # Column names come from KINDS above, never from users, so this is safe
     users = db.execute(
-        """SELECT u.id, u.timezone, u.reminder_time, u.last_reminded_on FROM users u
-           WHERE u.reminder_time IS NOT NULL
-             AND EXISTS (SELECT 1 FROM push_subscriptions s WHERE s.user_id = u.id)"""
+        f"""SELECT u.id, u.timezone, u.{time_column} AS remind_at, u.{sent_column} AS sent_on
+            FROM users u WHERE u.{time_column} IS NOT NULL
+              AND EXISTS (SELECT 1 FROM push_subscriptions s WHERE s.user_id = u.id)"""
     ).fetchall()
 
     for user in users:
@@ -161,10 +185,10 @@ def run_reminders(db, now_utc=None, sender=None):
             tz = ZoneInfo("UTC")
         local = now_utc.astimezone(tz)
         today = local.date()
-        if user["last_reminded_on"] == today.isoformat():
+        if user["sent_on"] == today.isoformat():
             continue                                   # already reminded today
 
-        hour, minute = map(int, user["reminder_time"].split(":"))
+        hour, minute = map(int, user["remind_at"].split(":"))
         minutes_late = (local.hour * 60 + local.minute) - (hour * 60 + minute)
         if not 0 <= minutes_late < SEND_WINDOW_MINUTES:
             continue                                   # not time yet (or way too late)
@@ -172,15 +196,15 @@ def run_reminders(db, now_utc=None, sender=None):
         # Claim today's reminder first. If two server workers get here at the
         # same moment, only one of them wins, so nobody gets it twice.
         claimed = db.execute(
-            """UPDATE users SET last_reminded_on = ?
-               WHERE id = ? AND (last_reminded_on IS NULL OR last_reminded_on != ?)""",
+            f"""UPDATE users SET {sent_column} = ?
+                WHERE id = ? AND ({sent_column} IS NULL OR {sent_column} != ?)""",
             (today.isoformat(), user["id"], today.isoformat()),
         ).rowcount
         db.commit()
         if not claimed:
             continue
 
-        message = reminder_message(db, user["id"], today)
+        message = make_message(db, user["id"], today)
         if message and send_to_user(db, user["id"], message, sender):
             sent_to += 1
     return sent_to
@@ -190,17 +214,20 @@ def run_reminders(db, now_utc=None, sender=None):
 @bp.route("/time", methods=["POST"])
 @login_required
 def set_time():
-    choice = request.form.get("reminder_time", "")
-    if choice and choice not in REMINDER_TIMES:
-        flash("Please pick a time from the list.", "error")
-        return redirect(url_for("settings.index"))
     db = get_db()
-    db.execute("UPDATE users SET reminder_time = ? WHERE id = ?", (choice or None, g.user["id"]))
+    changes = []
+    for field, choices in (("reminder_time", REMINDER_TIMES), ("morning_time", MORNING_TIMES)):
+        if field not in request.form:
+            continue                                   # this form didn't include it
+        choice = request.form.get(field, "")
+        if choice and choice not in choices:
+            flash("Please pick a time from the list.", "error")
+            return redirect(url_for("settings.index") + "#reminders")
+        db.execute(f"UPDATE users SET {field} = ? WHERE id = ?", (choice or None, g.user["id"]))
+        label = "Evening check-in" if field == "reminder_time" else "Morning plan"
+        changes.append(f"{label}: {time_label(choice) if choice else 'off'}")
     db.commit()
-    if choice:
-        flash(f"🔔 Daily reminder set for {time_label(choice)}.", "success")
-    else:
-        flash("Daily reminder turned off.", "success")
+    flash("🔔 Reminders saved. " + " · ".join(changes), "success")
     return redirect(url_for("settings.index") + "#reminders")
 
 

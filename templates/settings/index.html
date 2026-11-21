@@ -28,18 +28,28 @@
   </div>
 
   <div class="card settings-card" id="reminders">
-    <h2>🔔 Daily reminder</h2>
-    <p class="muted">Get one gentle nudge a day to check in, so you never lose your streak.
-      No reminder is sent if you've already checked in.</p>
-    <form method="post" action="{{ url_for('reminders.set_time') }}" class="reminder-time">
-      <label for="reminder_time">Remind me at</label>
-      <select name="reminder_time" id="reminder_time">
-        <option value="" {% if not reminder_time %}selected{% endif %}>Off</option>
-        {% for value, label in reminder_choices %}
-          <option value="{{ value }}" {% if value == reminder_time %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-      <button>Save</button>
+    <h2>🔔 Daily reminders</h2>
+    <p class="muted">Gentle nudges, never more than one each. Each one is skipped if you've already done it.</p>
+    <form method="post" action="{{ url_for('reminders.set_time') }}" class="reminder-times">
+      <div class="reminder-time">
+        <label for="morning_time">🌅 Morning: plan your top 3</label>
+        <select name="morning_time" id="morning_time">
+          <option value="" {% if not morning_time %}selected{% endif %}>Off</option>
+          {% for value, label in morning_choices %}
+            <option value="{{ value }}" {% if value == morning_time %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="reminder-time">
+        <label for="reminder_time">🌙 Evening: check in &amp; close your day</label>
+        <select name="reminder_time" id="reminder_time">
+          <option value="" {% if not reminder_time %}selected{% endif %}>Off</option>
+          {% for value, label in reminder_choices %}
+            <option value="{{ value }}" {% if value == reminder_time %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button>Save reminders</button>
     </form>
     <p class="sub">Times follow your time zone ({{ g.user['timezone'].replace('_', ' ') }}).</p>
 

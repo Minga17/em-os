@@ -145,3 +145,10 @@ CREATE TABLE IF NOT EXISTS app_state (
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
 );
+
+-- Evenings where someone tapped "Close my day"
+CREATE TABLE IF NOT EXISTS day_closes (
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    day     TEXT    NOT NULL,                 -- YYYY-MM-DD on their own clock
+    PRIMARY KEY (user_id, day)
+) WITHOUT ROWID;

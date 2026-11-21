@@ -27,7 +27,7 @@ def load_logged_in_user():
     g.user = None
     if user_id is not None:
         user = get_db().execute(
-            "SELECT id, name, email, timezone, email_verified, session_version "
+            "SELECT id, name, email, timezone, email_verified, session_version, onboarded "
             "FROM users WHERE id = ?", (user_id,)
         ).fetchone()
         # "Log out of all devices" bumps session_version, so older logins stop working

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Welcome · EM OS{% endblock %}
+
+{% block content %}
+  <div class="welcome">
+    {% if not template %}
+      <p class="eyebrow">Step 1 of 2</p>
+      <h1>Welcome to EM OS, {{ g.user['name'].split()[0] }} 👋</h1>
+      <p class="muted">What are you working on right now? Pick one and we'll set up your first habits and goal.
+        You can change everything later.</p>
+
+      <div class="template-grid">
+        {% for key, (icon, name, description, habits, goal) in templates.items() %}
+          <a class="card template-card" href="{{ url_for('welcome.index', template=key) }}">
+            <span class="template-icon">{{ icon }}</span>
+            <strong>{{ name }}</strong>
+            <span class="sub">{{ description }}</span>
+          </a>
+        {% endfor %}
+      </div>
+
+      <form method="post" action="{{ url_for('welcome.skip') }}" class="welcome-skip">
+        <button class="link">Skip, I'll start from scratch</button>
+      </form>
+
+    {% else %}
+      {% set icon, name, description, habits, goal = template %}
+      <p class="eyebrow">Step 2 of 2</p>
+      <h1>{{ icon }} {{ name }}</h1>
+      <p class="muted">Untick anything you don't want. You can add your own habits later.</p>
+
+      <form method="post" action="{{ url_for('welcome.start') }}" class="card stack">
+        <input type="hidden" name="template" value="{{ chosen }}">
+        <fieldset class="pick-list">
+          <legend>Your daily habits</legend>
+          {% for habit_icon, habit_name in habits %}
+            <label class="pick"><input type="checkbox" name="habit" value="{{ loop.index0 }}" checked>
+              <span>{{ habit_icon }}</span> {{ habit_name }}</label>
+          {% endfor %}
+        </fieldset>
+        <fieldset class="pick-list">
+          <legend>Your first goal</legend>
+          <label class="pick"><input type="checkbox" name="goal" value="1" checked>
+            <span>🎯</span> {{ goal[2] }} <span class="sub">· {{ goal[0] }} {{ goal[1] }} · in {{ goal[4] }} days</span></label>
+        </fieldset>
+        <button>Start my day →</button>
+      </form>
+      <p><a href="{{ url_for('welcome.index') }}">← Pick a different one</a></p>
+    {% endif %}
+  </div>
+{% endblock %}

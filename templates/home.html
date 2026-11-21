@@ -7,13 +7,7 @@
     <div class="today-text">
       <div class="muted">{{ summary.today.strftime('%A, %B %d') }}</div>
       <h1>{{ summary.greeting }}, {{ g.user['name'].split()[0] }} 👋</h1>
-      {% if summary.streak and summary.checked_in %}
-        <div class="flame lit">🔥 {{ summary.streak }}-day streak, keep it going!</div>
-      {% elif summary.streak %}
-        <div class="flame">🔥 Check in today to keep your {{ summary.streak }}-day streak</div>
-      {% else %}
-        <div class="flame">✨ Check in today to start a streak</div>
-      {% endif %}
+      {% include "today/_flame.html" %}
     </div>
     {% include "today/_ring.html" %}
   </section>
@@ -45,22 +39,11 @@
     </a>
   {% endif %}
 
-  <!-- Check-in -->
-  <div class="card today">
-    {% if today_checkin %}
-      <div>
-        <div class="muted">Today's score</div>
-        <div class="big">{{ today_checkin['score'] }}<span class="muted">/100</span></div>
-      </div>
-      <a class="btn secondary" href="{{ url_for('checkin.today') }}">Edit check-in</a>
-    {% else %}
-      <div>
-        <div class="muted">Daily check-in</div>
-        <div><strong>How did today go?</strong></div>
-      </div>
-      <a class="btn" href="{{ url_for('checkin.today') }}">Check in now</a>
-    {% endif %}
-  </div>
+  <!-- Check-in: 3 taps, saves by itself -->
+  {% include "today/_checkin_card.html" %}
+
+  <!-- Morning: top 3 · Evening: close your day -->
+  {% include "today/_plan.html" %}
 
   <!-- Today's habits: one tap, no page reload -->
   <div class="section-head">

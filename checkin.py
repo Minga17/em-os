@@ -4,8 +4,10 @@ from flask import Blueprint, flash, g, redirect, render_template, request, url_f
 
 from auth import login_required
 from db import get_db
+from notify import toast
 from scoring import compute_score
 from timeutil import user_today
+from today import today_summary
 
 bp = Blueprint("checkin", __name__, url_prefix="/checkin")
 
@@ -97,3 +99,50 @@ def today():
             values = {"priorities": prev["priorities"] if prev else ""}
 
     return render_template("checkin/today.html", values=values, today=today_str)
+
+
+@bp.route("/quick", methods=["POST"])
+@login_required
+def quick():
+    """3-tap check-in from the Today screen: just energy, mood and focus."""
+    db = get_db()
+    user_id = g.user["id"]
+    today_str = user_today().isoformat()
+    errors = []
+    energy = parse_rating(request.form.get("energy"), "Energy", errors)
+    mood = parse_rating(request.form.get("mood"), "Mood", errors)
+    focus = parse_rating(request.form.get("focus"), "Focus", errors)
+
+    if errors:
+        if request.headers.get("HX-Request"):
+            toast("Pick energy, mood and focus (1 to 5).")
+        else:
+            for error in errors:
+                flash(error, "error")
+    else:
+        existing = db.execute("SELECT * FROM checkins WHERE user_id = ? AND log_date = ?",
+                              (user_id, today_str)).fetchone()
+        if existing:
+            # Keep their hours and notes, only change the three ratings
+            score = compute_score(energy, mood, focus, existing["focused_hours"],
+                                  existing["accomplished"], existing["wins"])
+            db.execute("""UPDATE checkins SET energy = ?, mood = ?, focus = ?, score = ?,
+                          updated_at = datetime('now') WHERE id = ?""",
+                       (energy, mood, focus, score, existing["id"]))
+        else:
+            score = compute_score(energy, mood, focus, 0, "", "")
+            db.execute("""INSERT INTO checkins (user_id, log_date, energy, mood, focus, score)
+                          VALUES (?, ?, ?, ?, ?, ?)""", (user_id, today_str, energy, mood, focus, score))
+            toast(f"+10 XP · 📝 Checked in! Score {score}/100")
+        db.commit()
+        if not request.headers.get("HX-Request"):
+            flash(f"Check-in saved! Today's score: {score}/100", "success")
+
+    if request.headers.get("HX-Request"):
+        summary = today_summary(db, user_id)
+        if summary["all_done"]:
+            toast("🎉 Everything done today. Amazing!")
+        today_checkin = db.execute("SELECT score FROM checkins WHERE user_id = ? AND log_date = ?",
+                                   (user_id, today_str)).fetchone()
+        return render_template("today/_checkin_done.html", today_checkin=today_checkin, summary=summary)
+    return redirect(url_for("home"))

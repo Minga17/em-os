@@ -12,9 +12,13 @@ function showToast(text) {
   toast.className = "toast";
   toast.textContent = text;          // textContent, never innerHTML: no code injection
   box.appendChild(toast);
+  while (box.children.length > 3) box.firstElementChild.remove();   // never cover the screen
   setTimeout(function () { toast.classList.add("hide"); }, 2600);
   setTimeout(function () { toast.remove(); }, 3000);
 }
+
+// Lets the CSS know JavaScript is running (e.g. to hide buttons we press for you)
+document.documentElement.classList.add("js");
 
 // 2. A tiny vibration when you tick a habit (Android phones support this)
 document.addEventListener("click", function (event) {
@@ -134,3 +138,15 @@ function setUpReminders(panel) {
     });
   });
 }
+
+// 5. 3-tap check-in (Today): saves by itself once energy, mood and focus are all picked
+document.addEventListener("change", function (event) {
+  const form = event.target.closest("form[data-autosubmit]");
+  if (!form) return;
+  const groups = new Set(Array.from(form.querySelectorAll("input[type=radio]")).map(function (i) { return i.name; }));
+  const picked = Array.from(groups).every(function (name) {
+    return form.querySelector("input[name='" + name + "']:checked");
+  });
+  if (navigator.vibrate) navigator.vibrate(8);
+  if (picked) setTimeout(function () { form.requestSubmit(); }, 250);   // a moment to see the third tap
+});

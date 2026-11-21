@@ -1,7 +1,7 @@
 import os
 from datetime import date
 
-from flask import Flask, g, render_template
+from flask import Flask, g, redirect, render_template, url_for
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from achievements import bp as achievements_bp, player_progress
@@ -22,7 +22,9 @@ from tasks import bp as tasks_bp
 from db import close_db, get_db, init_db
 from settings import bp as settings_bp
 from timeutil import user_today
+from plan import bp as plan_bp, day_plan
 from today import today_summary
+from welcome import bp as welcome_bp, needs_welcome
 
 
 def setup_error_tracking(app):
@@ -91,6 +93,8 @@ def create_app(test_config=None):
     app.register_blueprint(achievements_bp)
     app.register_blueprint(reminders_bp)
     app.register_blueprint(feedback_bp)
+    app.register_blueprint(welcome_bp)
+    app.register_blueprint(plan_bp)
 
     # Reminders and backups run in the background (only online, where they're set up)
     reloader_parent = app.debug and os.environ.get("WERKZEUG_RUN_MAIN") != "true"
@@ -124,6 +128,8 @@ def create_app(test_config=None):
     @app.route("/")
     @login_required
     def home():
+        if needs_welcome(g.user):
+            return redirect(url_for("welcome.index"))
         db = get_db()
         user_id = g.user["id"]
         today = user_today().isoformat()
@@ -186,6 +192,7 @@ def create_app(test_config=None):
             recent=recent,
             task_stats=task_stats,
             reminder_tip=reminder_tip,
+            plan=day_plan(db, user_id),
         )
 
     # ── App install (PWA) files: must be served from the site root ──

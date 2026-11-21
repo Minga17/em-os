@@ -1,0 +1,3 @@
+{# Sent back after a 3-tap check-in: the card, plus the ring and streak (swapped "out of band") #}
+{% include "today/_checkin_card.html" %}
+{% with oob = true %}{% include "today/_ring.html" %}{% include "today/_flame.html" %}{% endwith %}

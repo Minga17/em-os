@@ -525,3 +525,67 @@ button.secondary-plain { background: transparent; border: 1px solid var(--border
 .pill.idea { color: var(--accent); border-color: var(--accent); }
 .pill.problem { color: var(--red); border-color: var(--red); }
 .pill.love { color: #ec4899; border-color: #ec4899; }
+
+/* ── Phase B: welcome, 3-tap check-in, top 3, close your day ── */
+.welcome { max-width: 680px; margin: 0 auto; }
+.welcome h1 { margin: 4px 0 8px; }
+.eyebrow { color: var(--accent); font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; margin: 0; }
+.template-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 12px; margin: 20px 0; }
+.template-card { display: grid; gap: 4px; padding: 18px; text-decoration: none; color: var(--text); }
+.template-card:hover, .template-card:focus-visible { border-color: var(--accent); }
+.template-icon { font-size: 30px; }
+.welcome-skip { text-align: center; }
+.pick-list { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; }
+.pick-list legend { color: var(--sub); font-size: 14px; margin-bottom: 8px; }
+.pick { flex-direction: row; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text); font-size: 15px; cursor: pointer; flex-wrap: wrap; }
+.pick input { width: 20px; height: 20px; accent-color: var(--accent); }
+.pick:has(input:checked) { border-color: var(--accent); }
+
+.quick-checkin { margin: 20px 0; }
+.qc-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+.qc-form { display: grid; gap: 12px; }
+.qc-row { border: 0; padding: 0; margin: 0; min-width: 0; }
+.qc-row legend { font-size: 14px; color: var(--text); margin-bottom: 6px; }
+.qc-chips { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.qc-chips label { display: block; }
+.qc-chips input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.qc-chips span { display: grid; place-items: center; height: 44px; border-radius: 12px; cursor: pointer;
+  border: 1px solid var(--border); color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums;
+  transition: transform .1s, background .15s; }
+.qc-chips span:active { transform: scale(.92); }
+.qc-chips input:checked + span { background: var(--accent); border-color: var(--accent); color: #fff; }
+.qc-chips input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.qc-scale { display: flex; justify-content: space-between; font-size: 11px; color: var(--sub); margin-top: 4px; }
+.js .qc-save { display: none; }               /* saves by itself after the third tap */
+.htmx-request.qc-form { opacity: .6; }
+
+.day-plan { display: grid; gap: 12px; margin: 0 0 20px; }
+.top3-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.top3 h3, .close-day h3 { margin: 0 0 10px; font-size: 17px; }
+.top3-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 8px; }
+.top3-row { display: flex; align-items: center; gap: 12px; }
+.top3-row form { margin: 0; }
+.top3-title { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.top3-row.done .top3-title { color: var(--sub); text-decoration: line-through; }
+.top3-row.done .tick { background: var(--green); border-color: var(--green); animation: tick-pop .35s ease-out; }
+.top3-row .tick { width: 32px; height: 32px; flex: none; }
+button.remove { font-size: 16px; padding: 6px; }
+.top3-add { display: flex; gap: 8px; }
+.top3-add input { flex: 1 1 auto; min-width: 0; }
+.suggest { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
+.suggest .sub { width: 100%; margin: 0; }
+.suggest form { margin: 0; max-width: 100%; }
+button.chip { background: transparent; border: 1px solid var(--border); color: var(--text); font-weight: 500;
+  font-size: 14px; padding: 8px 12px; border-radius: 999px; white-space: normal; text-align: left; max-width: 100%; }
+button.chip:hover { border-color: var(--accent); }
+.close-day { border-color: #8b5cf688; background: linear-gradient(135deg, #8b5cf614, transparent 60%), var(--card); }
+.close-list { list-style: none; padding: 0; margin: 0 0 14px; display: grid; gap: 6px; }
+.close-form { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.close-form .carry { flex-direction: row; align-items: center; gap: 8px; color: var(--text); flex: 1 1 220px; }
+.close-form .carry input { width: 18px; height: 18px; accent-color: var(--accent); }
+.close-form button { background: #8b5cf6; }
+.reminder-times { display: grid; gap: 4px; margin: 14px 0 4px; justify-items: start; }
+.reminder-times .reminder-time { margin: 0; width: 100%; }
+.reminder-times .reminder-time label { flex: 1 1 220px; }
+.day-plan > * { min-width: 0; }
