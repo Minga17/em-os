@@ -8,6 +8,8 @@ from achievements import bp as achievements_bp, player_progress
 from admin import bp as admin_bp
 from backup import backup_ready, send_backup
 from feedback import bp as feedback_bp
+from focus import bp as focus_bp
+from records import bp as records_bp
 from freezes import bp as freezes_bp
 from jobs import any_jobs, start_background_jobs
 from auth import bp as auth_bp, login_required
@@ -97,6 +99,8 @@ def create_app(test_config=None):
     app.register_blueprint(feedback_bp)
     app.register_blueprint(welcome_bp)
     app.register_blueprint(plan_bp)
+    app.register_blueprint(focus_bp)
+    app.register_blueprint(records_bp)
 
     # Reminders and backups run in the background (only online, where they're set up)
     reloader_parent = app.debug and os.environ.get("WERKZEUG_RUN_MAIN") != "true"
@@ -115,6 +119,9 @@ def create_app(test_config=None):
             print("Backups aren't set up: need BACKUP_PASSWORD, ADMIN_EMAILS, email settings and pyzipper.")
             return
         print(f"Backup sent ({send_backup(date.today().isoformat()) / 1024:.0f} KB).")
+
+    from task_logic import repeat_label
+    app.add_template_filter(repeat_label, "repeat_label")
 
     @app.template_filter("day_label")
     def day_label(iso_date):

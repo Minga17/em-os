@@ -3,12 +3,46 @@ from datetime import date, timedelta
 from flask import Blueprint, flash, g, redirect, render_template, request, url_for
 
 from auth import login_required
-from dashboard import checkin_summary
+from dashboard import change, checkin_summary
 from db import get_db
-from habit_model import completion_rates
+from habit_model import completion_rates, frozen_days
+from streaks import day_streak
 from timeutil import user_today
 
 bp = Blueprint("review", __name__, url_prefix="/review")
+
+
+def short_list(titles, limit=3):
+    shown = ", ".join(titles[:limit])
+    return shown + (f" and {len(titles) - limit} more" if len(titles) > limit else "")
+
+
+def draft_answers(best_day, finished_tasks, habits, wins, blockers, upcoming):
+    """A first draft of the reflection, written from the week's data. Every line is editable."""
+    went_well, hard, focus = [], [], []
+    if finished_tasks:
+        titles = [t["title"] for t in finished_tasks]
+        went_well.append(f"Finished {len(titles)} task{'s' if len(titles) != 1 else ''}: {short_list(titles)}.")
+    if best_day:
+        day = date.fromisoformat(best_day["log_date"])
+        went_well.append(f"Best day: {day.strftime('%A')} (score {best_day['score']}).")
+    strong = [h for h in habits if h["possible"] and h["rate"] >= 80]
+    if strong:
+        went_well.append("Kept up " + ", ".join(f"{h['icon']} {h['name']} ({h['done']}/{h['possible']})"
+                                                for h in strong[:3]) + ".")
+    went_well += [text for _, text in wins[:2]]
+
+    hard += [text for _, text in blockers[:2]]
+    weak = [h for h in habits if h["possible"] >= 2 and h["rate"] < 50]
+    if weak:
+        hard.append("Slipped on " + ", ".join(f"{h['icon']} {h['name']} ({h['done']}/{h['possible']})"
+                                              for h in weak[:3]) + ".")
+    if upcoming:
+        focus.append("Get done: " + short_list([t["title"] for t in upcoming]) + ".")
+    if weak:
+        focus.append(f"Get back on track with {weak[0]['icon']} {weak[0]['name']}.")
+    return {"went_well": "\n".join(went_well), "challenges": "\n".join(hard),
+            "lessons": "", "next_focus": "\n".join(focus)}
 
 
 def monday_of(day):
@@ -107,6 +141,34 @@ def week():
         (user_id, start.isoformat()),
     ).fetchone()
 
+    # ── Compared with the week before ────────────────────────────
+    before = checkin_summary(db, user_id, start - timedelta(weeks=1), start - timedelta(days=1))
+    tasks_before = db.execute(
+        "SELECT COUNT(*) FROM tasks WHERE user_id = ? AND status = 'done' AND date(completed_at) BETWEEN ? AND ?",
+        (user_id, (start - timedelta(weeks=1)).isoformat(), (start - timedelta(days=1)).isoformat()),
+    ).fetchone()[0]
+    compare = {
+        "score": change(summary["avg_score"], before["avg_score"]),
+        "days": summary["days_logged"] - before["days_logged"] if before["days_logged"] else None,
+        "hours": change(summary["total_hours"], before["total_hours"]),
+        "tasks": len(finished_tasks) - tasks_before if tasks_before else None,
+    }
+    checkin_dates = {date.fromisoformat(r[0]) for r in db.execute(
+        "SELECT log_date FROM checkins WHERE user_id = ? AND log_date <= ?", (user_id, min(end, today).isoformat()))}
+    streak = day_streak(checkin_dates, min(end, today), frozen_days(db, user_id)).current
+    focus_minutes = db.execute(
+        "SELECT COALESCE(SUM(minutes), 0) FROM focus_sessions WHERE user_id = ? AND log_date BETWEEN ? AND ?",
+        (user_id, start.isoformat(), end.isoformat())).fetchone()[0]
+
+    # ── A first draft of the answers, if nothing's been written yet ──
+    upcoming = db.execute(
+        """SELECT title FROM tasks WHERE user_id = ? AND status != 'done' AND due_date IS NOT NULL
+           AND due_date <= ? ORDER BY due_date, priority LIMIT 5""",
+        (user_id, (end + timedelta(days=7)).isoformat())).fetchall()
+    written = review and any(review[k] for k in ("went_well", "challenges", "lessons", "next_focus"))
+    answers = dict(review) if written else draft_answers(best_day, finished_tasks, habits, wins, blockers, upcoming)
+    drafted = not written and any(answers.values())
+
     past_reviews = db.execute(
         """
         SELECT week_start, rating FROM weekly_reviews
@@ -125,6 +187,8 @@ def week():
         start=start, end=end, summary=summary, best_day=best_day,
         wins=wins, blockers=blockers, habits=habits, days_so_far=days_so_far,
         finished_tasks=finished_tasks, review=review, past_reviews=past_reviews,
+        compare=compare, streak=streak, focus_minutes=focus_minutes,
+        answers=answers, drafted=drafted,
         previous_week=previous_week,
         next_week=next_week if next_week <= today else None,
         is_current=(start == monday_of(today)),

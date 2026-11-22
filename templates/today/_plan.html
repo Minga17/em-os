@@ -33,7 +33,7 @@
   <div class="card top3">
     <div class="top3-head">
       <h3>{% if not plan.top and plan.morning %}🌅 Good morning! What are your top 3?{% else %}🎯 Today's top 3{% endif %}</h3>
-      {% if plan.top %}<span class="sub">{{ plan.top_done }}/{{ plan.top|length }} done</span>{% endif %}
+      <span class="sub">{% if plan.top %}{{ plan.top_done }}/{{ plan.top|length }} done · {% endif %}<a class="focus-link" href="{{ url_for('focus.index') }}">⏱ Focus</a></span>
     </div>
 
     {% if plan.top %}
@@ -46,6 +46,7 @@
             </form>
             <span class="top3-title">{{ t['title'] }}</span>
             {% if not t['done'] %}
+              <a class="focus-mini" href="{{ url_for('focus.index', task=t['id']) }}" aria-label="Focus on: {{ t['title'] }}" title="Start a focus session">⏱</a>
               <form method="post" action="{{ url_for('plan.unpick', task_id=t['id']) }}"
                     hx-post="{{ url_for('plan.unpick', task_id=t['id']) }}" hx-target="#day-plan" hx-swap="outerHTML">
                 <button class="link remove" aria-label="Remove from top 3: {{ t['title'] }}">✕</button>

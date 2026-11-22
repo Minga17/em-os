@@ -47,7 +47,7 @@
           <div class="sub">
             <strong>{{ item.percent }}%</strong>
             {% if item.auto %}
-              · from {{ goal['done_tasks'] }}/{{ goal['total_tasks'] }} tasks
+              · {{ item.finished }} of {{ item.total }} tasks done
             {% endif %}
             {% if item.days_left is not none and goal['status'] == 'active' %}
               ·
@@ -57,6 +57,21 @@
             {% endif %}
             {% if item.projects %} · 📁 {{ item.projects|join(', ') }}{% endif %}
           </div>
+          {% if item.next_steps and goal['status'] == 'active' %}
+            <ul class="next-steps">
+              {% for step in item.next_steps %}
+                <li>▫️ {{ step['title'] }}{% if step['due_date'] %} <span class="sub">· {{ step['due_date'] }}</span>{% endif %}</li>
+              {% endfor %}
+            </ul>
+          {% elif goal['status'] == 'active' and not item.auto %}
+            <p class="sub next-hint">Tip: link tasks to this goal (on the Tasks page) and progress fills in by itself.</p>
+          {% endif %}
+          {% if item.ready %}
+            <form method="post" action="{{ url_for('goals.achieve', goal_id=goal['id']) }}" class="achieve-form">
+              <span>🎉 Every task is done!</span>
+              <button>🏆 Mark achieved</button>
+            </form>
+          {% endif %}
         </div>
       {% else %}
         <p class="muted empty-area">No goals here yet.</p>

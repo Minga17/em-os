@@ -6,6 +6,7 @@ from flask import Blueprint, abort, flash, g, redirect, render_template, request
 
 from auth import login_required
 from db import get_db
+from task_logic import GOAL_TASKS, goal_task_counts
 from timeutil import user_today
 
 bp = Blueprint("goals", __name__, url_prefix="/goals")
@@ -133,18 +134,9 @@ def index():
             flash(f"Goal added: {data['title']} 🎯", "success")
         return redirect(url_for("goals.index"))
 
-    # Each goal + how many tasks its linked projects have (and how many are done)
     goals = db.execute(
         """
-        SELECT g.*,
-               COUNT(DISTINCT p.id)              AS project_count,
-               COUNT(t.id)                       AS total_tasks,
-               COALESCE(SUM(t.status = 'done'), 0) AS done_tasks
-        FROM goals g
-        LEFT JOIN projects p ON p.goal_id = g.id
-        LEFT JOIN tasks t    ON t.project_id = p.id
-        WHERE g.user_id = ?
-        GROUP BY g.id
+        SELECT g.* FROM goals g WHERE g.user_id = ?
         ORDER BY CASE g.status
                    WHEN 'active' THEN 1 WHEN 'paused' THEN 2
                    WHEN 'achieved' THEN 3 ELSE 4 END,
@@ -164,12 +156,14 @@ def index():
     today = user_today()
     goals_by_area = defaultdict(list)
     for goal in goals:
-        if goal["total_tasks"]:
-            percent = goal["done_tasks"] * 100 // goal["total_tasks"]
-            auto = True
-        else:
-            percent = goal["progress"]
-            auto = False
+        # Progress comes from its tasks (linked directly or through its projects), if it has any
+        total, finished = goal_task_counts(db, goal["id"])
+        auto = total > 0
+        percent = finished * 100 // total if auto else goal["progress"]
+        next_steps = db.execute(
+            f"""SELECT title, due_date FROM ({GOAL_TASKS}) WHERE status != 'done'
+                ORDER BY due_date IS NULL, due_date, priority LIMIT 3""",
+            {"goal": goal["id"]}).fetchall()
 
         days_left = None
         if goal["target_date"]:
@@ -179,6 +173,10 @@ def index():
             "goal": goal,
             "percent": percent,
             "auto": auto,
+            "total": total,
+            "finished": finished,
+            "next_steps": next_steps,
+            "ready": auto and percent == 100 and goal["status"] == "active",
             "days_left": days_left,
             "projects": projects_by_goal[goal["id"]],
         })
@@ -224,6 +222,18 @@ def edit(goal_id):
 
     return render_template("goals/edit.html", goal=goal, goal_id=goal_id,
                            areas=user_areas(), statuses=STATUSES)
+
+
+@bp.route("/<int:goal_id>/achieve", methods=["POST"])
+@login_required
+def achieve(goal_id):
+    goal = get_own_goal(goal_id)
+    db = get_db()
+    db.execute("UPDATE goals SET status = 'achieved', progress = 100, updated_at = datetime('now') "
+               "WHERE id = ?", (goal_id,))
+    db.commit()
+    flash(f"🏆 Goal achieved: {goal['title']}! +50 XP", "success")
+    return redirect(url_for("goals.index"))
 
 
 @bp.route("/<int:goal_id>/delete", methods=["POST"])

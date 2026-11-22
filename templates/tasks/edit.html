@@ -38,6 +38,26 @@
         </select>
       </label>
 
+      <div class="row">
+        <label>Repeat
+          <select name="repeat">
+            {% set current = (task['repeat'] or '').split(':')[0] %}
+            {% for value, label in repeats.items() %}
+              <option value="{{ value }}" {% if value == current %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>Goal
+          <select name="goal_id">
+            <option value="">No goal</option>
+            {% for gl in goals %}
+              <option value="{{ gl['id'] }}" {% if task['goal_id']|string == gl['id']|string %}selected{% endif %}>🎯 {{ gl['title'] }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </div>
+      <p class="sub">Repeating tasks: finish one and the next appears with its new due date.</p>
+
       <label>Notes
         <textarea name="notes" rows="4">{{ task['notes'] or '' }}</textarea>
       </label>

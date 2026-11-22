@@ -12,6 +12,7 @@ from auth import login_required
 from db import get_db
 from notify import toast
 from timeutil import user_now, user_now_str, user_today
+from task_logic import complete_task, completion_messages, reopen_task
 from today import today_summary
 
 bp = Blueprint("plan", __name__, url_prefix="/plan")
@@ -119,11 +120,12 @@ def toggle(task_id):
     task = own_task(task_id)
     db = get_db()
     if task["status"] == "done":
-        db.execute("UPDATE tasks SET status = 'todo', completed_at = NULL WHERE id = ?", (task_id,))
+        reopen_task(db, task)
     else:
-        db.execute("UPDATE tasks SET status = 'done', completed_at = ? WHERE id = ?",
-                   (user_now_str(), task_id))
+        next_repeat = complete_task(db, task, user_today(), user_now_str())
         toast(f"+10 XP · ✅ {task['title']}")
+        for message in completion_messages(db, task, next_repeat):
+            toast(message)
     db.commit()
     plan = day_plan(db, g.user["id"])
     if task["status"] != "done" and plan["top"] and plan["top_done"] == len(plan["top"]):

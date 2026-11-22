@@ -4,6 +4,7 @@ from flask import Blueprint, flash, g, redirect, render_template, request, url_f
 
 from auth import login_required
 from db import get_db
+from focus import focus_minutes_on
 from freezes import award_freeze
 from notify import toast
 from scoring import compute_score
@@ -101,6 +102,9 @@ def today():
                 (user_id, yesterday),
             ).fetchone()
             values = {"priorities": prev["priorities"] if prev else ""}
+            focus_minutes = focus_minutes_on(db, user_id, today_str)
+            if focus_minutes:                        # start with the focus timer's hours
+                values["focused_hours"] = round(focus_minutes / 60, 2)
 
     return render_template("checkin/today.html", values=values, today=today_str)
 
@@ -134,9 +138,10 @@ def quick():
                           updated_at = datetime('now') WHERE id = ?""",
                        (energy, mood, focus, score, existing["id"]))
         else:
-            score = compute_score(energy, mood, focus, 0, "", "")
-            db.execute("""INSERT INTO checkins (user_id, log_date, energy, mood, focus, score)
-                          VALUES (?, ?, ?, ?, ?, ?)""", (user_id, today_str, energy, mood, focus, score))
+            hours = round(focus_minutes_on(db, user_id, today_str) / 60, 2)   # from the focus timer
+            score = compute_score(energy, mood, focus, hours, "", "")
+            db.execute("""INSERT INTO checkins (user_id, log_date, energy, mood, focus, focused_hours, score)
+                          VALUES (?, ?, ?, ?, ?, ?, ?)""", (user_id, today_str, energy, mood, focus, hours, score))
             toast(f"+10 XP · 📝 Checked in! Score {score}/100")
         db.commit()
         earned = award_freeze(db, user_id, user_today())

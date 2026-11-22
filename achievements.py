@@ -28,6 +28,7 @@ XP_RULES = [
     ("goals_achieved", 50, "goals achieved"),
     ("reviews",        20, "weekly reviews"),
     ("days_closed",     5, "days closed"),
+    ("focus_sessions",  5, "focus sessions"),
     ("badges",         25, "badges unlocked"),
 ]
 
@@ -57,6 +58,8 @@ ACHIEVEMENTS = [
     ("goal_achieved",  "🏆", "Goal Getter",        "Achieve a goal",                      "goals_achieved",    1,  "Goals & growth"),
     ("goals_5",        "👑", "Visionary",          "Achieve 5 goals",                     "goals_achieved",    5,  "Goals & growth"),
     ("close_7",        "🌙", "Wind Down",          "Close your day 7 times",              "days_closed",       7,  "Consistency"),
+    ("first_focus",    "🍅", "First Focus",        "Finish a 10+ minute focus session",   "focus_sessions",    1,  "Productivity"),
+    ("focus_25",       "🎧", "Deep Diver",         "Finish 25 focus sessions",            "focus_sessions",   25,  "Productivity"),
     ("first_review",   "🪞", "Reflective",         "Write your first weekly review",      "reviews",           1,  "Goals & growth"),
     ("reviews_4",      "📖", "Steady Reflector",   "Write 4 weekly reviews",              "reviews",           4,  "Goals & growth"),
 ]
@@ -91,6 +94,7 @@ def gather_stats(db, user_id):
         "goals_achieved": one("SELECT COUNT(*) FROM goals WHERE user_id = ? AND status = 'achieved'"),
         "reviews": one("SELECT COUNT(*) FROM weekly_reviews WHERE user_id = ?"),
         "days_closed": one("SELECT COUNT(*) FROM day_closes WHERE user_id = ?"),
+        "focus_sessions": one("SELECT COUNT(*) FROM focus_sessions WHERE user_id = ? AND minutes >= 10"),
         "badges": one("SELECT COUNT(*) FROM user_achievements WHERE user_id = ?"),
     }
 

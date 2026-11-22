@@ -4,6 +4,8 @@ from flask import Blueprint, abort, flash, g, redirect, render_template, request
 
 from auth import login_required
 from db import get_db
+from notify import toast
+from task_logic import REPEATS, complete_task, completion_messages, reopen_task, store_repeat
 from timeutil import user_now_str, user_today
 
 bp = Blueprint("tasks", __name__, url_prefix="/tasks")
@@ -31,6 +33,14 @@ def user_projects():
     ).fetchall()
 
 
+def user_goals():
+    """Active goals for the dropdown (only the user's own)."""
+    return get_db().execute(
+        "SELECT id, title FROM goals WHERE user_id = ? AND status != 'dropped' ORDER BY title",
+        (g.user["id"],),
+    ).fetchall()
+
+
 def read_task_form():
     """Read and check the task form. Returns (data, errors)."""
     errors = []
@@ -40,8 +50,12 @@ def read_task_form():
         "status": request.form.get("status", "todo"),
         "due_date": request.form.get("due_date", "").strip() or None,
         "project_id": None,
+        "goal_id": None,
         "priority": 2,
+        "repeat": request.form.get("repeat", ""),
     }
+    if data["repeat"] not in REPEATS:
+        errors.append("Pick how often it repeats from the list.")
 
     if not data["title"]:
         errors.append("Task title is required.")
@@ -73,7 +87,24 @@ def read_task_form():
         else:
             errors.append("That project doesn't exist.")
 
+    raw_goal = request.form.get("goal_id", "")
+    if raw_goal:
+        owned = get_db().execute(
+            "SELECT id FROM goals WHERE id = ? AND user_id = ?", (raw_goal, g.user["id"])
+        ).fetchone()
+        if owned:
+            data["goal_id"] = owned["id"]
+        else:
+            errors.append("That goal doesn't exist.")
+
+    if not errors:
+        data["repeat"] = store_repeat(data["repeat"], data["due_date"])
     return data, errors
+
+
+def say(messages, htmx=False):
+    for message in messages:
+        toast(message) if htmx else flash(message, "success")
 
 
 @bp.route("/", methods=["GET", "POST"])
@@ -90,11 +121,12 @@ def index():
         else:
             db.execute(
                 """
-                INSERT INTO tasks (user_id, project_id, title, notes, priority, due_date, status)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO tasks (user_id, project_id, goal_id, title, notes, priority, due_date,
+                                   status, repeat)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (user_id, data["project_id"], data["title"], data["notes"],
-                 data["priority"], data["due_date"], data["status"]),
+                (user_id, data["project_id"], data["goal_id"], data["title"], data["notes"],
+                 data["priority"], data["due_date"], data["status"], data["repeat"]),
             )
             db.commit()
             flash(f"Task added: {data['title']}", "success")
@@ -105,9 +137,10 @@ def index():
     project_filter = request.args.get("project", "")
 
     sql = """
-        SELECT t.*, p.title AS project_title
+        SELECT t.*, p.title AS project_title, gl.title AS goal_title
         FROM tasks t
         LEFT JOIN projects p ON p.id = t.project_id
+        LEFT JOIN goals gl ON gl.id = t.goal_id
         WHERE t.user_id = ?
     """
     params = [user_id]
@@ -134,6 +167,8 @@ def index():
         "tasks/index.html",
         tasks=tasks,
         projects=user_projects(),
+        goals=user_goals(),
+        repeats=REPEATS,
         priorities=PRIORITIES,
         show=show,
         project_filter=project_filter,
@@ -152,33 +187,38 @@ def edit(task_id):
             for error in errors:
                 flash(error, "error")
             return render_template("tasks/edit.html", task=data, task_id=task_id,
-                                   projects=user_projects(), priorities=PRIORITIES,
-                                   statuses=STATUSES)
-
-        completed_at = task["completed_at"]
-        if data["status"] == "done" and not completed_at:
-            completed_at = user_now_str()
-        elif data["status"] != "done":
-            completed_at = None
+                                   projects=user_projects(), goals=user_goals(),
+                                   priorities=PRIORITIES, statuses=STATUSES, repeats=REPEATS)
 
         db = get_db()
+        was_done, now_done = task["status"] == "done", data["status"] == "done"
         db.execute(
             """
             UPDATE tasks
             SET title = ?, notes = ?, status = ?, priority = ?, due_date = ?,
-                project_id = ?, completed_at = ?
+                project_id = ?, goal_id = ?, repeat = ?
             WHERE id = ? AND user_id = ?
             """,
-            (data["title"], data["notes"], data["status"], data["priority"],
-             data["due_date"], data["project_id"], completed_at, task_id, g.user["id"]),
+            (data["title"], data["notes"], data["status"] if was_done == now_done else task["status"],
+             data["priority"], data["due_date"], data["project_id"], data["goal_id"], data["repeat"],
+             task_id, g.user["id"]),
         )
+        messages = []
+        if now_done and not was_done:
+            updated = get_own_task(task_id)
+            messages = completion_messages(db, updated, complete_task(db, updated, user_today(), user_now_str()))
+        elif was_done and not now_done:
+            reopen_task(db, task)
+            if data["status"] == "doing":
+                db.execute("UPDATE tasks SET status = 'doing' WHERE id = ?", (task_id,))
         db.commit()
         flash("Task updated.", "success")
+        say(messages)
         return redirect(url_for("tasks.index"))
 
     return render_template("tasks/edit.html", task=task, task_id=task_id,
-                           projects=user_projects(), priorities=PRIORITIES,
-                           statuses=STATUSES)
+                           projects=user_projects(), goals=user_goals(),
+                           priorities=PRIORITIES, statuses=STATUSES, repeats=REPEATS)
 
 
 @bp.route("/<int:task_id>/toggle", methods=["POST"])
@@ -187,13 +227,12 @@ def toggle(task_id):
     task = get_own_task(task_id)
     db = get_db()
     if task["status"] == "done":
-        db.execute("UPDATE tasks SET status = 'todo', completed_at = NULL WHERE id = ?", (task_id,))
+        reopen_task(db, task)
+        db.commit()
     else:
-        db.execute(
-            "UPDATE tasks SET status = 'done', completed_at = ? WHERE id = ?",
-            (user_now_str(), task_id),
-        )
-    db.commit()
+        next_repeat = complete_task(db, task, user_today(), user_now_str())
+        db.commit()
+        say(completion_messages(db, task, next_repeat))
     return redirect(url_for("tasks.index"))
 
 

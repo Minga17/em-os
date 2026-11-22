@@ -166,3 +166,18 @@ CREATE TABLE IF NOT EXISTS frozen_days (
     day     TEXT    NOT NULL,
     PRIMARY KEY (user_id, day)
 ) WITHOUT ROWID;
+
+-- Focus timer sessions (minutes are filled in when the session ends)
+CREATE TABLE IF NOT EXISTS focus_sessions (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    task_id         INTEGER REFERENCES tasks(id) ON DELETE SET NULL,
+    label           TEXT    NOT NULL DEFAULT '',
+    planned_minutes INTEGER NOT NULL CHECK (planned_minutes BETWEEN 1 AND 180),
+    started_at      TEXT    NOT NULL,          -- UTC, e.g. 2026-11-22T15:04:05+00:00
+    log_date        TEXT    NOT NULL,          -- the day it counts for, on the person's clock
+    ended_at        TEXT,
+    minutes         INTEGER,
+    notified        INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_focus_user ON focus_sessions(user_id, log_date);

@@ -150,3 +150,50 @@ document.addEventListener("change", function (event) {
   if (navigator.vibrate) navigator.vibrate(8);
   if (picked) setTimeout(function () { form.requestSubmit(); }, 250);   // a moment to see the third tap
 });
+
+// 6. Focus timer: counts down to the time the server gave us, then logs the session
+const focusTimer = document.getElementById("focus-timer");
+if (focusTimer) {
+  const endsAt = Number(focusTimer.dataset.endsAt);
+  const startedAt = Number(focusTimer.dataset.startedAt);
+  const label = focusTimer.querySelector("[data-remaining]");
+  const dial = focusTimer.querySelector(".focus-dial");
+  const finishForm = focusTimer.querySelector("[data-finish]");
+  const title = document.title;
+  let done = false;
+
+  function chime() {
+    try {
+      const audio = new (window.AudioContext || window.webkitAudioContext)();
+      [0, 0.25, 0.5].forEach(function (delay) {
+        const tone = audio.createOscillator();
+        const volume = audio.createGain();
+        tone.frequency.value = 880;
+        volume.gain.setValueAtTime(0.15, audio.currentTime + delay);
+        volume.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + delay + 0.2);
+        tone.connect(volume).connect(audio.destination);
+        tone.start(audio.currentTime + delay);
+        tone.stop(audio.currentTime + delay + 0.2);
+      });
+    } catch (error) { /* sound isn't allowed: that's fine */ }
+  }
+
+  function tick() {
+    const left = Math.max(0, endsAt - Date.now());
+    const minutes = Math.floor(left / 60000);
+    const seconds = Math.floor((left % 60000) / 1000);
+    const text = minutes + ":" + String(seconds).padStart(2, "0");
+    label.textContent = text;
+    document.title = text + " · Focus";
+    dial.style.setProperty("--p", Math.min(100, ((Date.now() - startedAt) / (endsAt - startedAt)) * 100));
+    if (left === 0 && !done) {
+      done = true;
+      document.title = title;
+      chime();
+      if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+      setTimeout(function () { finishForm.submit(); }, 1500);
+    }
+  }
+  tick();
+  setInterval(tick, 1000);
+}

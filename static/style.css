@@ -633,3 +633,47 @@ button.chip:hover { border-color: var(--accent); }
   background: #38bdf822; border: 1px solid #38bdf866; color: var(--text); white-space: nowrap; }
 .stack > *, .habit-options, .habit-options > * { min-width: 0; }   /* let forms shrink on small phones */
 .habit-options, .opt-group { grid-template-columns: minmax(0, 1fr); }
+
+/* ── Phase D ─────────────────────────────────────────────────── */
+.next-steps { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 4px; font-size: 14px; }
+.next-steps li { overflow-wrap: anywhere; }
+.next-hint { margin: 8px 0 0; }
+.achieve-form { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+  margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: #22c55e18; border: 1px solid #22c55e55; }
+.achieve-form button { background: var(--green); }
+.focus-running { text-align: center; display: grid; justify-items: center; gap: 8px; }
+.focus-dial { --p: 0; width: min(240px, 70vw); aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
+  background: conic-gradient(var(--accent) calc(var(--p) * 1%), var(--border) 0); margin: 8px 0; max-width: 100%; }
+.focus-dial::before { content: ""; grid-area: 1 / 1; width: 86%; height: 86%; border-radius: 50%; background: var(--card); }
+.focus-time { grid-area: 1 / 1; z-index: 1; font-size: clamp(40px, 12vw, 56px); font-weight: 700; font-variant-numeric: tabular-nums; }
+.focus-actions { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; align-items: center; }
+.focus-actions form { margin: 0; }
+.lengths { border: 0; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.lengths legend { color: var(--sub); font-size: 14px; margin-bottom: 8px; }
+.lengths label { display: block; }
+.lengths input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.lengths span { display: grid; place-items: center; padding: 14px 6px; border: 1px solid var(--border); border-radius: 12px;
+  color: var(--text); cursor: pointer; }
+.lengths span strong { font-size: 24px; }
+.lengths input:checked + span { border-color: var(--accent); background: #4a9eff22; }
+.lengths input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.focus-go { font-size: 17px; padding: 14px; }
+.focus-kpis { margin-top: 16px; }
+.session-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.session-list li { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.records-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr)); gap: 12px; margin: 16px 0 28px; }
+.record { position: relative; display: grid; gap: 2px; align-content: start; }
+.record.is-new { border-color: #f59e0b; }
+.record-icon { font-size: 28px; }
+.record-title { color: var(--sub); font-size: 14px; }
+.record-value { font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.record-value .muted { font-size: 14px; font-weight: 500; }
+.new-badge { position: absolute; top: 12px; right: 12px; font-size: 12px; padding: 2px 8px; border-radius: 999px;
+  background: #f59e0b22; border: 1px solid #f59e0b88; }
+.top3-head .focus-link { font-size: 14px; }
+a.focus-mini { text-decoration: none; font-size: 15px; padding: 4px 6px; }
+.delta { font-size: 13px; font-weight: 600; }
+.delta.up { color: var(--green); }
+.delta.down { color: var(--red); }
+.delta.same { color: var(--sub); }
+.draft-note { margin: 0 0 4px; padding: 10px 12px; border-radius: 10px; background: #8b5cf618; border: 1px solid #8b5cf655; font-size: 14px; }

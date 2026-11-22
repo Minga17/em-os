@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Records · EM OS{% endblock %}
+
+{% block content %}
+  <h1>🏅 Hall of Fame</h1>
+  <p class="muted">Your personal bests. The only person to beat is you.</p>
+
+  {% if records %}
+    <div class="records-grid">
+      {% for r in records %}
+        <div class="card record {% if r.new %}is-new{% endif %}">
+          {% if r.new %}<span class="new-badge">🆕 This week</span>{% endif %}
+          <div class="record-icon">{{ r.icon }}</div>
+          <div class="record-title">{{ r.title }}</div>
+          <div class="record-value">{{ r.value }} <span class="muted">{{ r.unit }}</span></div>
+          <div class="sub">
+            {% if r.detail %}{{ r.detail }}{% endif %}
+            {% if r.when and not r.detail %}{{ r.when.strftime('%a %b') }} {{ r.when.day }}, {{ r.when.year }}{% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card empty-state">
+      <p>No records yet. Check in, tick habits and finish tasks, and your bests will show up here.</p>
+    </div>
+  {% endif %}
+
+  <h2>Lifetime</h2>
+  <p class="sub">{{ days_with_emos }} day{{ '' if days_with_emos == 1 else 's' }} with EM OS · Level {{ progress.level }} {{ progress.title }} · {{ progress.xp }} XP</p>
+  <div class="stats-grid">
+    {% for icon, label, value in totals %}
+      <div class="card stat"><div class="num">{{ value }}</div><div class="label">{{ icon }} {{ label }}</div></div>
+    {% endfor %}
+  </div>
+{% endblock %}

@@ -17,7 +17,18 @@
         <option value="{{ value }}" {% if value == 2 %}selected{% endif %}>{{ label }}</option>
       {% endfor %}
     </select>
-    <input name="due_date" type="date">
+    <input name="due_date" type="date" aria-label="Due date">
+    <select name="repeat" aria-label="Repeat">
+      {% for value, label in repeats.items() %}
+        <option value="{{ value }}">{{ '🔁 ' if value }}{{ label }}</option>
+      {% endfor %}
+    </select>
+    {% if goals %}
+      <select name="goal_id" aria-label="Goal">
+        <option value="">No goal</option>
+        {% for gl in goals %}<option value="{{ gl['id'] }}">🎯 {{ gl['title'] }}</option>{% endfor %}
+      </select>
+    {% endif %}
     <button>Add task</button>
   </form>
 
@@ -50,6 +61,8 @@
           <span class="prio p{{ t['priority'] }}">{{ priorities[t['priority']] }}</span>
           {% if t['status'] == 'doing' %} · <span class="doing">In progress</span>{% endif %}
           {% if t['project_title'] %} · 📁 {{ t['project_title'] }}{% endif %}
+          {% if t['goal_title'] %} · 🎯 {{ t['goal_title'] }}{% endif %}
+          {% if t['repeat'] %} · 🔁 {{ t['repeat']|repeat_label }}{% endif %}
           {% if t['due_date'] %}
             · {% if overdue %}⚠️ Overdue: {% elif t['due_date'] == today %}📅 Due today: {% else %}📅 {% endif %}{{ t['due_date'] }}
           {% endif %}

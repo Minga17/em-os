@@ -1,9 +1,10 @@
 """Background jobs: one small loop that wakes up every minute.
 
+- Finish focus sessions on time (and notify, if notification keys are set)
 - Daily reminders (if notification keys are set)
 - Daily backup (if backups are set up)
 
-It only starts online. On your laptop nothing runs in the background.
+It runs online. On your laptop (`flask run --debug`) it runs too, which is fine.
 """
 import threading
 import time
@@ -11,16 +12,18 @@ from datetime import datetime
 
 from backup import backup_ready, run_backup
 from db import get_db
-from reminders import push_ready, run_reminders
+from focus import finish_overdue
+from reminders import push_ready, run_reminders, send_push
 
 
 def any_jobs(app):
-    return push_ready(app) or backup_ready(app)
+    return True             # focus sessions always need finishing on time
 
 
 def run_due_jobs(app):
     with app.app_context():
         db = get_db()
+        finish_overdue(db, sender=send_push if push_ready(app) else None)
         if push_ready(app):
             run_reminders(db)
         if backup_ready(app):
