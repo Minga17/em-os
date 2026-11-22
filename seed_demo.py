@@ -82,7 +82,7 @@ for i in range(25):
          finished.isoformat(timespec="seconds") if done else None),
     )
 
-db.execute("UPDATE users SET email_verified = 1 WHERE email = ?", (DEMO_EMAIL,))
+db.execute("UPDATE users SET email_verified = 1, onboarded = 1 WHERE email = ?", (DEMO_EMAIL,))
 db.commit()
 db.close()
 print("Demo data ready! Log in as demo@example.com / demo-password")

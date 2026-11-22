@@ -61,6 +61,23 @@ def run_migrations(db):
     if not column_exists(db, "tasks", "focus_date"):
         db.execute("ALTER TABLE tasks ADD COLUMN focus_date TEXT")   # in that day's top 3
         db.commit()
+    for table, column, definition in [
+        # Flexible habits
+        ("habits", "kind", "TEXT NOT NULL DEFAULT 'build'"),         # build / quit
+        ("habits", "schedule", "TEXT NOT NULL DEFAULT 'daily'"),     # daily / days / weekly
+        ("habits", "days", "TEXT NOT NULL DEFAULT ''"),              # e.g. '0,2,4' = Mon Wed Fri
+        ("habits", "per_week", "INTEGER NOT NULL DEFAULT 3"),        # for 'weekly'
+        ("habits", "goal_count", "INTEGER NOT NULL DEFAULT 1"),      # e.g. 8 (glasses)
+        ("habits", "unit", "TEXT NOT NULL DEFAULT ''"),              # e.g. 'glasses'
+        ("habit_logs", "amount", "INTEGER NOT NULL DEFAULT 1"),      # how many today
+        # Streak freezes: everyone starts with one
+        ("users", "freezes", "INTEGER NOT NULL DEFAULT 1"),
+        ("users", "freeze_awarded_on", "TEXT"),
+        ("users", "freezes_checked_on", "TEXT"),
+    ]:
+        if not column_exists(db, table, column):
+            db.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+            db.commit()
     backfill_activity_days(db)
     if not column_exists(db, "projects", "goal_id"):
         db.execute(

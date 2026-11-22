@@ -50,12 +50,15 @@
     <h2>Today's habits</h2>
     <a class="link-btn" href="{{ url_for('habits.index') }}">Manage</a>
   </div>
-  {% if summary.habits %}
+  {% if summary.habits or summary.resting %}
     <ul class="habit-list">
       {% for item in summary.habits %}
         {% include "today/_habit_row.html" %}
       {% endfor %}
     </ul>
+    {% if summary.resting %}
+      <p class="sub resting">Day off today: {% for h in summary.resting %}{{ h.icon }} {{ h.name }}{{ ', ' if not loop.last }}{% endfor %}</p>
+    {% endif %}
   {% else %}
     <div class="card empty-state">
       <p>No habits yet. Small daily habits are where streaks begin.</p>

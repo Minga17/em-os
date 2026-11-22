@@ -152,3 +152,17 @@ CREATE TABLE IF NOT EXISTS day_closes (
     day     TEXT    NOT NULL,                 -- YYYY-MM-DD on their own clock
     PRIMARY KEY (user_id, day)
 ) WITHOUT ROWID;
+
+-- "Quit" habits: days the person slipped (everything else counts as clean)
+CREATE TABLE IF NOT EXISTS habit_slips (
+    habit_id INTEGER NOT NULL REFERENCES habits(id) ON DELETE CASCADE,
+    log_date TEXT    NOT NULL,
+    PRIMARY KEY (habit_id, log_date)
+) WITHOUT ROWID;
+
+-- Days protected by a streak freeze
+CREATE TABLE IF NOT EXISTS frozen_days (
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    day     TEXT    NOT NULL,
+    PRIMARY KEY (user_id, day)
+) WITHOUT ROWID;

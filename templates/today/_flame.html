@@ -2,9 +2,12 @@
      {% if oob %}hx-swap-oob="true"{% endif %}>
   {% if summary.streak and summary.checked_in %}
     🔥 {{ summary.streak }}-day streak, keep it going!
+  {% elif summary.at_risk %}
+    ⚠️ You missed yesterday. Check in today to keep your {{ summary.streak }}-day streak. Never miss twice!
   {% elif summary.streak %}
     🔥 Check in today to keep your {{ summary.streak }}-day streak
   {% else %}
     ✨ Check in today to start a streak
   {% endif %}
+  {% if summary.freezes %}<span class="freeze-chip" title="Streak freezes: used automatically if you miss 2 days in a row">🧊 ×{{ summary.freezes }}</span>{% endif %}
 </div>

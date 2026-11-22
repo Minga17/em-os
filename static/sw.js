@@ -3,7 +3,7 @@
 // - Shows a friendly offline screen when there's no internet.
 // - NEVER caches your personal pages: those always come fresh from the server.
 // - Shows the daily reminder notifications, even when the app is closed.
-const CACHE = "emos-v5";
+const CACHE = "emos-v6";
 const ASSETS = [
   "/static/style.css",
   "/static/js/htmx.min.js",

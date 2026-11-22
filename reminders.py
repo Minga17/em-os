@@ -21,7 +21,9 @@ from flask import Blueprint, current_app, flash, g, jsonify, redirect, request, 
 
 from auth import login_required
 from db import get_db
+from habit_model import all_statuses, frozen_days
 from streaks import current_streak
+from today import habits_left as habits_still_due
 
 bp = Blueprint("reminders", __name__, url_prefix="/reminders")
 
@@ -124,17 +126,13 @@ def reminder_message(db, user_id, today):
     if today in checkin_dates:
         return None
 
-    habits_left = db.execute(
-        """SELECT COUNT(*) FROM habits h
-           WHERE h.user_id = ? AND h.is_active = 1
-             AND NOT EXISTS (SELECT 1 FROM habit_logs l
-                             WHERE l.habit_id = h.id AND l.log_date = ?)""",
-        (user_id, today.isoformat()),
-    ).fetchone()[0]
+    from freezes import apply_freezes           # (imported here to avoid an import loop)
+    apply_freezes(db, user_id, today)
+    habits_left = len(habits_still_due(all_statuses(db, user_id, today)))
     habits_text = (f" {habits_left} habit{'s' if habits_left != 1 else ''} left today."
                    if habits_left else "")
 
-    streak = current_streak(checkin_dates, today)
+    streak = current_streak(checkin_dates, today, frozen_days(db, user_id))
     if streak >= 2:
         title = f"🔥 Keep your {streak}-day streak alive!"
         body = "3 taps to check in before midnight." + habits_text

@@ -57,3 +57,9 @@ def local_today_for(name) -> date:
         return datetime.now(ZoneInfo(name or DEFAULT_TZ)).date()
     except (ZoneInfoNotFoundError, ValueError):
         return datetime.now(ZoneInfo(DEFAULT_TZ)).date()
+
+
+def user_today_for(db, user_id) -> date:
+    """Today for a specific user, by their saved time zone (works without a login)."""
+    row = db.execute("SELECT timezone FROM users WHERE id = ?", (user_id,)).fetchone()
+    return local_today_for(row[0] if row else DEFAULT_TZ)

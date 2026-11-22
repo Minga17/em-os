@@ -589,3 +589,47 @@ button.chip:hover { border-color: var(--accent); }
 .reminder-times .reminder-time { margin: 0; width: 100%; }
 .reminder-times .reminder-time label { flex: 1 1 220px; }
 .day-plan > * { min-width: 0; }
+
+/* ── Phase C: flexible habits, forgiving streaks, freezes ───── */
+.add-habit-card { margin: 16px 0 24px; }
+.add-habit-card .add-habit { margin: 0; }
+.add-habit-card details, .habit-options { margin-top: 12px; }
+.add-habit-card summary { cursor: pointer; color: var(--accent); font-size: 14px; }
+.habit-options { display: grid; gap: 14px; }
+.opt-group { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin: 0; display: grid; gap: 8px; min-width: 0; }
+.opt-group legend { color: var(--sub); font-size: 13px; padding: 0 4px; }
+.opt { flex-direction: row; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--text); font-size: 15px; }
+.opt input[type=radio] { width: 18px; height: 18px; accent-color: var(--accent); }
+.opt select { padding: 6px 8px; }
+.habit-options:has(input[name=kind][value=quit]:checked) .build-only { display: none; }
+.day-picks { display: flex; flex-wrap: wrap; gap: 6px; padding-left: 26px; }
+.day-pick input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.day-pick span { display: inline-block; padding: 6px 10px; border: 1px solid var(--border); border-radius: 999px;
+  font-size: 13px; color: var(--text); cursor: pointer; }
+.day-pick input:checked + span { background: var(--accent); border-color: var(--accent); color: #fff; }
+.day-pick input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.amount-row { display: flex; gap: 8px; }
+.amount-row input[type=number] { flex: 0 0 90px; }
+.amount-row input[name=unit] { flex: 1 1 auto; min-width: 0; }
+.schedule-tag { margin-top: 2px; }
+
+.dot.part { border-color: var(--green); color: var(--green); }
+.dot.off { opacity: .35; border-style: dashed; }
+.dot.frozen { border-color: #38bdf8; background: #38bdf822; }
+.dot.slip { border-color: var(--red); color: var(--red); }
+.habit.quit .dot.on { background: #22c55e55; }
+.how-streaks { margin-top: 24px; }
+.how-streaks h2 { font-size: 17px; margin-top: 0; }
+.how-streaks ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; color: var(--sub); font-size: 14px; }
+.how-streaks strong { color: var(--text); }
+
+.tick.counter { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); }
+.habit-row.done .tick.counter { color: #fff; }
+.habit-row.met .tick { border-color: var(--green); }
+.habit-row.quit .quit-days { display: grid; place-items: center; width: 40px; height: 40px; flex: none; border-radius: 12px;
+  background: #22c55e22; color: var(--green); font-weight: 700; font-variant-numeric: tabular-nums; }
+.resting { margin: -4px 0 16px; }
+.freeze-chip { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 999px; font-size: 13px;
+  background: #38bdf822; border: 1px solid #38bdf866; color: var(--text); white-space: nowrap; }
+.stack > *, .habit-options, .habit-options > * { min-width: 0; }   /* let forms shrink on small phones */
+.habit-options, .opt-group { grid-template-columns: minmax(0, 1fr); }

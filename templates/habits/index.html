@@ -1,40 +1,66 @@
 {% extends "base.html" %}
+{% from "habits/_fields.html" import habit_options with context %}
 {% block title %}Habits · EM OS{% endblock %}
 
 {% block content %}
   <h1>Habits</h1>
 
-  <form method="post" class="card add-habit">
-    <input name="icon" value="✅" maxlength="4" class="icon-input" title="Pick an emoji with Win + .">
-    <input name="name" placeholder="New habit, e.g. Read 20 minutes" required maxlength="60">
-    <button>Add habit</button>
+  <form method="post" class="card add-habit-card">
+    <div class="add-habit">
+      <input name="icon" value="✅" maxlength="4" class="icon-input" title="Pick an emoji with Win + ." aria-label="Emoji">
+      <input name="name" placeholder="New habit, e.g. Read 20 minutes" required maxlength="60" aria-label="Habit name">
+      <button>Add habit</button>
+    </div>
+    <details>
+      <summary>More options: certain days, times a week, amounts, quitting</summary>
+      {{ habit_options() }}
+    </details>
   </form>
 
   {% for card in cards %}
-    {% set h = card.habit %}
-    <div class="card habit {% if card.done_today %}done{% endif %}">
+    {% set h = card.habit %}{% set s = card.s %}
+    <div class="card habit {% if s.kind == 'build' and s.counts_done %}done{% endif %} {% if s.kind == 'quit' %}quit{% endif %}">
       <div class="habit-main">
         <span class="habit-icon">{{ h['icon'] }}</span>
         <div>
           <div class="habit-name">{{ h['name'] }}</div>
-          <div class="sub">🔥 {{ card.current }}-day streak · best {{ card.best }}</div>
+          <div class="sub">
+            {% if s.progress %}{{ s.progress }} today · {% endif %}{{ s.label }}
+            {% if s.kind == 'build' %} · best {{ s.best }}{% elif s.best %} · best {{ s.best }}{% endif %}
+          </div>
+          <div class="sub schedule-tag">{{ s.schedule_text }}{% if s.kind == 'build' and not s.due %} · day off today{% endif %}</div>
         </div>
       </div>
 
       <div class="week">
-        {% for day, done in card.week %}
-          <span class="dot {% if done %}on{% endif %}" title="{{ day.isoformat() }}">{{ day.strftime('%a')[0] }}</span>
+        {% for day, state in card.week %}
+          <span class="dot {{ state }}" title="{{ day.isoformat() }}{% if state == 'frozen' %} · freeze used{% elif state == 'off' %} · day off{% elif state == 'slip' %} · slip{% endif %}">
+            {%- if state == 'frozen' %}🧊{% elif state == 'slip' %}✕{% else %}{{ day.strftime('%a')[0] }}{% endif -%}
+          </span>
         {% endfor %}
       </div>
 
       <div class="habit-actions">
-        <form method="post" action="{{ url_for('habits.toggle', habit_id=h['id']) }}" class="inline">
-          {% if card.done_today %}
-            <button class="secondary">✓ Done</button>
-          {% else %}
-            <button>Mark done</button>
+        {% if s.kind == 'quit' %}
+          <form method="post" action="{{ url_for('habits.slip', habit_id=h['id']) }}" class="inline"
+                {% if not s.slipped %}onsubmit="return confirm('Log a slip for today? Your clean days will start again.')"{% endif %}>
+            <button class="{{ 'secondary' if s.slipped else 'secondary-plain' }}">{{ 'Undo slip' if s.slipped else 'Log a slip' }}</button>
+          </form>
+        {% elif s.counter %}
+          {% if s.amount %}
+            <form method="post" action="{{ url_for('habits.minus', habit_id=h['id']) }}" class="inline">
+              <button class="secondary-plain" aria-label="One less">−1</button>
+            </form>
           {% endif %}
-        </form>
+          <form method="post" action="{{ url_for('habits.toggle', habit_id=h['id']) }}" class="inline">
+            <button class="{{ 'secondary' if s.done }}">+1{% if s.unit %} {{ s.unit[:12] }}{% endif %}</button>
+          </form>
+        {% else %}
+          <form method="post" action="{{ url_for('habits.toggle', habit_id=h['id']) }}" class="inline">
+            {% if s.done %}<button class="secondary">✓ Done</button>{% else %}<button>Mark done</button>{% endif %}
+          </form>
+        {% endif %}
+        <a class="link-btn" href="{{ url_for('habits.edit', habit_id=h['id']) }}">Edit</a>
         <form method="post" action="{{ url_for('habits.archive', habit_id=h['id']) }}" class="inline">
           <button class="link">Archive</button>
         </form>
@@ -43,4 +69,15 @@
   {% else %}
     <p class="muted">No habits yet. Add your first one above.</p>
   {% endfor %}
+
+  <div class="card how-streaks">
+    <h2>How streaks work</h2>
+    <ul>
+      <li><strong>Never miss twice.</strong> Missed a day? Your streak is safe if you're back the next day.</li>
+      <li><strong>🧊 Streak freezes</strong> cover a second missed day automatically. You have
+        <strong>{{ freezes }}</strong> (earn 1 every 7 days of check-in streak, hold up to 2).</li>
+      <li>Habits on certain days only count those days. "Times a week" habits count weeks.</li>
+      <li>Quit habits count days clean. A slip starts the count again, but your best stays.</li>
+    </ul>
+  </div>
 {% endblock %}

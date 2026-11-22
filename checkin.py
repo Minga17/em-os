@@ -4,6 +4,7 @@ from flask import Blueprint, flash, g, redirect, render_template, request, url_f
 
 from auth import login_required
 from db import get_db
+from freezes import award_freeze
 from notify import toast
 from scoring import compute_score
 from timeutil import user_today
@@ -79,6 +80,9 @@ def today():
             )
             db.commit()
             flash(f"Check-in saved! Today's score: {score}/100", "success")
+            earned = award_freeze(db, user_id, user_today())
+            if earned:
+                flash(earned, "achievement")
             return redirect(url_for("home"))
 
         values = request.form  # keep what they typed when there's an error
@@ -135,8 +139,13 @@ def quick():
                           VALUES (?, ?, ?, ?, ?, ?)""", (user_id, today_str, energy, mood, focus, score))
             toast(f"+10 XP · 📝 Checked in! Score {score}/100")
         db.commit()
+        earned = award_freeze(db, user_id, user_today())
         if not request.headers.get("HX-Request"):
             flash(f"Check-in saved! Today's score: {score}/100", "success")
+            if earned:
+                flash(earned, "achievement")
+        elif earned:
+            toast(earned)
 
     if request.headers.get("HX-Request"):
         summary = today_summary(db, user_id)

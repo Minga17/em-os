@@ -23,9 +23,9 @@ DATASETS = {
         """,
     ),
     "habits": (
-        "Every habit tick, one row per habit per day",
+        "Every habit tick, one row per habit per day (amount = how many that day)",
         """
-        SELECT hl.log_date, h.name AS habit, h.icon,
+        SELECT hl.log_date, h.name AS habit, h.icon, hl.amount,
                CASE WHEN h.is_active = 1 THEN 'active' ELSE 'archived' END AS habit_status
         FROM habit_logs hl
         JOIN habits h ON h.id = hl.habit_id

@@ -5,6 +5,7 @@ from flask import Blueprint, flash, g, redirect, render_template, request, url_f
 from auth import login_required
 from dashboard import checkin_summary
 from db import get_db
+from habit_model import completion_rates
 from timeutil import user_today
 
 bp = Blueprint("review", __name__, url_prefix="/review")
@@ -87,18 +88,7 @@ def week():
 
     # Days that count for habits: this week, but not after today
     days_so_far = (min(end, today) - start).days + 1
-    habits = db.execute(
-        """
-        SELECT h.icon, h.name, COUNT(hl.log_date) AS done
-        FROM habits h
-        LEFT JOIN habit_logs hl
-               ON hl.habit_id = h.id AND hl.log_date BETWEEN ? AND ?
-        WHERE h.user_id = ? AND h.is_active = 1
-        GROUP BY h.id
-        ORDER BY h.created_at
-        """,
-        (start.isoformat(), end.isoformat(), user_id),
-    ).fetchall()
+    habits = completion_rates(db, user_id, start, min(end, today))
 
     finished_tasks = db.execute(
         """

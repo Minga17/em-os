@@ -11,7 +11,9 @@ from flask import Blueprint, flash, g, render_template, request
 
 from auth import login_required
 from db import get_db
+from habit_model import all_statuses, frozen_days
 from streaks import best_streak
+from timeutil import user_today_for
 from notify import send_toasts, toast
 from timeutil import user_now_str
 
@@ -38,11 +40,11 @@ ACHIEVEMENTS = [
     ("checkins_7",     "🗓️", "Week Warrior",       "Log 7 check-ins",                     "checkins",          7,  "Consistency"),
     ("checkins_30",    "📅", "Monthly Master",     "Log 30 check-ins",                    "checkins",         30,  "Consistency"),
     ("checkins_100",   "💯", "Centurion",          "Log 100 check-ins",                   "checkins",        100,  "Consistency"),
-    ("streak_3",       "🔥", "On Fire",            "Check in 3 days in a row",            "checkin_streak",    3,  "Consistency"),
-    ("streak_7",       "⚡", "Unstoppable",        "Check in 7 days in a row",            "checkin_streak",    7,  "Consistency"),
-    ("streak_30",      "🏔️", "Iron Will",          "Check in 30 days in a row",           "checkin_streak",   30,  "Consistency"),
-    ("habit_streak_7", "🌱", "Habit Builder",      "Keep any habit for 7 days in a row",  "habit_streak",      7,  "Habits"),
-    ("habit_streak_30","🌳", "Habit Master",       "Keep any habit for 30 days in a row", "habit_streak",     30,  "Habits"),
+    ("streak_3",       "🔥", "On Fire",            "Reach a 3-day check-in streak",            "checkin_streak",    3,  "Consistency"),
+    ("streak_7",       "⚡", "Unstoppable",        "Reach a 7-day check-in streak",            "checkin_streak",    7,  "Consistency"),
+    ("streak_30",      "🏔️", "Iron Will",          "Reach a 30-day check-in streak",           "checkin_streak",   30,  "Consistency"),
+    ("habit_streak_7", "🌱", "Habit Builder",      "Reach a 7-day streak on any habit",  "habit_streak",      7,  "Habits"),
+    ("habit_streak_30","🌳", "Habit Master",       "Reach a 30-day streak on any habit", "habit_streak",     30,  "Habits"),
     ("habit_ticks_100","🎖️", "Hundred Habits",     "Tick off 100 habits in total",        "habit_ticks",     100,  "Habits"),
     ("high_score",     "🚀", "In the Zone",        "Score 90 or more in a day",           "max_score",        90,  "Daily performance"),
     ("perfect_day",    "⭐", "Perfect Day",        "Score a perfect 100",                 "max_score",       100,  "Daily performance"),
@@ -72,19 +74,17 @@ def gather_stats(db, user_id):
     checkin_dates = [date.fromisoformat(r[0]) for r in db.execute(
         "SELECT log_date FROM checkins WHERE user_id = ?", (user_id,))]
 
-    habit_days = defaultdict(list)
-    for habit_id, log_date in db.execute(
-        """SELECT hl.habit_id, hl.log_date FROM habit_logs hl
-           JOIN habits h ON h.id = hl.habit_id WHERE h.user_id = ?""", (user_id,)):
-        habit_days[habit_id].append(date.fromisoformat(log_date))
+    frozen = frozen_days(db, user_id)
+    habits = all_statuses(db, user_id, user_today_for(db, user_id), active_only=False)
 
     return {
         "checkins": checkin_row[0],
         "max_score": checkin_row[1] or 0,
         "max_hours": checkin_row[2] or 0,
-        "checkin_streak": best_streak(checkin_dates),
-        "habit_ticks": sum(len(days) for days in habit_days.values()),
-        "habit_streak": max((best_streak(days) for days in habit_days.values()), default=0),
+        "checkin_streak": best_streak(checkin_dates, frozen=frozen),
+        "habit_ticks": one("""SELECT COUNT(*) FROM habit_logs l JOIN habits h ON h.id = l.habit_id
+                              WHERE h.user_id = ? AND l.amount >= h.goal_count"""),
+        "habit_streak": max((h["best"] for h in habits if h["schedule"] != "weekly"), default=0),
         "tasks_done": one("SELECT COUNT(*) FROM tasks WHERE user_id = ? AND status = 'done'"),
         "projects": one("SELECT COUNT(*) FROM projects WHERE user_id = ?"),
         "goals": one("SELECT COUNT(*) FROM goals WHERE user_id = ?"),

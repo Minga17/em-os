@@ -101,7 +101,7 @@ def test_achievement_pops_up_on_instant_action(app, client, auth):
     auth.register_and_login()
     client.post("/habits/", data={"name": "Read"})
     db = sqlite3.connect(app.config["DATABASE"])
-    db.executemany("INSERT INTO habit_logs VALUES (1, ?)",
+    db.executemany("INSERT INTO habit_logs (habit_id, log_date) VALUES (1, ?)",
                    [(f"2025-01-{d:02d}",) for d in range(1, 32)] +
                    [(f"2025-03-{d:02d}",) for d in range(1, 31)] +
                    [(f"2025-05-{d:02d}",) for d in range(1, 31)] +

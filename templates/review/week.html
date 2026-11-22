@@ -57,11 +57,11 @@
     <div class="card">
       <h2>Habits</h2>
       {% for h in habits %}
-        {% set pct = (h['done'] * 100 // days_so_far) if days_so_far else 0 %}
+        {% set pct = h['rate'] %}
         <div class="hbar-row">
           <span class="hbar-label wide">{{ h['icon'] }} {{ h['name'] }}</span>
           <div class="hbar"><div style="width: {{ [pct, 100]|min }}%" class="habit-fill"></div></div>
-          <span class="hbar-value">{{ h['done'] }}/{{ days_so_far }}</span>
+          <span class="hbar-value">{{ h['done'] }}/{{ h['possible'] }}</span>
         </div>
       {% else %}
         <p class="muted">No active habits.</p>

@@ -86,7 +86,8 @@ def gather(db, today):
         "reminders": percent(one("SELECT COUNT(DISTINCT user_id) FROM push_subscriptions"), users),
         "returns": [return_rate(db, n) for n in (1, 7, 30)],
         "checkins_7": one("SELECT COUNT(*) FROM checkins WHERE log_date >= ?", week_ago),
-        "habit_ticks_7": one("SELECT COUNT(*) FROM habit_logs WHERE log_date >= ?", week_ago),
+        "habit_ticks_7": one("""SELECT COUNT(*) FROM habit_logs l JOIN habits h ON h.id = l.habit_id
+                                WHERE l.log_date >= ? AND l.amount >= h.goal_count""", week_ago),
         "tasks_done": one("SELECT COUNT(*) FROM tasks WHERE status = 'done'"),
         "goals": one("SELECT COUNT(*) FROM goals"),
         "last_14": last_14,

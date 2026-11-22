@@ -8,6 +8,7 @@ from achievements import bp as achievements_bp, player_progress
 from admin import bp as admin_bp
 from backup import backup_ready, send_backup
 from feedback import bp as feedback_bp
+from freezes import bp as freezes_bp
 from jobs import any_jobs, start_background_jobs
 from auth import bp as auth_bp, login_required
 from checkin import bp as checkin_bp
@@ -81,6 +82,7 @@ def create_app(test_config=None):
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)          # right after auth: it needs to know who's logged in
+    app.register_blueprint(freezes_bp)        # uses streak freezes once a day, if needed
     app.register_blueprint(checkin_bp)
     app.register_blueprint(habits_bp)
     app.register_blueprint(projects_bp)
