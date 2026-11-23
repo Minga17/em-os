@@ -10,6 +10,7 @@ from backup import backup_ready, send_backup
 from feedback import bp as feedback_bp
 from focus import bp as focus_bp
 from records import bp as records_bp
+from recap import bp as recap_bp
 from freezes import bp as freezes_bp
 from jobs import any_jobs, start_background_jobs
 from auth import bp as auth_bp, login_required
@@ -101,6 +102,7 @@ def create_app(test_config=None):
     app.register_blueprint(plan_bp)
     app.register_blueprint(focus_bp)
     app.register_blueprint(records_bp)
+    app.register_blueprint(recap_bp)
 
     # Reminders and backups run in the background (only online, where they're set up)
     reloader_parent = app.debug and os.environ.get("WERKZEUG_RUN_MAIN") != "true"
@@ -119,6 +121,16 @@ def create_app(test_config=None):
             print("Backups aren't set up: need BACKUP_PASSWORD, ADMIN_EMAILS, email settings and pyzipper.")
             return
         print(f"Backup sent ({send_backup(date.today().isoformat()) / 1024:.0f} KB).")
+
+    from notify import pending_celebrations
+    from themes import THEMES, theme_of
+
+    @app.context_processor
+    def theme_and_celebrations():
+        theme = theme_of(g.get("user"))
+        # take_celebrations is only called by base.html, so instant (htmx) pieces never use them up
+        return {"theme": theme, "theme_bar": THEMES[theme]["bar"],
+                "take_celebrations": pending_celebrations}
 
     from task_logic import repeat_label
     app.add_template_filter(repeat_label, "repeat_label")

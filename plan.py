@@ -10,7 +10,7 @@ from flask import Blueprint, abort, g, redirect, render_template, request, url_f
 
 from auth import login_required
 from db import get_db
-from notify import toast
+from notify import celebrate, toast
 from timeutil import user_now, user_now_str, user_today
 from task_logic import complete_task, completion_messages, reopen_task
 from today import today_summary
@@ -51,6 +51,7 @@ def day_plan(db, user_id):
         "closed": closed,
         "tomorrow": tomorrow,
         "today": today_str,
+        "sunday": today.weekday() == 6,
     }
 
 
@@ -148,4 +149,5 @@ def close():
     db.commit()
     if added:
         toast("🌙 Day closed. +5 XP. Rest well!")
+        celebrate("confetti")
     return respond()

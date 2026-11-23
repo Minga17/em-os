@@ -5,6 +5,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from auth import login_required, sign_out_other_devices
 from db import get_db
 from reminders import MORNING_TIMES, REMINDER_TIMES, push_ready, time_label
+from themes import THEMES, theme_of, unlocked
 from timeutil import all_timezones, is_valid_timezone, user_today
 
 bp = Blueprint("settings", __name__, url_prefix="/settings")
@@ -26,8 +27,11 @@ def index():
         "SELECT reminder_time, morning_time FROM users WHERE id = ?", (g.user["id"],)).fetchone()
     devices = db.execute("SELECT COUNT(*) FROM push_subscriptions WHERE user_id = ?",
                          (g.user["id"],)).fetchone()[0]
+    from achievements import player_progress           # (here to avoid an import loop)
+    level = player_progress(db, g.user["id"])["level"]
     return render_template(
         "settings/index.html", timezones=all_timezones(), local_today=user_today(),
+        themes=THEMES, current_theme=theme_of(g.user), level=level,
         reminder_time=reminder_time, devices=devices,
         reminder_choices=[(t, time_label(t)) for t in REMINDER_TIMES],
         morning_time=morning_time,
@@ -74,6 +78,24 @@ def password():
         sign_out_other_devices(g.user["id"])
         flash("Password changed. 🔒 Any other devices have been logged out.", "success")
     return redirect(url_for("settings.index"))
+
+
+@bp.route("/theme", methods=["POST"])
+@login_required
+def theme():
+    from achievements import player_progress           # (here to avoid an import loop)
+    choice = request.form.get("theme", "")
+    level = player_progress(get_db(), g.user["id"])["level"]
+    if choice not in THEMES:
+        flash("Pick a theme from the list.", "error")
+    elif not unlocked(choice, level):
+        flash(f"{THEMES[choice]['name']} unlocks at level {THEMES[choice]['level']}. Keep going!", "error")
+    else:
+        db = get_db()
+        db.execute("UPDATE users SET theme = ? WHERE id = ?", (choice, g.user["id"]))
+        db.commit()
+        flash(f"{THEMES[choice]['emoji']} {THEMES[choice]['name']} theme on.", "success")
+    return redirect(url_for("settings.index") + "#theme")
 
 
 @bp.route("/logout-others", methods=["POST"])

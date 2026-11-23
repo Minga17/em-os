@@ -8,6 +8,7 @@
         <p class="sub">Nice work today. Rest well.
           {% if plan.tomorrow %}Tomorrow's top 3 starts with: {{ plan.tomorrow|map(attribute='title')|join(', ') }}.{% endif %}
         </p>
+        {% if plan.sunday %}<a class="btn secondary" href="{{ url_for('recap.index') }}">📸 See your week's recap</a>{% endif %}
       {% else %}
         <h3>🌙 Close your day</h3>
         <ul class="close-list">

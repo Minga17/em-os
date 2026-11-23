@@ -14,7 +14,7 @@ from db import get_db
 from habit_model import all_statuses, frozen_days
 from streaks import best_streak
 from timeutil import user_today_for
-from notify import send_toasts, toast
+from notify import celebrate as party, send_toasts, toast
 from timeutil import user_now_str
 
 bp = Blueprint("achievements", __name__, url_prefix="/achievements")
@@ -176,7 +176,34 @@ def unlock_after_actions(response):
                 toast(message)
         else:
             celebrate(new_badges)
+        check_level_up(get_db(), g.user["id"])
     return send_toasts(response)
+
+
+def check_level_up(db, user_id):
+    """Show the level-up screen once for every new level (never for old ones)."""
+    progress = player_progress(db, user_id)
+    seen = db.execute("SELECT level_seen FROM users WHERE id = ?", (user_id,)).fetchone()[0]
+    if seen is None or progress["level"] < seen:          # first time (or XP went down): just remember
+        db.execute("UPDATE users SET level_seen = ? WHERE id = ?", (progress["level"], user_id))
+        db.commit()
+        return None
+    if progress["level"] > seen:
+        db.execute("UPDATE users SET level_seen = ? WHERE id = ?", (progress["level"], user_id))
+        db.commit()
+        details = {"level": progress["level"], "title": progress["title"],
+                   "xp": progress["xp"], "to_next": progress["to_next"],
+                   "unlocks": unlocks_at(progress["level"])}
+        party("levelUp", **details)
+        party("confetti")
+        return details
+    return None
+
+
+def unlocks_at(level):
+    """What a new level unlocks (shown on the level-up screen)."""
+    from themes import THEMES                           # (here to avoid an import loop)
+    return [f"{t['emoji']} {t['name']} theme" for t in THEMES.values() if t["level"] == level]
 
 
 # ── Trophies page ───────────────────────────────────────────────

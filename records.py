@@ -91,6 +91,53 @@ def gather_records(db, user_id, today):
     return records
 
 
+def year_heatmap(db, user_id, today, days=365):
+    """One square per day for the last year: how much you did that day.
+
+    Each check-in, completed habit, finished task and focus session counts as 1.
+    Returns weeks (columns, Monday on top) and month labels.
+    """
+    start = week_start(today - timedelta(days=days - 1))
+    since = start.isoformat()
+    counts = defaultdict(lambda: defaultdict(int))
+    for (day,) in db.execute("SELECT log_date FROM checkins WHERE user_id = ? AND log_date >= ?", (user_id, since)):
+        counts[day]["check-in"] += 1
+    for (day,) in db.execute("""SELECT l.log_date FROM habit_logs l JOIN habits h ON h.id = l.habit_id
+                                WHERE h.user_id = ? AND l.log_date >= ? AND l.amount >= h.goal_count""",
+                             (user_id, since)):
+        counts[day]["habit"] += 1
+    for (day,) in db.execute("""SELECT date(completed_at) FROM tasks WHERE user_id = ? AND status = 'done'
+                                AND date(completed_at) >= ?""", (user_id, since)):
+        counts[day]["task"] += 1
+    for (day,) in db.execute("SELECT log_date FROM focus_sessions WHERE user_id = ? AND log_date >= ? "
+                             "AND minutes IS NOT NULL", (user_id, since)):
+        counts[day]["focus session"] += 1
+
+    def level(total):
+        return 0 if total == 0 else 1 if total <= 2 else 2 if total <= 4 else 3 if total <= 6 else 4
+
+    weeks, months, active_days = [], [], 0
+    day = start
+    while day <= today:
+        column = []
+        for _ in range(7):
+            if day > today:
+                column.append(None)
+            else:
+                things = counts.get(day.isoformat(), {})
+                total = sum(things.values())
+                active_days += total > 0
+                parts = [f"{n} {kind}{'s' if n != 1 else ''}" for kind, n in things.items()] or ["nothing logged"]
+                column.append({"date": day, "level": level(total),
+                               "label": f"{day.strftime('%a %b')} {day.day}: {', '.join(parts)}"})
+            day += timedelta(days=1)
+        first = column[0]["date"]
+        if not months or months[-1][1] != first.strftime("%b"):
+            months.append((len(weeks), first.strftime("%b")))
+        weeks.append(column)
+    return {"weeks": weeks, "months": months, "active_days": active_days}
+
+
 @bp.route("/")
 @login_required
 def index():
@@ -115,5 +162,5 @@ def index():
         ("🏆", "Goals achieved", stats["goals_achieved"]),
     ]
     return render_template("records/index.html", records=gather_records(db, user_id, today),
-                           totals=totals, progress=progress,
+                           totals=totals, progress=progress, heat=year_heatmap(db, user_id, today),
                            days_with_emos=(today - date.fromisoformat(first_day)).days + 1 if first_day else 1)

@@ -6,7 +6,7 @@ from auth import login_required
 from db import get_db
 from focus import focus_minutes_on
 from freezes import award_freeze
-from notify import toast
+from notify import celebrate, toast
 from scoring import compute_score
 from timeutil import user_today
 from today import today_summary
@@ -156,6 +156,7 @@ def quick():
         summary = today_summary(db, user_id)
         if summary["all_done"]:
             toast("🎉 Everything done today. Amazing!")
+            celebrate("confetti")
         today_checkin = db.execute("SELECT score FROM checkins WHERE user_id = ? AND log_date = ?",
                                    (user_id, today_str)).fetchone()
         return render_template("today/_checkin_done.html", today_checkin=today_checkin, summary=summary)

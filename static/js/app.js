@@ -197,3 +197,166 @@ if (focusTimer) {
   tick();
   setInterval(tick, 1000);
 }
+
+// 7. Celebrations: confetti and the level-up screen
+const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function confetti() {
+  if (calm || document.querySelector(".confetti")) return;      // no motion for people who asked for none
+  const canvas = document.createElement("canvas");
+  canvas.className = "confetti";
+  canvas.setAttribute("aria-hidden", "true");
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext("2d");
+  const scale = window.devicePixelRatio || 1;
+  canvas.width = innerWidth * scale;
+  canvas.height = innerHeight * scale;
+  ctx.scale(scale, scale);
+  const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#4a9eff";
+  const colors = [accent, "#22c55e", "#f59e0b", "#ec4899", "#a855f7", "#ffffff"];
+  const pieces = Array.from({ length: 160 }, function () {
+    return {
+      x: innerWidth / 2 + (Math.random() - 0.5) * 120, y: innerHeight * 0.35,
+      vx: (Math.random() - 0.5) * 14, vy: -Math.random() * 14 - 4,
+      size: 5 + Math.random() * 6, spin: Math.random() * 6, turn: (Math.random() - 0.5) * 0.3,
+      color: colors[Math.floor(Math.random() * colors.length)],
+    };
+  });
+  const start = performance.now();
+  (function frame(now) {
+    const t = now - start;
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    ctx.globalAlpha = Math.max(0, 1 - t / 2800);
+    pieces.forEach(function (p) {
+      p.vy += 0.35; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; p.spin += p.turn;
+      ctx.save();
+      ctx.translate(p.x, p.y); ctx.rotate(p.spin);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+      ctx.restore();
+    });
+    if (t < 2800) requestAnimationFrame(frame); else canvas.remove();
+  })(start);
+  if (navigator.vibrate) navigator.vibrate([30, 40, 30]);
+}
+
+function levelUp(info) {
+  const old = document.querySelector(".level-up");
+  if (old) old.remove();
+  const overlay = document.createElement("div");
+  overlay.className = "level-up";
+  overlay.setAttribute("role", "dialog");
+  overlay.setAttribute("aria-modal", "true");
+  overlay.setAttribute("aria-label", "Level up");
+  const card = document.createElement("div");
+  card.className = "level-up-card";
+  function add(tag, className, text) {
+    const el = document.createElement(tag);
+    el.className = className;
+    el.textContent = text;                   // textContent only: safe
+    card.appendChild(el);
+    return el;
+  }
+  add("div", "level-up-eyebrow", "LEVEL UP!");
+  add("div", "level-up-badge", String(info.level));
+  add("div", "level-up-title", info.title);
+  add("p", "level-up-text", "You reached level " + info.level + " with " + info.xp + " XP. "
+      + info.to_next + " XP to the next level.");
+  (info.unlocks || []).forEach(function (thing) { add("p", "level-up-unlock", "🔓 New: " + thing); });
+  const button = add("button", "level-up-close", "Keep going →");
+  function close() { overlay.remove(); document.removeEventListener("keydown", onKey); }
+  function onKey(event) { if (event.key === "Escape") close(); }
+  button.addEventListener("click", close);
+  overlay.addEventListener("click", function (event) { if (event.target === overlay) close(); });
+  document.addEventListener("keydown", onKey);
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+  button.focus();
+}
+
+// From instant (htmx) actions...
+document.addEventListener("confetti", function () { confetti(); });
+document.addEventListener("levelUp", function (event) { levelUp(event.detail); });
+// ...and from normal page loads (saved by the server for this page)
+const waiting = document.getElementById("celebrations");
+if (waiting) {
+  try {
+    const found = JSON.parse(waiting.textContent || "{}");
+    if (found.levelUp) levelUp(found.levelUp);
+    if (found.confetti) setTimeout(confetti, 200);
+  } catch (error) { /* nothing to celebrate */ }
+}
+
+// 8. Wide scrolling boxes (the year heatmap) start at the newest end
+document.querySelectorAll("[data-scroll-end]").forEach(function (box) { box.scrollLeft = box.scrollWidth; });
+
+// 9. Weekly recap: draw the card as a picture (1080×1350) to share or save
+const recapData = document.getElementById("recap-data");
+if (recapData) {
+  const recap = JSON.parse(recapData.textContent);
+  const shareButton = document.querySelector("[data-recap-share]");
+  const saveButton = document.querySelector("[data-recap-save]");
+
+  function drawRecap() {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1080; canvas.height = 1350;
+    const c = canvas.getContext("2d");
+    const css = getComputedStyle(document.documentElement);
+    const accent = css.getPropertyValue("--accent").trim() || "#4a9eff";
+    const font = "system-ui, 'Segoe UI', sans-serif";
+
+    const sky = c.createLinearGradient(0, 0, 1080, 1350);
+    sky.addColorStop(0, "#0d1117"); sky.addColorStop(1, "#1b1438");
+    c.fillStyle = sky; c.fillRect(0, 0, 1080, 1350);
+    const glow = c.createRadialGradient(880, 160, 20, 880, 160, 600);
+    glow.addColorStop(0, accent + "88"); glow.addColorStop(1, "transparent");
+    c.fillStyle = glow; c.fillRect(0, 0, 1080, 1350);
+
+    c.fillStyle = accent; c.font = "800 44px " + font; c.fillText("EM OS", 80, 130);
+    c.fillStyle = "#ffffff"; c.font = "800 96px " + font;
+    c.fillText(recap.name ? recap.name + "'s week" : "My week", 80, 260);
+    c.fillStyle = "#94a3b8"; c.font = "500 40px " + font; c.fillText(recap.range, 80, 325);
+
+    recap.stats.forEach(function (stat, i) {
+      const x = 80 + (i % 2) * 470, y = 400 + Math.floor(i / 2) * 260;
+      c.fillStyle = "#ffffff12";
+      c.beginPath(); c.roundRect(x, y, 450, 230, 32); c.fill();
+      c.fillStyle = "#ffffff"; c.font = "60px " + font; c.fillText(stat[0], x + 36, y + 90);   // solid, so emoji aren't faded
+      c.fillStyle = "#ffffff"; c.font = "800 84px " + font; c.fillText(String(stat[2]), x + 36, y + 180);
+      c.fillStyle = "#cbd5e1"; c.font = "500 34px " + font; c.fillText(stat[1], x + 130, y + 78);
+    });
+
+    c.fillStyle = "#e2e8f0"; c.font = "600 38px " + font;
+    c.fillText("Level " + recap.level + " · " + recap.title, 80, 1230);
+    if (recap.best_day) { c.textAlign = "right"; c.fillText("Best day: " + recap.best_day, 1000, 1230); c.textAlign = "left"; }
+    c.fillStyle = "#94a3b8"; c.font = "500 30px " + font; c.fillText("em-os.onrender.com", 80, 1290);
+    return canvas;
+  }
+
+  function asFile() {
+    return new Promise(function (resolve) {
+      drawRecap().toBlob(function (blob) {
+        resolve(new File([blob], "em-os-week.png", { type: "image/png" }));
+      }, "image/png");
+    });
+  }
+
+  asFile().then(function (file) {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) shareButton.hidden = false;
+  });
+  shareButton.addEventListener("click", function () {
+    asFile().then(function (file) {
+      return navigator.share({ files: [file], title: "My week on EM OS" });
+    }).catch(function () { /* the person closed the share sheet */ });
+  });
+  saveButton.addEventListener("click", function () {
+    asFile().then(function (file) {
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(file);
+      link.download = file.name;
+      link.click();
+      setTimeout(function () { URL.revokeObjectURL(link.href); }, 5000);
+      showToast("📸 Image saved");
+    });
+  });
+}

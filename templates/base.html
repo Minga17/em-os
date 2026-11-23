@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="{{ theme }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -7,7 +7,12 @@
 
   <!-- App install (PWA) -->
   <link rel="manifest" href="{{ url_for('manifest') }}">
-  <meta name="theme-color" content="#161b25">
+  {% if theme_bar %}
+    <meta name="theme-color" content="{{ theme_bar }}">
+  {% else %}
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#161b25" media="(prefers-color-scheme: dark)">
+  {% endif %}
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/favicon.png') }}">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -101,6 +106,9 @@
 
   <!-- Pop-up messages after instant actions appear here -->
   <div id="toasts" aria-live="polite"></div>
+
+  <!-- Confetti or a level-up waiting from the last action (shown once) -->
+  {% if g.user %}<script type="application/json" id="celebrations">{{ take_celebrations()|tojson }}</script>{% endif %}
 
   <script src="{{ url_for('static', filename='js/htmx.min.js') }}" defer></script>
   <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>

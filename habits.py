@@ -6,7 +6,7 @@ from auth import login_required
 from db import get_db
 from habit_model import (DAY_NAMES, KINDS, SCHEDULES, frozen_days, load_logs, scheduled_days,
                          status, week_dots)
-from notify import toast
+from notify import celebrate, toast
 from timeutil import user_today
 from today import today_summary
 
@@ -126,6 +126,7 @@ def respond(habit_id, message=None):
                 toast(message)
                 if summary["all_done"]:
                     toast("🎉 Everything done today. Amazing!")
+                    celebrate("confetti")
             return render_template("today/_habit_toggle.html", item=item, summary=summary)
     if message:
         flash(message, "success")

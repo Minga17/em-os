@@ -6,6 +6,7 @@ from flask import Blueprint, abort, flash, g, redirect, render_template, request
 
 from auth import login_required
 from db import get_db
+from notify import celebrate
 from task_logic import GOAL_TASKS, goal_task_counts
 from timeutil import user_today
 
@@ -216,6 +217,7 @@ def edit(goal_id):
         db.commit()
         if data["status"] == "achieved" and goal["status"] != "achieved":
             flash(f"🎉 Goal achieved: {data['title']}!", "success")
+            celebrate("confetti")
         else:
             flash("Goal updated.", "success")
         return redirect(url_for("goals.index"))
@@ -233,6 +235,7 @@ def achieve(goal_id):
                "WHERE id = ?", (goal_id,))
     db.commit()
     flash(f"🏆 Goal achieved: {goal['title']}! +50 XP", "success")
+    celebrate("confetti")
     return redirect(url_for("goals.index"))
 
 

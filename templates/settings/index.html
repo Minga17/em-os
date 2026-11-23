@@ -27,6 +27,23 @@
     </form>
   </div>
 
+  <div class="card settings-card" id="theme">
+    <h2>🎨 Theme</h2>
+    <form method="post" action="{{ url_for('settings.theme') }}" class="theme-picker">
+      {% for key, t in themes.items() %}
+        {% set locked = level < t.level %}
+        <label class="theme-option {% if locked %}locked{% endif %}">
+          <input type="radio" name="theme" value="{{ key }}" {% if key == current_theme %}checked{% endif %}
+                 {% if locked %}disabled{% endif %}>
+          <span class="swatch" style="background: linear-gradient(135deg, {{ t.swatch[0] }} 50%, {{ t.swatch[1] }} 50%)"></span>
+          <span class="theme-name">{{ t.emoji }} {{ t.name }}</span>
+          {% if locked %}<span class="sub">🔒 Level {{ t.level }}</span>{% endif %}
+        </label>
+      {% endfor %}
+      <button>Use this theme</button>
+    </form>
+  </div>
+
   <div class="card settings-card" id="reminders">
     <h2>🔔 Daily reminders</h2>
     <p class="muted">Gentle nudges, never more than one each. Each one is skipped if you've already done it.</p>

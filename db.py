@@ -82,6 +82,8 @@ def run_migrations(db):
         ("tasks", "repeat", "TEXT NOT NULL DEFAULT ''"),          # '', daily, weekdays, weekly, monthly:<day>
         ("tasks", "next_id", "INTEGER"),                          # the repeat it created (for undo)
         ("tasks", "goal_id", "INTEGER REFERENCES goals(id) ON DELETE SET NULL"),
+        ("users", "level_seen", "INTEGER"),                           # last level we celebrated
+        ("users", "theme", "TEXT NOT NULL DEFAULT 'midnight'"),       # color theme
     ]:
         if not column_exists(db, table, column):
             db.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
