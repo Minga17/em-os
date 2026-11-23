@@ -1,24 +1,24 @@
 {% extends "base.html" %}
-{% block title %}Goals · EM OS{% endblock %}
+{% block title %}{{ _("Goals · EM OS") }}{% endblock %}
 
 {% block content %}
-  <h1>Goals</h1>
+  <h1>{{ _("Goals") }}</h1>
 
   <details class="card add-project">
-    <summary>🎯 New goal</summary>
+    <summary>{{ _("🎯 New goal") }}</summary>
     <form method="post" class="stack">
-      <input name="title" placeholder="e.g. Land a data engineering internship" required maxlength="150">
+      <input aria-label="{{ _("Goal") }}" name="title" placeholder="{{ _("e.g. Land a data engineering internship") }}" required maxlength="150">
       <div class="row">
-        <select name="area_id">
-          <option value="">No area</option>
+        <select name="area_id" aria-label="{{ _("Life area") }}">
+          <option value="">{{ _("No area") }}</option>
           {% for a in areas %}
             <option value="{{ a['id'] }}">{{ a['icon'] }} {{ a['name'] }}</option>
           {% endfor %}
         </select>
-        <input name="target_date" type="date" title="Target date">
+        <input name="target_date" type="date" title="{{ _("Target date") }}" aria-label="{{ _("Target date") }}">
       </div>
-      <textarea name="why" rows="2" placeholder="Why does this matter to you?"></textarea>
-      <button>Add goal</button>
+      <textarea aria-label="{{ _("Why does this matter to you") }}" name="why" rows="2" placeholder="{{ _("Why does this matter to you?") }}"></textarea>
+      <button>{{ _("Add goal") }}</button>
     </form>
   </details>
 
@@ -26,8 +26,8 @@
     {% set area = section.area %}
     <section class="area" style="--area-color: {{ area['color'] if area else '#94a3b8' }}">
       <h2 class="area-title">
-        {% if area %}{{ area['icon'] }} {{ area['name'] }}{% else %}📂 No area{% endif %}
-        <span class="sub">{{ section['items']|length }} goal{{ '' if section['items']|length == 1 else 's' }}</span>
+        {% if area %}{{ area['icon'] }} {{ area['name'] }}{% else %}{{ _("📂 No area") }}{% endif %}
+        <span class="sub">{{ _n("{n} goal", "{n} goals", section['items']|length) }}</span>
       </h2>
 
       {% for item in section['items'] %}
@@ -36,8 +36,8 @@
           <div class="project-top">
             <div class="goal-title">{{ goal['title'] }}</div>
             <div>
-              <span class="badge {{ goal['status'] }}">{{ goal['status']|capitalize }}</span>
-              <a class="link-btn" href="{{ url_for('goals.edit', goal_id=goal['id']) }}">Edit</a>
+              <span class="badge {{ goal['status'] }}">{{ goal['status']|name }}</span>
+              <a class="link-btn" href="{{ url_for('goals.edit', goal_id=goal['id']) }}">{{ _("Edit") }}</a>
             </div>
           </div>
 
@@ -47,13 +47,13 @@
           <div class="sub">
             <strong>{{ item.percent }}%</strong>
             {% if item.auto %}
-              · {{ item.finished }} of {{ item.total }} tasks done
+              {{ _("· {finished} of {total} tasks done", finished=item.finished, total=item.total) }}
             {% endif %}
             {% if item.days_left is not none and goal['status'] == 'active' %}
               ·
-              {% if item.days_left < 0 %}<span class="overdue-text">⚠️ {{ -item.days_left }} days past target</span>
-              {% elif item.days_left == 0 %}📅 Target is today
-              {% else %}📅 {{ item.days_left }} days left{% endif %}
+              {% if item.days_left < 0 %}<span class="overdue-text">{{ _n("⚠️ {n} day past target", "⚠️ {n} days past target", -item.days_left) }}</span>
+              {% elif item.days_left == 0 %}{{ _("📅 Target is today") }}
+              {% else %}{{ _n("📅 {n} day left", "📅 {n} days left", item.days_left) }}{% endif %}
             {% endif %}
             {% if item.projects %} · 📁 {{ item.projects|join(', ') }}{% endif %}
           </div>
@@ -64,37 +64,37 @@
               {% endfor %}
             </ul>
           {% elif goal['status'] == 'active' and not item.auto %}
-            <p class="sub next-hint">Tip: link tasks to this goal (on the Tasks page) and progress fills in by itself.</p>
+            <p class="sub next-hint">{{ _("Tip: link tasks to this goal (on the Tasks page) and progress fills in by itself.") }}</p>
           {% endif %}
           {% if item.ready %}
             <form method="post" action="{{ url_for('goals.achieve', goal_id=goal['id']) }}" class="achieve-form">
-              <span>🎉 Every task is done!</span>
-              <button>🏆 Mark achieved</button>
+              <span>{{ _("🎉 Every task is done!") }}</span>
+              <button>{{ _("🏆 Mark achieved") }}</button>
             </form>
           {% endif %}
         </div>
       {% else %}
-        <p class="muted empty-area">No goals here yet.</p>
+        <p class="muted empty-area">{{ _("No goals here yet.") }}</p>
       {% endfor %}
     </section>
   {% endfor %}
 
   <details class="card manage-areas">
-    <summary>⚙️ Manage life areas</summary>
+    <summary>{{ _("⚙️ Manage life areas") }}</summary>
     <ul class="area-list">
       {% for a in areas %}
         <li>
           <span>{{ a['icon'] }} {{ a['name'] }}</span>
           <form method="post" action="{{ url_for('goals.delete_area', area_id=a['id']) }}" class="inline">
-            <button class="link">Delete</button>
+            <button class="link">{{ _("Delete") }}</button>
           </form>
         </li>
       {% endfor %}
     </ul>
     <form method="post" action="{{ url_for('goals.add_area') }}" class="add-habit">
-      <input name="icon" value="📁" maxlength="4" class="icon-input" title="Pick an emoji with Win + .">
-      <input name="name" placeholder="New area, e.g. Music" required maxlength="40">
-      <button>Add area</button>
+      <input name="icon" aria-label="{{ _("Area emoji") }}" value="📁" maxlength="4" class="icon-input" title="{{ _("Pick an emoji with Win + .") }}">
+      <input aria-label="{{ _("New area name") }}" name="name" placeholder="{{ _("New area, e.g. Music") }}" required maxlength="40">
+      <button>{{ _("Add area") }}</button>
     </form>
   </details>
 {% endblock %}

@@ -1,0 +1,15 @@
+{# Quick add: type a sentence, see what it will make, tap Add. Works without JavaScript too. #}
+{% macro quick_add(next="home") %}
+  <form method="post" action="{{ url_for('quick.add') }}" class="card quick-add">
+    <input type="hidden" name="next" value="{{ next }}">
+    <label for="qa-text" class="sr-only">{{ _("Quick add a habit or task") }}</label>
+    <div class="qa-row">
+      <input id="qa-text" name="text" maxlength="120" autocomplete="off" required
+             placeholder="{{ _("➕ Quick add: “Gym every Mon/Wed/Fri” or “Essay due Friday”") }}"
+             hx-get="{{ url_for('quick.preview') }}" hx-trigger="input changed delay:250ms"
+             hx-target="#qa-preview" hx-include="#qa-text">
+      <button>{{ _("Add") }}</button>
+    </div>
+    <div id="qa-preview" aria-live="polite"></div>
+  </form>
+{% endmacro %}

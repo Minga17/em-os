@@ -1,22 +1,22 @@
 {% extends "base.html" %}
-{% block title %}Weekly review · EM OS{% endblock %}
+{% block title %}{{ _("Weekly review · EM OS") }}{% endblock %}
 
 {% macro delta(value) -%}
   {% if value is not none and value != 0 %}
     <div class="delta {{ 'up' if value > 0 else 'down' }}">{{ '▲' if value > 0 else '▼' }} {{ value|abs }}</div>
-  {% elif value == 0 %}<div class="delta same">= same</div>{% endif %}
+  {% elif value == 0 %}<div class="delta same">{{ _("= same") }}</div>{% endif %}
 {%- endmacro %}
 
 {% block content %}
   <div class="dash-head">
     <div>
-      <h1>Weekly review</h1>
-      <p class="muted">{{ start.strftime('%b %d') }} – {{ end.strftime('%b %d, %Y') }}{% if is_current %} · this week{% endif %}</p>
+      <h1>{{ _("Weekly review") }}</h1>
+      <p class="muted">{{ start|day('day_month') }} – {{ end|day('yMMMd') }}{% if is_current %} {{ _("· this week") }}{% endif %}</p>
     </div>
-    <nav class="tabs">
-      <a href="{{ url_for('review.week', week=previous_week.isoformat()) }}">← Previous</a>
+    <nav class="tabs" aria-label="{{ _("Choose a period") }}">
+      <a href="{{ url_for('review.week', week=previous_week.isoformat()) }}">{{ _("← Previous") }}</a>
       {% if next_week %}
-        <a href="{{ url_for('review.week', week=next_week.isoformat()) }}">Next →</a>
+        <a href="{{ url_for('review.week', week=next_week.isoformat()) }}">{{ _("Next →") }}</a>
       {% endif %}
     </nav>
   </div>
@@ -24,41 +24,41 @@
   <!-- Auto summary -->
   <div class="kpis">
     <div class="card kpi">
-      <div class="muted">Days logged</div>
+      <div class="muted">{{ _("Days logged") }}</div>
       <div class="big">{{ summary['days_logged'] }}<span class="muted">/7</span></div>
       {{ delta(compare.days) }}
     </div>
     <div class="card kpi">
-      <div class="muted">Avg score</div>
+      <div class="muted">{{ _("Avg score") }}</div>
       <div class="big">{{ summary['avg_score'] if summary['avg_score'] is not none else '–' }}</div>
       {{ delta(compare.score) }}
     </div>
     <div class="card kpi">
-      <div class="muted">Focused hours</div>
+      <div class="muted">{{ _("Focused hours") }}</div>
       <div class="big">{{ summary['total_hours'] or 0 }}</div>
       {{ delta(compare.hours) }}
     </div>
     <div class="card kpi">
-      <div class="muted">Tasks finished</div>
+      <div class="muted">{{ _("Tasks finished") }}</div>
       <div class="big">{{ finished_tasks|length }}</div>
       {{ delta(compare.tasks) }}
     </div>
   </div>
-  <p class="sub compare-note">🔥 {{ streak }}-day check-in streak{% if focus_minutes %} · ⏱ {{ (focus_minutes / 60)|round(1) }} h with the focus timer{% endif %} · arrows compare with the week before</p>
+  <p class="sub compare-note">{{ _n("🔥 {n}-day check-in streak", "🔥 {n}-day check-in streak", streak) }}{% if focus_minutes %} {{ _("· ⏱ {focus_minutes} h with the focus timer", focus_minutes=(focus_minutes / 60)|round(1)) }}{% endif %} {{ _("· arrows compare with the week before") }}</p>
   {% if best_day %}
-    <p class="sub compare-note">🏆 Best day: {{ best_day['log_date']|day_label }} {{ best_day['log_date'] }} with a score of {{ best_day['score'] }}</p>
+    <p class="sub compare-note">{{ _("🏆 Best day: {day} with a score of {score}", day=best_day['log_date']|day_label, score=best_day['score']) }}</p>
   {% endif %}
 
   <div class="two-col">
     <div class="card">
-      <h2>🏆 Wins</h2>
+      <h2>{{ _("🏆 Wins") }}</h2>
       {% for day, text in wins %}
         <p class="note"><span class="sub">{{ day|day_label }}</span><br>{{ text }}</p>
       {% else %}
-        <p class="muted">No wins logged this week.</p>
+        <p class="muted">{{ _("No wins logged this week.") }}</p>
       {% endfor %}
       {% if blockers %}
-        <h2 class="mt">🧱 Blockers</h2>
+        <h2 class="mt">{{ _("🧱 Blockers") }}</h2>
         {% for day, text in blockers %}
           <p class="note"><span class="sub">{{ day|day_label }}</span><br>{{ text }}</p>
         {% endfor %}
@@ -66,7 +66,7 @@
     </div>
 
     <div class="card">
-      <h2>Habits</h2>
+      <h2>{{ _("Habits") }}</h2>
       {% for h in habits %}
         {% set pct = h['rate'] %}
         <div class="hbar-row">
@@ -75,29 +75,29 @@
           <span class="hbar-value">{{ h['done'] }}/{{ h['possible'] }}</span>
         </div>
       {% else %}
-        <p class="muted">No active habits.</p>
+        <p class="muted">{{ _("No active habits.") }}</p>
       {% endfor %}
 
-      <h2 class="mt">✅ Finished tasks</h2>
+      <h2 class="mt">{{ _("✅ Finished tasks") }}</h2>
       {% for t in finished_tasks %}
         <p class="note">{{ t['title'] }}{% if t['project_title'] %} <span class="sub">· 📁 {{ t['project_title'] }}</span>{% endif %}</p>
       {% else %}
-        <p class="muted">No tasks finished this week.</p>
+        <p class="muted">{{ _("No tasks finished this week.") }}</p>
       {% endfor %}
     </div>
   </div>
 
-  <p><a class="btn secondary" href="{{ url_for('recap.index', week=start.isoformat()) }}">📸 Make a recap card of this week</a></p>
+  <p><a class="btn secondary" href="{{ url_for('recap.index', week=start.isoformat()) }}">{{ _("📸 Make a recap card of this week") }}</a></p>
 
   <!-- Reflection form -->
   <div class="card">
-    <h2>Your reflection</h2>
+    <h2>{{ _("Your reflection") }}</h2>
     {% if drafted %}
-      <p class="draft-note">✨ Drafted from your week. Change anything, add what you learned, then save.</p>
+      <p class="draft-note">{{ _("✨ Drafted from your week. Change anything, add what you learned, then save.") }}</p>
     {% endif %}
     <form method="post" class="stack">
       <fieldset class="rating">
-        <legend>How was this week overall?</legend>
+        <legend>{{ _("How was this week overall?") }}</legend>
         {% for n in range(1, 6) %}
           <label>
             <input type="radio" name="rating" value="{{ n }}"
@@ -106,28 +106,28 @@
           </label>
         {% endfor %}
       </fieldset>
-      <label>What went well?
+      <label>{{ _("What went well?") }}
         <textarea name="went_well" rows="3">{{ answers['went_well'] or '' }}</textarea>
       </label>
-      <label>What was hard?
+      <label>{{ _("What was hard?") }}
         <textarea name="challenges" rows="2">{{ answers['challenges'] or '' }}</textarea>
       </label>
-      <label>What did I learn?
-        <textarea name="lessons" rows="2" placeholder="e.g. I focus best in the morning">{{ answers['lessons'] or '' }}</textarea>
+      <label>{{ _("What did I learn?") }}
+        <textarea name="lessons" rows="2" placeholder="{{ _("e.g. I focus best in the morning") }}">{{ answers['lessons'] or '' }}</textarea>
       </label>
-      <label>Main focus for next week
+      <label>{{ _("Main focus for next week") }}
         <textarea name="next_focus" rows="2">{{ answers['next_focus'] or '' }}</textarea>
       </label>
-      <button>Save review</button>
+      <button>{{ _("Save review") }}</button>
     </form>
   </div>
 
   {% if past_reviews %}
-    <h2>Past reviews</h2>
+    <h2>{{ _("Past reviews") }}</h2>
     <div class="past-reviews">
       {% for r in past_reviews %}
         <a class="card past" href="{{ url_for('review.week', week=r['week_start']) }}">
-          <span>Week of {{ r['week_start'] }}</span>
+          <span>{{ _("Week of {week_start}", week_start=r['week_start']) }}</span>
           <span>{% if r['rating'] %}{{ '★' * r['rating'] }}{{ '☆' * (5 - r['rating']) }}{% else %}–{% endif %}</span>
         </a>
       {% endfor %}

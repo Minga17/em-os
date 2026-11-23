@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Import · EM OS") }}{% endblock %}
+
+{% macro link_to_export() %}<a href="{{ url_for('export.index') }}">{{ _("Export") }}</a>{% endmacro %}
+
+{% block content %}
+  <h1>{{ _("Import your history") }}</h1>
+  <p class="muted">{{ _("Bring your streaks and to-dos with you. You'll see a preview first; nothing is saved until you press Import.") }}</p>
+
+  <form method="post" enctype="multipart/form-data" class="card import-form">
+    <label for="import-files" class="import-drop">
+      <span class="import-icon" aria-hidden="true">📥</span>
+      <strong>{{ _("Choose a file") }}</strong>
+      <span class="sub">{{ _("CSV or zip, up to 5 MB. You can pick several CSV files at once.") }}</span>
+    </label>
+    <input id="import-files" type="file" name="files" accept=".csv,.zip,.txt,text/csv,application/zip" multiple required>
+    <button>{{ _("Preview import") }}</button>
+  </form>
+
+  <h2>{{ _("Where to find your file") }}</h2>
+  {% macro bold(text) %}<strong>{{ text }}</strong>{% endmacro %}
+  <div class="import-sources">
+    <details class="card">
+      <summary><span aria-hidden="true">🔁</span> Loop Habit Tracker</summary>
+      <p>{{ _("In Loop, go to {path}. Save or share the .zip file it makes, then upload it here.", path=bold(_("⋮ menu → Settings → Export as CSV"))) }}
+        {{ _("Your habits, how often they repeat and every tick come across.") }}</p>
+    </details>
+    <details class="card">
+      <summary><span aria-hidden="true">✅</span> Todoist</summary>
+      <p>{{ _("On the Todoist website or computer app, open a project and click {path}. Upload the CSV (one per project).", path=bold(_("⋯ → Import & export → Export to CSV"))) }}
+        {{ _("Tasks, due dates, repeats and priorities come across. Sections and sub-tasks are noted on each task.") }}</p>
+    </details>
+    <details class="card">
+      <summary><span aria-hidden="true">🗂️</span> {{ _("EM OS export") }}</summary>
+      <p>{{ _("Download your files from {export} on any account, then upload one or more of them: check-ins, habits, tasks, goals and weekly reviews. Handy for moving to a new account.", export=link_to_export()) }}</p>
+    </details>
+    <details class="card">
+      <summary><span aria-hidden="true">📊</span> {{ _("Any spreadsheet") }}</summary>
+      <p>{{ _("In Excel or Google Sheets, choose {path}. Two layouts work:", path=bold(_("File → Download/Save as → CSV"))) }}</p>
+      <ul>
+        <li>{{ _("{label} a column called Title or Task, and optionally Due, Priority, Notes, Done.", label=bold(_("Tasks:"))) }}</li>
+        <li>{{ _("{label} dates in the first column and one column per habit, with 1, x or ✓ on the days you did it.", label=bold(_("Habit grid:"))) }}</li>
+      </ul>
+    </details>
+  </div>
+{% endblock %}

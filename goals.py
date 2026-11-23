@@ -3,6 +3,7 @@ from collections import defaultdict
 from datetime import date
 
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
+from i18n import _, _n, N_
 
 from auth import login_required
 from db import get_db
@@ -15,12 +16,12 @@ bp = Blueprint("goals", __name__, url_prefix="/goals")
 STATUSES = ["active", "achieved", "paused", "dropped"]
 
 DEFAULT_AREAS = [
-    ("Career", "💼", "#4a9eff"),
-    ("Health", "💪", "#22c55e"),
-    ("Learning", "📚", "#a855f7"),
-    ("Finance", "💰", "#f59e0b"),
-    ("Relationships", "❤️", "#ef4444"),
-    ("Personal", "🌱", "#06b6d4"),
+    (N_("Career"), "💼", "#4a9eff"),
+    (N_("Health"), "💪", "#22c55e"),
+    (N_("Learning"), "📚", "#a855f7"),
+    (N_("Finance"), "💰", "#f59e0b"),
+    (N_("Relationships"), "❤️", "#ef4444"),
+    (N_("Personal"), "🌱", "#06b6d4"),
 ]
 
 
@@ -34,7 +35,7 @@ def ensure_default_areas(user_id):
     if not has_any:
         db.executemany(
             "INSERT INTO life_areas (user_id, name, icon, color, sort_order) VALUES (?, ?, ?, ?, ?)",
-            [(user_id, name, icon, color, position)
+            [(user_id, _(name), icon, color, position)
              for position, (name, icon, color) in enumerate(DEFAULT_AREAS)],
         )
         db.commit()
@@ -78,22 +79,22 @@ def read_goal_form():
     }
 
     if not data["title"]:
-        errors.append("Goal title is required.")
+        errors.append(_('Goal title is required.'))
     if data["status"] not in STATUSES:
-        errors.append("Pick a valid status.")
+        errors.append(_('Pick a valid status.'))
 
     try:
         data["progress"] = int(request.form.get("progress") or 0)
         if not 0 <= data["progress"] <= 100:
             raise ValueError
     except ValueError:
-        errors.append("Progress must be between 0 and 100.")
+        errors.append(_('Progress must be between 0 and 100.'))
 
     if data["target_date"]:
         try:
             date.fromisoformat(data["target_date"])
         except ValueError:
-            errors.append("Target date must be a real date.")
+            errors.append(_('Target date must be a real date.'))
 
     raw_area = request.form.get("area_id", "")
     if raw_area:
@@ -104,7 +105,7 @@ def read_goal_form():
         if owned:
             data["area_id"] = owned["id"]
         else:
-            errors.append("That life area doesn't exist.")
+            errors.append(_("That life area doesn't exist."))
 
     return data, errors
 
@@ -132,7 +133,7 @@ def index():
                  data["target_date"], data["status"], data["progress"]),
             )
             db.commit()
-            flash(f"Goal added: {data['title']} 🎯", "success")
+            flash(_('Goal added: {title} 🎯', title=data['title']), "success")
         return redirect(url_for("goals.index"))
 
     goals = db.execute(
@@ -216,10 +217,10 @@ def edit(goal_id):
         )
         db.commit()
         if data["status"] == "achieved" and goal["status"] != "achieved":
-            flash(f"🎉 Goal achieved: {data['title']}!", "success")
+            flash(_('🎉 Goal achieved: {title}!', title=data['title']), "success")
             celebrate("confetti")
         else:
-            flash("Goal updated.", "success")
+            flash(_('Goal updated.'), "success")
         return redirect(url_for("goals.index"))
 
     return render_template("goals/edit.html", goal=goal, goal_id=goal_id,
@@ -234,7 +235,7 @@ def achieve(goal_id):
     db.execute("UPDATE goals SET status = 'achieved', progress = 100, updated_at = datetime('now') "
                "WHERE id = ?", (goal_id,))
     db.commit()
-    flash(f"🏆 Goal achieved: {goal['title']}! +50 XP", "success")
+    flash(_('🏆 Goal achieved: {title}! +50 XP', title=goal['title']), "success")
     celebrate("confetti")
     return redirect(url_for("goals.index"))
 
@@ -246,7 +247,7 @@ def delete(goal_id):
     db = get_db()
     db.execute("DELETE FROM goals WHERE id = ? AND user_id = ?", (goal_id, g.user["id"]))
     db.commit()
-    flash(f"Deleted goal: {goal['title']}. Linked projects were kept.", "success")
+    flash(_('Deleted goal: {title}. Linked projects were kept.', title=goal['title']), "success")
     return redirect(url_for("goals.index"))
 
 
@@ -257,7 +258,7 @@ def add_area():
     name = request.form.get("name", "").strip()
     icon = request.form.get("icon", "").strip() or "📁"
     if not name:
-        flash("Area name is required.", "error")
+        flash(_('Area name is required.'), "error")
     else:
         db = get_db()
         next_position = db.execute(
@@ -271,9 +272,9 @@ def add_area():
             )
             db.commit()
         except sqlite3.IntegrityError:
-            flash(f"You already have an area called {name}.", "error")
+            flash(_('You already have an area called {name}.', name=name), "error")
         else:
-            flash(f"Area added: {icon} {name}", "success")
+            flash(_('Area added: {icon} {name}', icon=icon, name=name), "success")
     return redirect(url_for("goals.index"))
 
 
@@ -284,5 +285,5 @@ def delete_area(area_id):
     db = get_db()
     db.execute("DELETE FROM life_areas WHERE id = ? AND user_id = ?", (area_id, g.user["id"]))
     db.commit()
-    flash(f"Deleted area: {area['name']}. Its goals moved to 'No area'.", "success")
+    flash(_("Deleted area: {name}. Its goals moved to 'No area'.", name=area['name']), "success")
     return redirect(url_for("goals.index"))

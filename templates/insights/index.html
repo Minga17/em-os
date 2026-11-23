@@ -1,24 +1,22 @@
 {% extends "base.html" %}
-{% block title %}Insights · EM OS{% endblock %}
+{% block title %}{{ _("Insights · EM OS") }}{% endblock %}
 
 {% block content %}
-  <h1>💡 Insights</h1>
-  <p class="muted">Patterns in your own data from the last 90 days. They show what tends to go together,
-    not what causes what. You know your life best.</p>
+  <h1>{{ _("💡 Insights") }}</h1>
+  <p class="muted">{{ _("Patterns in your own data from the last 90 days. They show what tends to go together, not what causes what. You know your life best.") }}</p>
 
   {% if result.locked %}
     <div class="card insight-locked">
-      <h2>🔒 Unlocks after {{ result.needed }} check-ins</h2>
-      <p>You have {{ result.checkins }} so far. A few more weeks of check-ins and habits, and EM OS can start
-        showing what really makes your good days good.</p>
+      <h2>{{ _("🔒 Unlocks after {needed} check-ins", needed=result.needed) }}</h2>
+      <p>{{ _("You have {checkins} so far. A few more weeks of check-ins and habits, and EM OS can start showing what really makes your good days good.", checkins=result.checkins) }}</p>
       <div class="progress"><div style="width: {{ (result.checkins * 100 // result.needed) }}%"></div></div>
-      <p class="sub">{{ result.needed - result.checkins }} to go. The 3-tap check-in on Today counts.</p>
+      <p class="sub">{{ _("{checkins} to go. The 3-tap check-in on Today counts.", checkins=result.needed - result.checkins) }}</p>
     </div>
   {% else %}
     {% if result.support %}
       <div class="card support-note">
         <p>💙 {{ result.support.text }}</p>
-        <a href="{{ result.support.link }}" target="_blank" rel="noopener">Find support near you →</a>
+        <a href="{{ result.support.link }}" target="_blank" rel="noopener">{{ _("Find support near you →") }}</a>
       </div>
     {% endif %}
 
@@ -31,25 +29,24 @@
           <form method="post" action="{{ url_for('insights.vote') }}" class="insight-vote">
             <input type="hidden" name="key" value="{{ item.key }}">
             {% if votes.get(item.key) == 1 %}
-              <span class="sub">👍 Thanks!</span>
+              <span class="sub">{{ _("👍 Thanks!") }}</span>
             {% else %}
-              <span class="sub">Useful?</span>
-              <button name="helpful" value="1" class="link">👍 Yes</button>
-              <button name="helpful" value="0" class="link">👎 Hide this</button>
+              <span class="sub">{{ _("Useful?") }}</span>
+              <button name="helpful" value="1" class="link">{{ _("👍 Yes") }}</button>
+              <button name="helpful" value="0" class="link">{{ _("👎 Hide this") }}</button>
             {% endif %}
           </form>
         </div>
       </div>
     {% else %}
       <div class="card empty-state">
-        <p>No clear patterns yet. That's normal: it can take a few weeks of check-ins and habits.
-          We only show a pattern when the numbers really support it.</p>
+        <p>{{ _("No clear patterns yet. That's normal: it can take a few weeks of check-ins and habits. We only show a pattern when the numbers really support it.") }}</p>
       </div>
     {% endfor %}
 
     {% if votes.values()|select('equalto', 0)|list %}
       <form method="post" action="{{ url_for('insights.reset') }}">
-        <button class="link">Show hidden insights again</button>
+        <button class="link">{{ _("Show hidden insights again") }}</button>
       </form>
     {% endif %}
   {% endif %}

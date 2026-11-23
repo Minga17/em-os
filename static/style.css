@@ -419,7 +419,7 @@ a, button, label { -webkit-tap-highlight-color: transparent; }   /* no grey flas
   }
   .tabbar a span { font-size: 20px; line-height: 1.2; }
   .tabbar a.active { color: var(--accent); font-weight: 600; }
-  .tabbar .tab-main span {
+  .tabbar .tab-main span:not(.tab-label) {
     width: 48px; height: 48px; margin-top: -24px; border-radius: 50%;
     display: grid; place-items: center; font-size: 26px; color: white;
     background: linear-gradient(135deg, var(--accent), #a855f7);
@@ -711,7 +711,7 @@ a.focus-mini { text-decoration: none; font-size: 15px; padding: 4px 6px; }
               var(--accent) 60%, color-mix(in srgb, var(--accent) 70%, black));
   box-shadow: 0 0 24px var(--glow);
 }
-.tabbar .tab-main span { box-shadow: 0 6px 18px var(--glow); }
+.tabbar .tab-main span:not(.tab-label) { box-shadow: 0 6px 18px var(--glow); }
 [data-theme="light"] .backdrop { background: #0f172a66; }
 
 .theme-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr)); gap: 10px; margin-top: 12px; }
@@ -793,3 +793,65 @@ a.focus-mini { text-decoration: none; font-size: 15px; padding: 4px 6px; }
   text-decoration: none; color: var(--text); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
 .insight-today:hover { border-color: var(--accent); }
 .insight-today > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+
+/* ── Phase G: accessibility ──────────────────────────────────────
+   White text needs a deeper shade of the accent to be readable (WCAG AA, 4.5:1).
+   The bright accent stays for links, bars and highlights. */
+:root { --btn: color-mix(in srgb, var(--accent) 72%, black); }
+button, .btn, .rating input:checked + span, .tabs a.active, .level-pill,
+.qc-chips input:checked + span, .day-pick input:checked + span { background: var(--btn); }
+.rating input:checked + span, .qc-chips input:checked + span, .day-pick input:checked + span { border-color: var(--btn); }
+button.link, button.secondary, button.secondary-plain, button.chip, .btn.secondary,
+button.tick, button.remove { background: transparent; }
+.close-form button { background: #7c3aed; }
+.achieve-form button { background: #15803d; }
+
+/* Skip straight to the page content (for keyboard and screen reader users) */
+.skip-link { position: absolute; left: 12px; top: -60px; z-index: 100; padding: 10px 14px; border-radius: 8px;
+  background: var(--btn); color: #fff; text-decoration: none; font-weight: 600; }
+.skip-link:focus { top: 12px; }
+/* A clear focus ring everywhere when using a keyboard */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.card-title { font-size: 17px; margin: 0 0 10px; }
+.hamburger { background: transparent; border: 0; padding: 4px 8px; font: inherit; font-size: 24px; color: var(--text); cursor: pointer; }
+
+/* ── Quick add ──────────────────────────────────────────────── */
+.quick-add { padding: 12px; }
+.qa-row { display: flex; gap: 8px; }
+.qa-row input { flex: 1; min-width: 0; }
+.qa-preview { margin-top: 10px; display: grid; gap: 8px; }
+.qa-what { display: flex; align-items: center; gap: 8px; font-size: 16px; overflow-wrap: anywhere; }
+.qa-icon { font-size: 22px; }
+.qa-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.qa-chip { font-size: 13px; padding: 3px 10px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--text); }
+.qa-kind { border: 0; padding: 0; margin: 0; grid-template-columns: repeat(3, 1fr); }
+.qa-kind span { height: 38px; font-size: 14px; }
+
+/* ── Import ─────────────────────────────────────────────────── */
+.import-form { display: grid; gap: 12px; }
+.import-drop { display: grid; justify-items: center; gap: 4px; padding: 22px 12px; border: 2px dashed var(--border);
+               border-radius: 14px; text-align: center; cursor: pointer; }
+.import-icon { font-size: 32px; }
+.import-sources { display: grid; gap: 8px; }
+.import-sources summary { cursor: pointer; font-weight: 600; }
+.import-sources p, .import-sources ul { margin: 10px 0 0; line-height: 1.5; }
+.import-counts { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.import-counts .big { font-size: 22px; font-weight: 700; margin-right: 6px; }
+.import-list { list-style: none; padding: 12px 16px; display: grid; gap: 6px; overflow-wrap: anywhere; }
+.import-actions { display: flex; gap: 10px; margin-top: 16px; }
+
+/* ── Language links (logged-out pages) ──────────────────────── */
+.language-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; margin: 32px 0 8px; font-size: 14px; }
+.language-links a { color: var(--sub); }
+.language-links a[aria-current] { color: var(--text); font-weight: 600; }
+
+/* Tab bar: always 5 equal columns, labels on one line (longer words in other languages) */
+@media (max-width: 800px) {
+  .tabbar { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; padding-left: 0; padding-right: 0; }
+  .tabbar a { min-width: 0; align-items: stretch; text-align: center; }
+  .tabbar a span:not(.tab-label) { align-self: center; }
+  .tabbar a span.tab-label { font-size: 10.5px; line-height: 1.3; letter-spacing: -0.1px;
+                             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
+@media (max-width: 800px) { .tabbar a.active span.tab-label { font-weight: 500; letter-spacing: -0.2px; } }

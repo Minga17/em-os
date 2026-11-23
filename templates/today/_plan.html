@@ -4,28 +4,28 @@
   {% if plan.evening or plan.closed %}
     <div class="card close-day">
       {% if plan.closed %}
-        <h3>🌙 Day closed</h3>
-        <p class="sub">Nice work today. Rest well.
-          {% if plan.tomorrow %}Tomorrow's top 3 starts with: {{ plan.tomorrow|map(attribute='title')|join(', ') }}.{% endif %}
+        <h2 class="card-title">{{ _("🌙 Day closed") }}</h2>
+        <p class="sub">{{ _("Nice work today. Rest well.") }}
+          {% if plan.tomorrow %}{{ _("Tomorrow's top 3 starts with: {attribute}.", attribute=plan.tomorrow|map(attribute='title')|join(', ')) }}{% endif %}
         </p>
-        {% if plan.sunday %}<a class="btn secondary" href="{{ url_for('recap.index') }}">📸 See your week's recap</a>{% endif %}
+        {% if plan.sunday %}<a class="btn secondary" href="{{ url_for('recap.index') }}">{{ _("📸 See your week's recap") }}</a>{% endif %}
       {% else %}
-        <h3>🌙 Close your day</h3>
+        <h2 class="card-title">{{ _("🌙 Close your day") }}</h2>
         <ul class="close-list">
-          <li>{{ '✅' if summary.checked_in else '⬜' }} Check-in {{ 'done' if summary.checked_in else 'not done yet' }}</li>
-          <li>{{ '✅' if summary.habits and summary.habits|selectattr('done')|list|length == summary.habits|length else '🔥' }}
-            {{ summary.habits|selectattr('done')|list|length }} of {{ summary.habits|length }} habits</li>
+          <li>{{ _("✅ Check-in done") if summary.checked_in else _("⬜ Check-in not done yet") }}</li>
+          {% set habits_done = summary.habits|selectattr('done')|list|length %}
+          <li>{{ '✅' if summary.habits and habits_done == summary.habits|length else '🔥' }} {{ _n("{done} of {n} habit", "{done} of {n} habits", summary.habits|length, done=habits_done) }}</li>
           {% if plan.top %}
-            <li>{{ '✅' if not unfinished else '🎯' }} {{ plan.top_done }} of {{ plan.top|length }} top tasks</li>
+            <li>{{ '✅' if not unfinished else '🎯' }} {{ _n("{done} of {n} top task", "{done} of {n} top tasks", plan.top|length, done=plan.top_done) }}</li>
           {% endif %}
         </ul>
         <form method="post" action="{{ url_for('plan.close') }}" class="close-form"
               hx-post="{{ url_for('plan.close') }}" hx-target="#day-plan" hx-swap="outerHTML">
           {% if unfinished %}
             <label class="carry"><input type="checkbox" name="carry" value="1" checked>
-              Move {{ unfinished|length }} unfinished to tomorrow's top 3</label>
+              {{ _("Move {unfinished} unfinished to tomorrow's top 3", unfinished=unfinished|length) }}</label>
           {% endif %}
-          <button>Close my day</button>
+          <button>{{ _("Close my day") }}</button>
         </form>
       {% endif %}
     </div>
@@ -33,8 +33,8 @@
 
   <div class="card top3">
     <div class="top3-head">
-      <h3>{% if not plan.top and plan.morning %}🌅 Good morning! What are your top 3?{% else %}🎯 Today's top 3{% endif %}</h3>
-      <span class="sub">{% if plan.top %}{{ plan.top_done }}/{{ plan.top|length }} done · {% endif %}<a class="focus-link" href="{{ url_for('focus.index') }}">⏱ Focus</a></span>
+      <h2 class="card-title">{% if not plan.top and plan.morning %}{{ _("🌅 Good morning! What are your top 3?") }}{% else %}{{ _("🎯 Today's top 3") }}{% endif %}</h2>
+      <span class="sub">{% if plan.top %}{{ _("{top_done}/{top} done ·", top_done=plan.top_done, top=plan.top|length) }} {% endif %}<a class="focus-link" href="{{ url_for('focus.index') }}">{{ _("⏱ Focus") }}</a></span>
     </div>
 
     {% if plan.top %}
@@ -43,36 +43,36 @@
           <li class="top3-row {% if t['done'] %}done{% endif %}">
             <form method="post" action="{{ url_for('plan.toggle', task_id=t['id']) }}"
                   hx-post="{{ url_for('plan.toggle', task_id=t['id']) }}" hx-target="#day-plan" hx-swap="outerHTML">
-              <button class="tick" aria-label="{{ 'Undo' if t['done'] else 'Mark done' }}: {{ t['title'] }}">{% if t['done'] %}✓{% endif %}</button>
+              <button class="tick" aria-label="{{ _('Undo: {name}', name=t['title']) if t['done'] else _('Mark done: {name}', name=t['title']) }}">{% if t['done'] %}✓{% endif %}</button>
             </form>
             <span class="top3-title">{{ t['title'] }}</span>
             {% if not t['done'] %}
-              <a class="focus-mini" href="{{ url_for('focus.index', task=t['id']) }}" aria-label="Focus on: {{ t['title'] }}" title="Start a focus session">⏱</a>
+              <a class="focus-mini" href="{{ url_for('focus.index', task=t['id']) }}" aria-label="{{ _('Focus on: {name}', name=t['title']) }}" title="{{ _("Start a focus session") }}">⏱</a>
               <form method="post" action="{{ url_for('plan.unpick', task_id=t['id']) }}"
                     hx-post="{{ url_for('plan.unpick', task_id=t['id']) }}" hx-target="#day-plan" hx-swap="outerHTML">
-                <button class="link remove" aria-label="Remove from top 3: {{ t['title'] }}">✕</button>
+                <button class="link remove" aria-label="{{ _('Remove from top 3: {name}', name=t['title']) }}">✕</button>
               </form>
             {% endif %}
           </li>
         {% endfor %}
       </ul>
     {% else %}
-      <p class="sub">The few things that would make today a win.</p>
+      <p class="sub">{{ _("The few things that would make today a win.") }}</p>
     {% endif %}
 
     {% if plan.can_add %}
       <form method="post" action="{{ url_for('plan.add') }}" class="top3-add"
             hx-post="{{ url_for('plan.add') }}" hx-target="#day-plan" hx-swap="outerHTML">
-        <input name="title" placeholder="Add something for today" maxlength="200" required aria-label="New task for today">
-        <button>Add</button>
+        <input name="title" placeholder="{{ _("Add something for today") }}" maxlength="200" required aria-label="{{ _("New task for today") }}">
+        <button>{{ _("Add") }}</button>
       </form>
       {% if plan.suggestions %}
         <div class="suggest">
-          <span class="sub">Or pick from your tasks:</span>
+          <span class="sub">{{ _("Or pick from your tasks:") }}</span>
           {% for s in plan.suggestions %}
             <form method="post" action="{{ url_for('plan.pick', task_id=s['id']) }}"
                   hx-post="{{ url_for('plan.pick', task_id=s['id']) }}" hx-target="#day-plan" hx-swap="outerHTML">
-              <button class="chip">＋ {{ s['title'] }}{% if s['due_date'] %}<span class="sub"> · due {{ s['due_date'] }}</span>{% endif %}</button>
+              <button class="chip">＋ {{ s['title'] }}{% if s['due_date'] %}<span class="sub"> {{ _("· due {due_date}", due_date=s['due_date']) }}</span>{% endif %}</button>
             </form>
           {% endfor %}
         </div>

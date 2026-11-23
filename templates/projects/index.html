@@ -1,30 +1,30 @@
 {% extends "base.html" %}
-{% block title %}Projects · EM OS{% endblock %}
+{% block title %}{{ _("Projects · EM OS") }}{% endblock %}
 
 {% block content %}
-  <h1>Projects</h1>
+  <h1>{{ _("Projects") }}</h1>
 
   <details class="card add-project">
-    <summary>➕ New project</summary>
+    <summary>{{ _("➕ New project") }}</summary>
     <form method="post" class="stack">
-      <input name="title" placeholder="Project title" required maxlength="120">
+      <input aria-label="{{ _("Project title") }}" name="title" placeholder="{{ _("Project title") }}" required maxlength="120">
       <div class="row">
-        <select name="status">
+        <select name="status" aria-label="{{ _("Status") }}">
           {% for s in statuses %}
-            <option value="{{ s }}" {% if s == 'active' %}selected{% endif %}>{{ s|capitalize }}</option>
+            <option value="{{ s }}" {% if s == 'active' %}selected{% endif %}>{{ s|name }}</option>
           {% endfor %}
         </select>
-        <input name="github_url" type="url" placeholder="https://github.com/...">
+        <input aria-label="{{ _("GitHub link") }}" name="github_url" type="url" placeholder="{{ _("https://github.com/...") }}">
       </div>
-      <select name="goal_id">
-        <option value="">No goal</option>
+      <select name="goal_id" aria-label="{{ _("Goal") }}">
+        <option value="">{{ _("No goal") }}</option>
         {% for gl in goals %}
           <option value="{{ gl['id'] }}">🎯 {{ gl['title'] }}</option>
         {% endfor %}
       </select>
-      <input name="next_action" placeholder="Next action (the very next step)">
-      <textarea name="description" rows="2" placeholder="Short description"></textarea>
-      <button>Add project</button>
+      <input aria-label="{{ _("Next action (the very next step)") }}" name="next_action" placeholder="{{ _("Next action (the very next step)") }}">
+      <textarea aria-label="{{ _("Short description") }}" name="description" rows="2" placeholder="{{ _("Short description") }}"></textarea>
+      <button>{{ _("Add project") }}</button>
     </form>
   </details>
 
@@ -32,10 +32,10 @@
     {% for p in projects %}
       <div class="card project status-{{ p['status'] }}">
         <div class="project-top">
-          <span class="badge {{ p['status'] }}">{{ p['status']|capitalize }}</span>
-          <a class="link-btn" href="{{ url_for('projects.edit', project_id=p['id']) }}">Edit</a>
+          <span class="badge {{ p['status'] }}">{{ p['status']|name }}</span>
+          <a class="link-btn" href="{{ url_for('projects.edit', project_id=p['id']) }}">{{ _("Edit") }}</a>
         </div>
-        <h3>{{ p['title'] }}</h3>
+        <h2 class="card-title">{{ p['title'] }}</h2>
         {% if p['goal_title'] %}<div class="sub">🎯 {{ p['goal_title'] }}</div>{% endif %}
         {% if p['description'] %}<p class="muted">{{ p['description'] }}</p>{% endif %}
         {% if p['next_action'] %}<p class="next">→ {{ p['next_action'] }}</p>{% endif %}
@@ -43,12 +43,12 @@
         {% set pct = (p['done_tasks'] * 100 // p['total_tasks']) if p['total_tasks'] else 0 %}
         <div class="progress"><div style="width: {{ pct }}%"></div></div>
         <div class="sub">
-          <a href="{{ url_for('tasks.index', project=p['id'], show='all') }}">{{ p['done_tasks'] }}/{{ p['total_tasks'] }} tasks done</a>
-          {% if p['github_url'] %} · <a href="{{ p['github_url'] }}" target="_blank" rel="noopener">GitHub ↗</a>{% endif %}
+          <a href="{{ url_for('tasks.index', project=p['id'], show='all') }}">{{ _("{done_tasks}/{total_tasks} tasks done", done_tasks=p['done_tasks'], total_tasks=p['total_tasks']) }}</a>
+          {% if p['github_url'] %} · <a href="{{ p['github_url'] }}" target="_blank" rel="noopener">{{ _("GitHub ↗") }}</a>{% endif %}
         </div>
       </div>
     {% else %}
-      <p class="muted">No projects yet. Add one above.</p>
+      <p class="muted">{{ _("No projects yet. Add one above.") }}</p>
     {% endfor %}
   </div>
 {% endblock %}

@@ -12,6 +12,8 @@ from focus import bp as focus_bp
 from records import bp as records_bp
 from recap import bp as recap_bp
 from insights import bp as insights_bp, insight_of_the_day
+from quickadd import bp as quick_bp
+from importer import bp as importer_bp
 from freezes import bp as freezes_bp
 from jobs import any_jobs, start_background_jobs
 from auth import bp as auth_bp, login_required
@@ -25,6 +27,8 @@ from projects import bp as projects_bp
 from reminders import bp as reminders_bp, push_ready, run_reminders
 from tasks import bp as tasks_bp
 from db import close_db, get_db, init_db
+import i18n
+from i18n import _, format_day
 from settings import bp as settings_bp
 from timeutil import user_today
 from plan import bp as plan_bp, day_plan
@@ -105,6 +109,9 @@ def create_app(test_config=None):
     app.register_blueprint(records_bp)
     app.register_blueprint(recap_bp)
     app.register_blueprint(insights_bp)
+    app.register_blueprint(quick_bp)
+    app.register_blueprint(importer_bp)
+    i18n.init_app(app)
 
     # Reminders and backups run in the background (only online, where they're set up)
     reloader_parent = app.debug and os.environ.get("WERKZEUG_RUN_MAIN") != "true"
@@ -143,10 +150,10 @@ def create_app(test_config=None):
         d = date.fromisoformat(iso_date)
         days_ago = (user_today() - d).days
         if days_ago == 0:
-            return "Today"
+            return _("Today")
         if days_ago == 1:
-            return "Yesterday"
-        return d.strftime("%A")
+            return _("Yesterday")
+        return format_day(d, "weekday")
 
     @app.route("/")
     @login_required

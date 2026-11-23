@@ -1,64 +1,64 @@
 {% extends "base.html" %}
-{% block title %}Focus · EM OS{% endblock %}
+{% block title %}{{ _("Focus · EM OS") }}{% endblock %}
 
 {% block content %}
-  <h1>⏱ Focus</h1>
+  <h1>{{ _("⏱ Focus") }}</h1>
 
   {% if running %}
     <div class="card focus-running" id="focus-timer"
          data-ends-at="{{ ends_at_ms }}" data-started-at="{{ started_ms }}">
-      <p class="muted">{% if running['label'] %}{{ running['label'] }}{% else %}Focusing{% endif %}
-        · {{ running['planned_minutes'] }} minutes</p>
+      <p class="muted">{% if running['label'] %}{{ running['label'] }}{% else %}{{ _("Focusing") }}{% endif %}
+        {{ _("· {planned_minutes} minutes", planned_minutes=running['planned_minutes']) }}</p>
       <div class="focus-dial" style="--p: 0">
         <div class="focus-time" data-remaining aria-live="off">{{ running['planned_minutes'] }}:00</div>
       </div>
-      <p class="sub focus-hint">You can lock your phone. The timer keeps going{% if g.user %} and we'll notify you when it's done{% endif %}.</p>
+      <p class="sub focus-hint">{{ _("You can lock your phone. The timer keeps going and we'll notify you when it's done.") }}</p>
       <div class="focus-actions">
         <form method="post" action="{{ url_for('focus.stop', session_id=running['id']) }}" data-finish>
-          <button>Finish &amp; log it</button>
+          <button>{{ _("Finish & log it") }}</button>
         </form>
         <form method="post" action="{{ url_for('focus.cancel', session_id=running['id']) }}">
-          <button class="link">Cancel (don't log)</button>
+          <button class="link">{{ _("Cancel (don't log)") }}</button>
         </form>
       </div>
     </div>
   {% else %}
     <form method="post" action="{{ url_for('focus.start') }}" class="card stack focus-start">
       <fieldset class="lengths">
-        <legend>How long?</legend>
+        <legend>{{ _("How long?") }}</legend>
         {% for m in lengths %}
           <label><input type="radio" name="minutes" value="{{ m }}" {% if m == 25 %}checked{% endif %}>
-            <span><strong>{{ m }}</strong> min</span></label>
+            <span><strong>{{ m }}</strong> {{ _("min") }}</span></label>
         {% endfor %}
       </fieldset>
-      <label>Working on (optional)
+      <label>{{ _("Working on (optional)") }}
         <select name="task_id">
-          <option value="">Just focusing</option>
+          <option value="">{{ _("Just focusing") }}</option>
           {% for t in tasks %}
             <option value="{{ t['id'] }}" {% if chosen_task == t['id'] %}selected{% endif %}>{{ t['title'] }}</option>
           {% endfor %}
         </select>
       </label>
-      <input name="label" maxlength="80" placeholder="Or type what you're focusing on" aria-label="What you're focusing on">
-      <button class="focus-go">▶ Start focusing</button>
-      <p class="sub">The minutes go into today's focused hours and your check-in score.</p>
+      <input name="label" maxlength="80" placeholder="{{ _("Or type what you're focusing on") }}" aria-label="{{ _("What you're focusing on") }}">
+      <button class="focus-go">{{ _("▶ Start focusing") }}</button>
+      <p class="sub">{{ _("The minutes go into today's focused hours and your check-in score.") }}</p>
     </form>
   {% endif %}
 
   <div class="kpis focus-kpis">
-    <div class="card kpi"><div class="muted">Today</div>
+    <div class="card kpi"><div class="muted">{{ _("Today") }}</div>
       <div class="big">{{ (today_minutes / 60)|round(1) }}<span class="muted"> h</span></div></div>
-    <div class="card kpi"><div class="muted">This week</div>
+    <div class="card kpi"><div class="muted">{{ _("This week") }}</div>
       <div class="big">{{ (week_minutes / 60)|round(1) }}<span class="muted"> h</span></div></div>
   </div>
 
   {% if sessions %}
     <div class="card">
-      <h2>Today's sessions</h2>
+      <h2>{{ _("Today's sessions") }}</h2>
       <ul class="session-list">
         {% for s in sessions %}
-          <li><strong>{{ s['minutes'] }} min</strong>
-            <span class="sub">{{ s['task_title'] or s['label'] or 'Focus' }}</span></li>
+          <li><strong>{{ _("{minutes} min", minutes=s['minutes']) }}</strong>
+            <span class="sub">{{ s['task_title'] or s['label'] or _('Focus') }}</span></li>
         {% endfor %}
       </ul>
     </div>

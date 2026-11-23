@@ -2,6 +2,7 @@
 from urllib.parse import urlparse
 
 from flask import Blueprint, flash, g, redirect, render_template, request, url_for
+from i18n import _, _n, N_
 
 from auth import login_required
 from db import get_db
@@ -9,7 +10,7 @@ from mailer import admin_emails, send_email
 
 bp = Blueprint("feedback", __name__, url_prefix="/feedback")
 
-KINDS = {"idea": "💡 Idea", "problem": "🐞 Problem", "love": "❤️ Something I love"}
+KINDS = {"idea": N_("💡 Idea"), "problem": N_("🐞 Problem"), "love": N_("❤️ Something I love")}
 MAX_LENGTH = 2000
 MAX_PER_DAY = 10
 
@@ -33,13 +34,13 @@ def index():
             (g.user["id"],)).fetchone()[0]
 
         if kind not in KINDS:
-            flash("Please choose what kind of feedback this is.", "error")
+            flash(_('Please choose what kind of feedback this is.'), "error")
         elif not message:
-            flash("Please write a message.", "error")
+            flash(_('Please write a message.'), "error")
         elif len(message) > MAX_LENGTH:
-            flash(f"Please keep it under {MAX_LENGTH} characters.", "error")
+            flash(_('Please keep it under {x} characters.', x=MAX_LENGTH), "error")
         elif sent_today >= MAX_PER_DAY:
-            flash("Thanks for all the feedback today! Please try again tomorrow.", "error")
+            flash(_('Thanks for all the feedback today! Please try again tomorrow.'), "error")
         else:
             db.execute("INSERT INTO feedback (user_id, kind, message, page) VALUES (?, ?, ?, ?)",
                        (g.user["id"], kind, message, page))
@@ -48,7 +49,7 @@ def index():
                 send_email(owner, f"EM OS feedback: {KINDS[kind]}",
                            f"From: {g.user['name']} <{g.user['email']}>\n"
                            f"Page: {page or '-'}\n\n{message}\n", background=True)
-            flash("Thank you! 🙏 Your feedback was sent. It really helps make EM OS better.", "success")
+            flash(_('Thank you! 🙏 Your feedback was sent. It really helps make EM OS better.'), "success")
             return redirect(url_for("home"))
         return render_template("feedback/index.html", kinds=KINDS, form=request.form,
                                page=page, max_length=MAX_LENGTH)

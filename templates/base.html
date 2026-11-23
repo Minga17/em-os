@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="{{ theme }}">
+<html lang="{{ current_language() }}" data-theme="{{ theme }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -23,85 +23,99 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+  <a href="#main" class="skip-link">{{ _("Skip to content") }}</a>
   {% if g.user %}
     {% set links = [
-      ("home",               "🏠", "Today"),
-      ("dashboard.index",    "📊", "Dashboard"),
-      ("checkin.today",      "📝", "Check-in"),
-      ("habits.index",       "🔥", "Habits"),
-      ("tasks.index",        "✅", "Tasks"),
-      ("focus.index",        "⏱", "Focus"),
-      ("projects.index",     "📁", "Projects"),
-      ("goals.index",        "🎯", "Goals"),
-      ("review.week",        "🗓️", "Weekly review"),
-      ("achievements.index", "🏆", "Achievements"),
-      ("records.index",      "🏅", "Records"),
-      ("insights.index",     "💡", "Insights"),
-      ("export.index",       "⬇️", "Export"),
+      ("home",               "🏠", _("Today")),
+      ("dashboard.index",    "📊", _("Dashboard")),
+      ("checkin.today",      "📝", _("Check-in")),
+      ("habits.index",       "🔥", _("Habits")),
+      ("tasks.index",        "✅", _("Tasks")),
+      ("focus.index",        "⏱", _("Focus")),
+      ("projects.index",     "📁", _("Projects")),
+      ("goals.index",        "🎯", _("Goals")),
+      ("review.week",        "🗓️", _("Weekly review")),
+      ("achievements.index", "🏆", _("Achievements")),
+      ("records.index",      "🏅", _("Records")),
+      ("insights.index",     "💡", _("Insights")),
+      ("export.index",       "⬇️", _("Export")),
+      ("importer.index",     "📥", _("Import")),
     ] %}
     {% macro is_active(endpoint) -%}
       {{ 'active' if request.endpoint == endpoint
            or (request.blueprint and endpoint.startswith(request.blueprint ~ '.')) else '' }}
     {%- endmacro %}
+    {% macro here(endpoint) -%}
+      {% if is_active(endpoint) %}aria-current="page"{% endif %}
+    {%- endmacro %}
 
     <!-- Hidden checkbox: remembers if the mobile menu is open (no JavaScript needed) -->
-    <input type="checkbox" id="nav-toggle" class="nav-toggle">
+    <input type="checkbox" id="nav-toggle" class="nav-toggle" tabindex="-1" aria-hidden="true">
 
     <header class="topbar">
-      <label for="nav-toggle" class="hamburger" title="Menu">☰</label>
+      <button type="button" class="hamburger" title="{{ _("Menu") }}"
+              aria-label="{{ _("Open menu") }}" aria-controls="sidebar" aria-expanded="false">☰</button>
       <a href="{{ url_for('home') }}" class="brand">EM OS</a>
     </header>
 
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar" aria-label="{{ _("Menu") }}">
       <a href="{{ url_for('home') }}" class="brand">EM OS</a>
-      <div class="side-links">
+      <nav class="side-links" aria-label="{{ _("All pages") }}">
         {% for endpoint, icon, label in links %}
-          <a href="{{ url_for(endpoint) }}" class="{{ is_active(endpoint) }}">
-            <span class="icon">{{ icon }}</span>{{ label }}
+          <a href="{{ url_for(endpoint) }}" class="{{ is_active(endpoint) }}" {{ here(endpoint) }}>
+            <span class="icon" aria-hidden="true">{{ icon }}</span>{{ label }}
           </a>
         {% endfor %}
-      </div>
+      </nav>
       <div class="side-footer">
         <div class="who">👤 {{ g.user['name'] }}</div>
-        <a href="{{ url_for('settings.index') }}" class="side-settings {{ is_active('settings.index') }}">⚙️ Settings</a>
-        <a href="{{ url_for('feedback.index') }}" class="side-settings {{ is_active('feedback.index') }}">💬 Send feedback</a>
+        <a href="{{ url_for('settings.index') }}" class="side-settings {{ is_active('settings.index') }}" {{ here('settings.index') }}>{{ _("⚙️ Settings") }}</a>
+        <a href="{{ url_for('feedback.index') }}" class="side-settings {{ is_active('feedback.index') }}" {{ here('feedback.index') }}>{{ _("💬 Send feedback") }}</a>
         {% if is_admin %}
-          <a href="{{ url_for('admin.index') }}" class="side-settings {{ is_active('admin.index') }}">📈 Owner stats</a>
+          <a href="{{ url_for('admin.index') }}" class="side-settings {{ is_active('admin.index') }}" {{ here('admin.index') }}>{{ _("📈 Owner stats") }}</a>
         {% endif %}
         <form method="post" action="{{ url_for('auth.logout') }}">
-          <button class="link">Log out</button>
+          <button class="link">{{ _("Log out") }}</button>
         </form>
       </div>
     </aside>
 
     <!-- Dark layer behind the open mobile menu; tapping it closes the menu -->
-    <label for="nav-toggle" class="backdrop"></label>
+    <label for="nav-toggle" class="backdrop" aria-hidden="true"></label>
 
     <!-- Bottom tab bar (phones), like a native app -->
-    <nav class="tabbar">
-      <a href="{{ url_for('home') }}" class="{{ is_active('home') }}"><span>🏠</span>Today</a>
-      <a href="{{ url_for('habits.index') }}" class="{{ is_active('habits.index') }}"><span>🔥</span>Habits</a>
-      <a href="{{ url_for('checkin.today') }}" class="tab-main {{ is_active('checkin.today') }}"><span>＋</span>Check-in</a>
-      <a href="{{ url_for('tasks.index') }}" class="{{ is_active('tasks.index') }}"><span>✅</span>Tasks</a>
-      <a href="{{ url_for('achievements.index') }}" class="{{ is_active('achievements.index') }}"><span>🏆</span>Trophies</a>
+    <nav class="tabbar" aria-label="{{ _("Quick menu") }}">
+      <a href="{{ url_for('home') }}" class="{{ is_active('home') }}" {{ here('home') }}><span aria-hidden="true">🏠</span><span class="tab-label">{{ _("Today") }}</span></a>
+      <a href="{{ url_for('habits.index') }}" class="{{ is_active('habits.index') }}" {{ here('habits.index') }}><span aria-hidden="true">🔥</span><span class="tab-label">{{ _("Habits") }}</span></a>
+      <a href="{{ url_for('checkin.today') }}" class="tab-main {{ is_active('checkin.today') }}" {{ here('checkin.today') }}><span aria-hidden="true">＋</span><span class="tab-label">{{ _("Check-in") }}</span></a>
+      <a href="{{ url_for('tasks.index') }}" class="{{ is_active('tasks.index') }}" {{ here('tasks.index') }}><span aria-hidden="true">✅</span><span class="tab-label">{{ _("Tasks") }}</span></a>
+      <a href="{{ url_for('achievements.index') }}" class="{{ is_active('achievements.index') }}" {{ here('achievements.index') }}><span aria-hidden="true">🏆</span><span class="tab-label">{{ _("Trophies") }}</span></a>
     </nav>
   {% else %}
-    <nav class="topnav">
+    <nav class="topnav" aria-label="{{ _("Main") }}">
       <a href="{{ url_for('auth.login') }}" class="brand">EM OS</a>
-      <a href="{{ url_for('auth.login') }}">Log in</a>
-      <a href="{{ url_for('auth.register') }}">Sign up</a>
+      <a href="{{ url_for('auth.login') }}">{{ _("Log in") }}</a>
+      <a href="{{ url_for('auth.register') }}">{{ _("Sign up") }}</a>
     </nav>
   {% endif %}
 
   <div class="page {% if g.user %}with-sidebar{% endif %}">
-    <main>
+    <main id="main" tabindex="-1">
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% for category, message in messages %}
-          <div class="flash {{ category }}">{{ message }}</div>
+          <div class="flash {{ category }}" role="{{ 'alert' if category == 'error' else 'status' }}">{{ message }}</div>
         {% endfor %}
       {% endwith %}
 
       {% block content %}{% endblock %}
+      {% if not g.user %}
+        <nav class="language-links" aria-label="{{ _("Language") }}">
+          {% for code, name in LANGUAGES.items() %}
+            <a href="?lang={{ code }}" lang="{{ code }}" hreflang="{{ code }}"
+               {% if code == current_language() %}aria-current="true"{% endif %}>{{ name }}</a>
+          {% endfor %}
+        </nav>
+      {% endif %}
     </main>
   </div>
 
@@ -111,6 +125,7 @@
   <!-- Confetti or a level-up waiting from the last action (shown once) -->
   {% if g.user %}<script type="application/json" id="celebrations">{{ take_celebrations()|tojson }}</script>{% endif %}
 
+  <script type="application/json" id="js-texts">{{ js_texts()|tojson }}</script>
   <script src="{{ url_for('static', filename='js/htmx.min.js') }}" defer></script>
   <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
 </body>

@@ -18,6 +18,7 @@ from urllib.parse import urlparse
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from flask import Blueprint, current_app, flash, g, jsonify, redirect, request, url_for
+from i18n import _, _n, current_language, translate, translate_n
 
 from auth import login_required
 from db import get_db
@@ -45,10 +46,17 @@ PUSH_HOSTS = (
 
 
 def time_label(hhmm):
-    """'20:30' -> '8:30 PM'"""
+    """'20:30' -> '8:30 PM' in English, '20:30' in Spanish, French and Portuguese"""
     hour, minute = map(int, hhmm.split(":"))
+    if current_language() != "en":
+        return f"{hour:02d}:{minute:02d}"
     suffix = "AM" if hour < 12 else "PM"
     return f"{hour % 12 or 12}:{minute:02d} {suffix}"
+
+
+def user_language(db, user_id):
+    row = db.execute("SELECT language FROM users WHERE id = ?", (user_id,)).fetchone()
+    return (row[0] if row else None) or "en"
 
 
 def is_push_endpoint(url):
@@ -128,17 +136,18 @@ def reminder_message(db, user_id, today):
 
     from freezes import apply_freezes           # (imported here to avoid an import loop)
     apply_freezes(db, user_id, today)
+    lang = user_language(db, user_id)
     habits_left = len(habits_still_due(all_statuses(db, user_id, today)))
-    habits_text = (f" {habits_left} habit{'s' if habits_left != 1 else ''} left today."
+    habits_text = (" " + translate_n(lang, "{n} habit left today.", "{n} habits left today.", habits_left)
                    if habits_left else "")
 
     streak = current_streak(checkin_dates, today, frozen_days(db, user_id))
     if streak >= 2:
-        title = f"🔥 Keep your {streak}-day streak alive!"
-        body = "3 taps to check in before midnight." + habits_text
+        title = translate_n(lang, "🔥 Keep your {n}-day streak alive!", "🔥 Keep your {n}-day streak alive!", streak)
+        body = translate(lang, "3 taps to check in before midnight.") + habits_text
     else:
-        title = "🌙 How did today go?"
-        body = "Check in with 3 taps and close your day." + habits_text
+        title = translate(lang, "🌙 How did today go?")
+        body = translate(lang, "Check in with 3 taps and close your day.") + habits_text
     return {"title": title, "body": body.strip(), "url": "/", "tag": "daily-reminder"}
 
 
@@ -148,8 +157,9 @@ def morning_message(db, user_id, today):
                          (user_id, today.isoformat())).fetchone()[0]
     if planned:
         return None
-    return {"title": "🌅 Good morning! What are your top 3?",
-            "body": "Pick the 3 things that would make today a win.",
+    lang = user_language(db, user_id)
+    return {"title": translate(lang, "🌅 Good morning! What are your top 3?"),
+            "body": translate(lang, "Pick the 3 things that would make today a win."),
             "url": "/", "tag": "morning-plan"}
 
 
@@ -219,13 +229,13 @@ def set_time():
             continue                                   # this form didn't include it
         choice = request.form.get(field, "")
         if choice and choice not in choices:
-            flash("Please pick a time from the list.", "error")
+            flash(_('Please pick a time from the list.'), "error")
             return redirect(url_for("settings.index") + "#reminders")
         db.execute(f"UPDATE users SET {field} = ? WHERE id = ?", (choice or None, g.user["id"]))
-        label = "Evening check-in" if field == "reminder_time" else "Morning plan"
-        changes.append(f"{label}: {time_label(choice) if choice else 'off'}")
+        label = _("Evening check-in") if field == "reminder_time" else _("Morning plan")
+        changes.append(f"{label}: {time_label(choice) if choice else _('off')}")
     db.commit()
-    flash("🔔 Reminders saved. " + " · ".join(changes), "success")
+    flash(_("🔔 Reminders saved. {changes}", changes=" · ".join(changes)), "success")
     return redirect(url_for("settings.index") + "#reminders")
 
 
@@ -234,14 +244,14 @@ def set_time():
 def subscribe():
     data = request.get_json(silent=True) if request.is_json else None
     if not isinstance(data, dict):
-        return jsonify(error="Expected JSON."), 400
+        return jsonify(error=_("Expected JSON.")), 400
     endpoint = data.get("endpoint")
     keys = data.get("keys") if isinstance(data.get("keys"), dict) else {}
     p256dh, auth_key = keys.get("p256dh"), keys.get("auth")
     if not (isinstance(endpoint, str) and len(endpoint) <= 1000 and is_push_endpoint(endpoint)
             and isinstance(p256dh, str) and 0 < len(p256dh) <= 200
             and isinstance(auth_key, str) and 0 < len(auth_key) <= 100):
-        return jsonify(error="That doesn't look like a browser push subscription."), 400
+        return jsonify(error=_("That doesn't look like a browser push subscription.")), 400
 
     db = get_db()
     db.execute(
@@ -263,7 +273,9 @@ def device_status(db):
         """SELECT reminder_time,
                   (SELECT COUNT(*) FROM push_subscriptions WHERE user_id = users.id) AS devices
            FROM users WHERE id = ?""", (g.user["id"],)).fetchone()
-    return {"reminder_time": row["reminder_time"], "devices": row["devices"]}
+    return {"reminder_time": row["reminder_time"], "devices": row["devices"],
+            "devices_text": _n("{n} device signed up for reminders.", "{n} devices signed up for reminders.",
+                               row["devices"])}
 
 
 @bp.route("/unsubscribe", methods=["POST"])
@@ -272,7 +284,7 @@ def unsubscribe():
     data = request.get_json(silent=True) if request.is_json else None
     endpoint = data.get("endpoint") if isinstance(data, dict) else None
     if not isinstance(endpoint, str):
-        return jsonify(error="Expected JSON with an endpoint."), 400
+        return jsonify(error=_("Expected JSON with an endpoint.")), 400
     db = get_db()
     db.execute("DELETE FROM push_subscriptions WHERE user_id = ? AND endpoint = ?",
                (g.user["id"], endpoint))
@@ -284,10 +296,10 @@ def unsubscribe():
 @login_required
 def test():
     if not push_ready():
-        return jsonify(error="Reminders aren't set up on this server yet."), 503
+        return jsonify(error=_("Reminders aren't set up on this server yet.")), 503
     sent = send_to_user(get_db(), g.user["id"], {
-        "title": "🔔 EM OS reminders are on!",
-        "body": "This is how your daily reminder will look.",
+        "title": _("🔔 EM OS reminders are on!"),
+        "body": _("This is how your daily reminder will look."),
         "url": "/", "tag": "test",
     })
     return jsonify(sent=sent)

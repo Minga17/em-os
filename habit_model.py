@@ -9,6 +9,7 @@ import math
 from collections import defaultdict
 from datetime import date, timedelta
 
+from i18n import _, _n, weekday_names
 from streaks import Streak, clean_streak, day_streak, week_start, week_streak
 
 DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -29,17 +30,18 @@ def is_scheduled(habit, day):
 
 def schedule_text(habit):
     if habit["kind"] == "quit":
-        return "Quit"
+        return _("Quit")
     if habit["schedule"] == "days":
         days = sorted(scheduled_days(habit))
         if days == [0, 1, 2, 3, 4]:
-            return "Weekdays"
+            return _("Weekdays")
         if days == [5, 6]:
-            return "Weekends"
-        return " ".join(DAY_NAMES[d] for d in days)
+            return _("Weekends")
+        names = weekday_names()
+        return " ".join(names[d] for d in days)
     if habit["schedule"] == "weekly":
-        return f"{habit['per_week']}× a week"
-    return "Every day"
+        return _("{n}× a week", n=habit["per_week"])
+    return _("Every day")
 
 
 def load_logs(db, user_id, active_only=True):
@@ -86,30 +88,32 @@ def status(habit, amounts, slips, frozen, today):
         streak = clean_streak(min(start, today), slips, today)
         s.update(due=False, done=not s["slipped"])
         if s["slipped"]:
-            label = "Fresh start today 💪"
+            label = _("Fresh start today 💪")
         elif streak.current == 0:
-            label = "Day one. You've got this 💪"
+            label = _("Day one. You've got this 💪")
         else:
-            label = f"{streak.current} day{'s' if streak.current != 1 else ''} clean"
+            label = _n("{n} day clean", "{n} days clean", streak.current)
     elif habit["schedule"] == "weekly":
         streak = week_streak(done_days, today, habit["per_week"])
         this_week = week_start(today)
         s["week_done"] = sum(1 for d in done_days if this_week <= d <= today)
         week_met = s["week_done"] >= habit["per_week"]
         s["counts_done"] = s["done"] or week_met
-        label = f"{s['week_done']}/{habit['per_week']} this week"
+        label = _("{done}/{goal} this week", done=s["week_done"], goal=habit["per_week"])
         if week_met:
             label = f"✅ {label}"
         if streak.current:
-            label += f" · 🔥 {streak.current}-week streak"
+            label += " · " + _n("🔥 {n}-week streak", "🔥 {n}-week streak", streak.current)
     else:
         streak = day_streak(done_days, today, frozen,
                             scheduled=(lambda d: is_scheduled(habit, d)))
         s["due"] = is_scheduled(habit, today)
         s["counts_done"] = s["done"]
-        label = f"🔥 {streak.current}-day streak" if streak.current else "Start a streak today"
+        label = (_n("🔥 {n}-day streak", "🔥 {n}-day streak", streak.current) if streak.current
+                 else _("Start a streak today"))
         if streak.at_risk:
-            label = f"⚠️ {streak.current}-day streak: missed last time, don't miss twice"
+            label = _n("⚠️ {n}-day streak: missed last time, don't miss twice",
+                       "⚠️ {n}-day streak: missed last time, don't miss twice", streak.current)
 
     s.update(streak=streak.current, best=streak.best, at_risk=streak.at_risk, label=label)
     if s["counter"] and habit["kind"] == "build":

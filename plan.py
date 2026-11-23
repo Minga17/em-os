@@ -7,6 +7,7 @@ tasks to tomorrow, and close the day (+5 XP).
 from datetime import timedelta
 
 from flask import Blueprint, abort, g, redirect, render_template, request, url_for
+from i18n import _, _n, N_
 
 from auth import login_required
 from db import get_db
@@ -84,9 +85,9 @@ def add():
     title = request.form.get("title", "").strip()[:200]
     db = get_db()
     if not title:
-        toast("Type what you want to get done first.")
+        toast(_('Type what you want to get done first.'))
     elif top_count(db) >= TOP_N:
-        toast(f"Your top {TOP_N} is full. Finish or remove one first.")
+        toast(_('Your top {x} is full. Finish or remove one first.', x=TOP_N))
     else:
         db.execute("INSERT INTO tasks (user_id, title, focus_date) VALUES (?, ?, ?)",
                    (g.user["id"], title, user_today().isoformat()))
@@ -124,13 +125,13 @@ def toggle(task_id):
         reopen_task(db, task)
     else:
         next_repeat = complete_task(db, task, user_today(), user_now_str())
-        toast(f"+10 XP · ✅ {task['title']}")
+        toast(_('+10 XP · ✅ {title}', title=task['title']))
         for message in completion_messages(db, task, next_repeat):
             toast(message)
     db.commit()
     plan = day_plan(db, g.user["id"])
     if task["status"] != "done" and plan["top"] and plan["top_done"] == len(plan["top"]):
-        toast(f"🎯 Top {len(plan['top'])} done! Great day.")
+        toast(_('🎯 Top {top} done! Great day.', top=len(plan['top'])))
     return respond()
 
 
@@ -148,6 +149,6 @@ def close():
                        (g.user["id"], today.isoformat())).rowcount
     db.commit()
     if added:
-        toast("🌙 Day closed. +5 XP. Rest well!")
+        toast(_('🌙 Day closed. +5 XP. Rest well!'))
         celebrate("confetti")
     return respond()

@@ -8,6 +8,7 @@
 from datetime import date, timedelta
 
 from flask import Blueprint, flash, g, session
+from i18n import _, format_day
 
 from db import get_db
 from habit_model import frozen_days
@@ -61,7 +62,8 @@ def award_freeze(db, user_id, today):
     db.execute("UPDATE users SET freezes = freezes + 1, freeze_awarded_on = ? WHERE id = ?",
                (today.isoformat(), user_id))
     db.commit()
-    return f"🧊 {streak}-day streak! You earned a streak freeze ({user['freezes'] + 1}/{MAX_FREEZES})."
+    return _("🧊 {n}-day streak! You earned a streak freeze ({have}/{max}).",
+             n=streak, have=user["freezes"] + 1, max=MAX_FREEZES)
 
 
 @bp.before_app_request
@@ -76,4 +78,4 @@ def use_freezes_once_a_day():
     used = apply_freezes(get_db(), user["id"], today)
     session["freezes_on"] = today.isoformat()
     for day in used:
-        flash(f"🧊 A streak freeze saved your streak on {day.strftime('%A')}. Welcome back!", "achievement")
+        flash(_('🧊 A streak freeze saved your streak on {day}. Welcome back!', day=format_day(day, 'weekday')), "achievement")

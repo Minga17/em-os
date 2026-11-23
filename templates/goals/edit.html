@@ -1,52 +1,52 @@
 {% extends "base.html" %}
-{% block title %}Edit goal · EM OS{% endblock %}
+{% block title %}{{ _("Edit goal · EM OS") }}{% endblock %}
 
 {% block content %}
   <div class="card narrow-wide">
-    <h1>Edit goal</h1>
+    <h1>{{ _("Edit goal") }}</h1>
     <form method="post" class="stack">
-      <label>Title
+      <label>{{ _("Title") }}
         <input name="title" required maxlength="150" value="{{ goal['title'] }}">
       </label>
 
       <div class="row">
-        <label>Life area
-          <select name="area_id">
-            <option value="">No area</option>
+        <label>{{ _("Life area") }}
+          <select name="area_id" aria-label="{{ _("Life area") }}">
+            <option value="">{{ _("No area") }}</option>
             {% for a in areas %}
               <option value="{{ a['id'] }}" {% if goal['area_id']|string == a['id']|string %}selected{% endif %}>{{ a['icon'] }} {{ a['name'] }}</option>
             {% endfor %}
           </select>
         </label>
-        <label>Status
+        <label>{{ _("Status") }}
           <select name="status">
             {% for s in statuses %}
-              <option value="{{ s }}" {% if goal['status'] == s %}selected{% endif %}>{{ s|capitalize }}</option>
+              <option value="{{ s }}" {% if goal['status'] == s %}selected{% endif %}>{{ s|name }}</option>
             {% endfor %}
           </select>
         </label>
-        <label>Target date
+        <label>{{ _("Target date") }}
           <input name="target_date" type="date" value="{{ goal['target_date'] or '' }}">
         </label>
       </div>
 
-      <label>Progress % (used when no linked project has tasks yet)
+      <label>{{ _("Progress % (used when no linked project has tasks yet)") }}
         <input name="progress" type="number" min="0" max="100" step="5" value="{{ goal['progress'] }}">
       </label>
 
-      <label>Why does this matter?
+      <label>{{ _("Why does this matter?") }}
         <textarea name="why" rows="3">{{ goal['why'] or '' }}</textarea>
       </label>
 
       <div class="row-actions">
-        <button>Save changes</button>
-        <a href="{{ url_for('goals.index') }}" class="muted">Cancel</a>
+        <button>{{ _("Save changes") }}</button>
+        <a href="{{ url_for('goals.index') }}" class="muted">{{ _("Cancel") }}</a>
       </div>
     </form>
 
     <form method="post" action="{{ url_for('goals.delete', goal_id=goal_id) }}" class="danger-zone">
-      <button class="danger">Delete this goal</button>
-      <span class="sub">Linked projects are kept.</span>
+      <button class="danger">{{ _("Delete this goal") }}</button>
+      <span class="sub">{{ _("Linked projects are kept.") }}</span>
     </form>
   </div>
 {% endblock %}

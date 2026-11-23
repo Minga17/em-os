@@ -1,21 +1,21 @@
 {% extends "base.html" %}
-{% block title %}Export data · EM OS{% endblock %}
+{% block title %}{{ _("Export data · EM OS") }}{% endblock %}
 
 {% block content %}
-  <h1>Export your data</h1>
-  <p class="muted">Download CSV files to open in Excel, Google Sheets, or Power BI. Only your own data is included.</p>
+  <h1>{{ _("Export your data") }}</h1>
+  <p class="muted">{{ _("Download CSV files to open in Excel, Google Sheets, or Power BI. Only your own data is included.") }}</p>
 
   <div class="export-list">
-    {% for name, (description, _) in datasets.items() %}
+    {% for name, (description, sql) in datasets.items() %}
       <div class="card export-row">
         <div>
-          <div class="goal-title">{{ name|replace('_', ' ')|capitalize }}</div>
-          <div class="sub">{{ description }} · {{ counts[name] }} rows</div>
+          <div class="goal-title">{{ name|name }}</div>
+          <div class="sub">{{ _(description) }} · {{ _n("{n} row", "{n} rows", counts[name]) }}</div>
         </div>
         {% if counts[name] %}
-          <a class="btn" href="{{ url_for('export.download', name=name) }}">⬇ CSV</a>
+          <a class="btn" href="{{ url_for('export.download', name=name) }}">{{ _("⬇ CSV") }}</a>
         {% else %}
-          <span class="muted">No data yet</span>
+          <span class="muted">{{ _("No data yet") }}</span>
         {% endif %}
       </div>
     {% endfor %}

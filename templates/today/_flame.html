@@ -1,13 +1,13 @@
 <div id="today-flame" class="flame {% if summary.streak and summary.checked_in %}lit{% endif %}"
      {% if oob %}hx-swap-oob="true"{% endif %}>
   {% if summary.streak and summary.checked_in %}
-    🔥 {{ summary.streak }}-day streak, keep it going!
+    {{ _("🔥 {streak}-day streak, keep it going!", streak=summary.streak) }}
   {% elif summary.at_risk %}
-    ⚠️ You missed yesterday. Check in today to keep your {{ summary.streak }}-day streak. Never miss twice!
+    {{ _("⚠️ You missed yesterday. Check in today to keep your {streak}-day streak. Never miss twice!", streak=summary.streak) }}
   {% elif summary.streak %}
-    🔥 Check in today to keep your {{ summary.streak }}-day streak
+    {{ _("🔥 Check in today to keep your {streak}-day streak", streak=summary.streak) }}
   {% else %}
-    ✨ Check in today to start a streak
+    {{ _("✨ Check in today to start a streak") }}
   {% endif %}
-  {% if summary.freezes %}<span class="freeze-chip" title="Streak freezes: used automatically if you miss 2 days in a row">🧊 ×{{ summary.freezes }}</span>{% endif %}
+  {% if summary.freezes %}<span class="freeze-chip" title="{{ _("Streak freezes: used automatically if you miss 2 days in a row") }}">🧊 ×{{ summary.freezes }}</span>{% endif %}
 </div>

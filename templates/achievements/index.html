@@ -1,34 +1,34 @@
 {% extends "base.html" %}
-{% block title %}Achievements · EM OS{% endblock %}
+{% block title %}{{ _("Achievements · EM OS") }}{% endblock %}
 
 {% block content %}
-  <h1>Achievements</h1>
-  <p><a href="{{ url_for('records.index') }}">🏅 See your personal records →</a></p>
+  <h1>{{ _("Achievements") }}</h1>
+  <p><a href="{{ url_for('records.index') }}">{{ _("🏅 See your personal records →") }}</a></p>
 
   <!-- Level card -->
   <div class="card level-card">
     <div class="level-badge">
       <div class="level-number">{{ progress.level }}</div>
-      <div class="level-label">LEVEL</div>
+      <div class="level-label">{{ _("LEVEL") }}</div>
     </div>
     <div class="level-info">
       <div class="level-title">{{ progress.title }}</div>
-      <div class="sub">{{ progress.xp }} XP total · {{ progress.to_next }} XP to level {{ progress.level + 1 }}</div>
+      <div class="sub">{{ _("{xp} XP total · {to_next} XP to level {level}", xp=progress.xp, to_next=progress.to_next, level=progress.level + 1) }}</div>
       <div class="xp-bar"><div style="width: {{ progress.percent }}%"></div></div>
-      <div class="sub">{{ progress.into_level }} / {{ progress.level_size }} XP</div>
+      <div class="sub">{{ _("{into_level} / {level_size} XP", into_level=progress.into_level, level_size=progress.level_size) }}</div>
     </div>
     <div class="badge-count">
       <div class="big">{{ unlocked_count }}<span class="muted">/{{ total }}</span></div>
-      <div class="sub">badges</div>
+      <div class="sub">{{ _("badges") }}</div>
     </div>
   </div>
 
   <details class="card xp-details">
-    <summary>Where your XP comes from</summary>
+    <summary>{{ _("Where your XP comes from") }}</summary>
     <table>
-      <tr><th>Action</th><th>Count</th><th>XP</th></tr>
+      <tr><th>{{ _("Action") }}</th><th>{{ _("Count") }}</th><th>{{ _("XP") }}</th></tr>
       {% for label, count, xp in progress.breakdown %}
-        <tr><td>{{ label|capitalize }}</td><td>{{ count }}</td><td><strong>{{ xp }}</strong></td></tr>
+        <tr><td>{{ _(label)|capitalize }}</td><td>{{ count }}</td><td><strong>{{ xp }}</strong></td></tr>
       {% endfor %}
     </table>
   </details>

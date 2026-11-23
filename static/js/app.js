@@ -1,5 +1,11 @@
 // EM OS: the only JavaScript in the app. Everything else is Python + HTML.
 
+// 0. Text in your language (the server puts the translations in the page)
+const TEXTS = (function () {
+  try { return JSON.parse(document.getElementById("js-texts").textContent); } catch (e) { return {}; }
+})();
+function t(text) { return TEXTS[text] || text; }
+
 // 1. Pop-up "toast" messages the server sends after instant (htmx) actions
 document.addEventListener("toast", function (event) {
   (event.detail.messages || []).forEach(showToast);
@@ -46,8 +52,8 @@ function setUpReminders(panel) {
 
   if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
     status.textContent = isIPhone && !installed
-      ? "On iPhone: tap Share → Add to Home Screen, open EM OS from your Home Screen, then come back here."
-      : "This browser can't show notifications. Try Chrome, Edge, Firefox or Safari.";
+      ? t("On iPhone: tap Share → Add to Home Screen, open EM OS from your Home Screen, then come back here.")
+      : t("This browser can't show notifications. Try Chrome, Edge, Firefox or Safari.");
     return;
   }
 
@@ -56,12 +62,12 @@ function setUpReminders(panel) {
     offButton.hidden = !subscribed;
     testButton.hidden = !subscribed;
     if (Notification.permission === "denied") {
-      status.textContent = "Notifications are blocked for EM OS. Allow them in your browser or phone settings, then reload this page.";
+      status.textContent = t("Notifications are blocked for EM OS. Allow them in your browser or phone settings, then reload this page.");
       onButton.hidden = true;
     } else {
       status.textContent = subscribed
-        ? "✅ Reminders are on for this device."
-        : "Reminders are off for this device.";
+        ? t("✅ Reminders are on for this device.")
+        : t("Reminders are off for this device.");
     }
   }
 
@@ -70,9 +76,7 @@ function setUpReminders(panel) {
     const select = document.getElementById("reminder_time");
     if (select && data.reminder_time) select.value = data.reminder_time;
     const count = document.querySelector("[data-push-count]");
-    if (count && typeof data.devices === "number") {
-      count.textContent = data.devices + (data.devices === 1 ? " device" : " devices") + " signed up for reminders.";
-    }
+    if (count && data.devices_text) count.textContent = data.devices_text;
   }
 
   function send(url, body) {
@@ -82,7 +86,7 @@ function setUpReminders(panel) {
       body: JSON.stringify(body || {}),
     }).then(function (response) {
       return response.json().then(function (data) {
-        if (!response.ok) throw new Error(data.error || "Something went wrong.");
+        if (!response.ok) throw new Error(data.error || t("Something went wrong."));
         return data;
       });
     });
@@ -111,7 +115,7 @@ function setUpReminders(panel) {
         });
         updatePage(await send("/reminders/subscribe", sub.toJSON()));
         show(true);
-        showToast("🔔 Reminders are on!");
+        showToast(t("🔔 Reminders are on!"));
       } catch (error) {
         status.textContent = "Couldn't turn on reminders: " + error.message;
       } finally {
@@ -126,13 +130,13 @@ function setUpReminders(panel) {
         await sub.unsubscribe();
       }
       show(false);
-      showToast("Reminders turned off for this device.");
+      showToast(t("Reminders turned off for this device."));
     });
 
     testButton.addEventListener("click", function () {
       send("/reminders/test")
         .then(function (data) {
-          showToast(data.sent ? "Test sent! Check your notifications." : "No devices got it. Try turning reminders off and on.");
+          showToast(data.sent ? t("Test sent! Check your notifications.") : t("No devices got it. Try turning reminders off and on."));
         })
         .catch(function (error) { showToast(error.message); });
     });
@@ -184,7 +188,7 @@ if (focusTimer) {
     const seconds = Math.floor((left % 60000) / 1000);
     const text = minutes + ":" + String(seconds).padStart(2, "0");
     label.textContent = text;
-    document.title = text + " · Focus";
+    document.title = text + " · " + t("Focus");
     dial.style.setProperty("--p", Math.min(100, ((Date.now() - startedAt) / (endsAt - startedAt)) * 100));
     if (left === 0 && !done) {
       done = true;
@@ -247,7 +251,7 @@ function levelUp(info) {
   overlay.className = "level-up";
   overlay.setAttribute("role", "dialog");
   overlay.setAttribute("aria-modal", "true");
-  overlay.setAttribute("aria-label", "Level up");
+  overlay.setAttribute("aria-label", t("Level up"));
   const card = document.createElement("div");
   card.className = "level-up-card";
   function add(tag, className, text) {
@@ -257,13 +261,13 @@ function levelUp(info) {
     card.appendChild(el);
     return el;
   }
-  add("div", "level-up-eyebrow", "LEVEL UP!");
+  add("div", "level-up-eyebrow", t("LEVEL UP!"));
   add("div", "level-up-badge", String(info.level));
   add("div", "level-up-title", info.title);
-  add("p", "level-up-text", "You reached level " + info.level + " with " + info.xp + " XP. "
-      + info.to_next + " XP to the next level.");
-  (info.unlocks || []).forEach(function (thing) { add("p", "level-up-unlock", "🔓 New: " + thing); });
-  const button = add("button", "level-up-close", "Keep going →");
+  add("p", "level-up-text", t("You reached level {level} with {xp} XP. {to_next} XP to the next level.")
+      .replace("{level}", info.level).replace("{xp}", info.xp).replace("{to_next}", info.to_next));
+  (info.unlocks || []).forEach(function (thing) { add("p", "level-up-unlock", t("🔓 New: {thing}").replace("{thing}", thing)); });
+  const button = add("button", "level-up-close", t("Keep going →"));
   function close() { overlay.remove(); document.removeEventListener("keydown", onKey); }
   function onKey(event) { if (event.key === "Escape") close(); }
   button.addEventListener("click", close);
@@ -314,7 +318,7 @@ if (recapData) {
 
     c.fillStyle = accent; c.font = "800 44px " + font; c.fillText("EM OS", 80, 130);
     c.fillStyle = "#ffffff"; c.font = "800 96px " + font;
-    c.fillText(recap.name ? recap.name + "'s week" : "My week", 80, 260);
+    c.fillText(recap.heading, 80, 260);
     c.fillStyle = "#94a3b8"; c.font = "500 40px " + font; c.fillText(recap.range, 80, 325);
 
     recap.stats.forEach(function (stat, i) {
@@ -327,8 +331,8 @@ if (recapData) {
     });
 
     c.fillStyle = "#e2e8f0"; c.font = "600 38px " + font;
-    c.fillText("Level " + recap.level + " · " + recap.title, 80, 1230);
-    if (recap.best_day) { c.textAlign = "right"; c.fillText("Best day: " + recap.best_day, 1000, 1230); c.textAlign = "left"; }
+    c.fillText(recap.level_line, 80, 1230);
+    if (recap.best_line) { c.textAlign = "right"; c.fillText(recap.best_line, 1000, 1230); c.textAlign = "left"; }
     c.fillStyle = "#94a3b8"; c.font = "500 30px " + font; c.fillText("em-os.onrender.com", 80, 1290);
     return canvas;
   }
@@ -346,7 +350,7 @@ if (recapData) {
   });
   shareButton.addEventListener("click", function () {
     asFile().then(function (file) {
-      return navigator.share({ files: [file], title: "My week on EM OS" });
+      return navigator.share({ files: [file], title: t("My week on EM OS") });
     }).catch(function () { /* the person closed the share sheet */ });
   });
   saveButton.addEventListener("click", function () {
@@ -356,7 +360,26 @@ if (recapData) {
       link.download = file.name;
       link.click();
       setTimeout(function () { URL.revokeObjectURL(link.href); }, 5000);
-      showToast("📸 Image saved");
+      showToast(t("📸 Image saved"));
     });
+  });
+}
+
+// 10. Phone menu button: opens/closes the menu, works with the keyboard, says if it's open
+const menuButton = document.querySelector(".hamburger");
+const menuToggle = document.getElementById("nav-toggle");
+if (menuButton && menuToggle) {
+  function setMenu(open) {
+    menuToggle.checked = open;
+    menuButton.setAttribute("aria-expanded", String(open));
+    menuButton.setAttribute("aria-label", open ? t("Close menu") : t("Open menu"));
+  }
+  menuButton.addEventListener("click", function () {
+    setMenu(!menuToggle.checked);
+    if (menuToggle.checked) { const first = document.querySelector(".side-links a"); if (first) first.focus(); }
+  });
+  menuToggle.addEventListener("change", function () { setMenu(menuToggle.checked); });   // tapping the dark backdrop
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape" && menuToggle.checked) { setMenu(false); menuButton.focus(); }
   });
 }

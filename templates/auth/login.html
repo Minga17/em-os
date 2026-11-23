@@ -1,19 +1,19 @@
 {% extends "base.html" %}
-{% block title %}Log in · EM OS{% endblock %}
+{% block title %}{{ _("Log in · EM OS") }}{% endblock %}
 
 {% block content %}
   <div class="card narrow">
-    <h1>Log in</h1>
+    <h1>{{ _("Log in") }}</h1>
     <form method="post" class="stack">
-      <label>Email
+      <label>{{ _("Email") }}
         <input name="email" type="email" required value="{{ request.form.get('email', '') }}">
       </label>
-      <label>Password
+      <label>{{ _("Password") }}
         <input name="password" type="password" required autocomplete="current-password">
       </label>
-      <a href="{{ url_for('auth.forgot') }}" class="forgot-link">Forgot password?</a>
-      <button>Log in</button>
+      <a href="{{ url_for('auth.forgot') }}" class="forgot-link">{{ _("Forgot password?") }}</a>
+      <button>{{ _("Log in") }}</button>
     </form>
-    <p class="muted">New here? <a href="{{ url_for('auth.register') }}">Create an account</a></p>
+    <p class="muted">{{ _("New here?") }} <a href="{{ url_for('auth.register') }}">{{ _("Create an account") }}</a></p>
   </div>
 {% endblock %}

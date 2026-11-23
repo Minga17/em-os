@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 from flask import (
     Blueprint, current_app, flash, g, redirect, render_template, request, session, url_for
 )
+from i18n import _, current_language, translate
 from itsdangerous import BadData, URLSafeTimedSerializer
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -27,7 +28,7 @@ def load_logged_in_user():
     g.user = None
     if user_id is not None:
         user = get_db().execute(
-            "SELECT id, name, email, timezone, email_verified, session_version, onboarded, theme "
+            "SELECT id, name, email, timezone, email_verified, session_version, onboarded, theme, language "
             "FROM users WHERE id = ?", (user_id,)
         ).fetchone()
         # "Log out of all devices" bumps session_version, so older logins stop working
@@ -42,7 +43,7 @@ def login_required(view):
     @functools.wraps(view)
     def wrapped_view(**kwargs):
         if g.user is None:
-            flash("Please log in first.", "error")
+            flash(_('Please log in first.'), "error")
             return redirect(url_for("auth.login"))
         return view(**kwargs)
     return wrapped_view
@@ -94,20 +95,26 @@ def may_send_email(user_id):
     return bool(allowed)
 
 
+def email_language(user):
+    language = user["language"] if "language" in user.keys() else None
+    return language or current_language()
+
+
 def send_verification_email(user):
     token = make_token("verify-email", {"uid": user["id"], "email": user["email"]})
     link = external_url(url_for("auth.verify_email", token=token))
-    return send_email(user["email"], "Confirm your EM OS email", f"""Hi {user['name']},
+    lang = email_language(user)
+    return send_email(user["email"], translate(lang, "Confirm your EM OS email"), translate(lang, """Hi {name},
 
 Welcome to EM OS! Please confirm your email address:
 
 {link}
 
 Confirming lets you reset your password if you ever forget it.
-This link works for {VERIFY_LINK_DAYS} days.
+This link works for {days} days.
 
 If you didn't create an EM OS account, you can ignore this email.
-""", background=True)
+""", name=user["name"], link=link, days=VERIFY_LINK_DAYS), background=True)
 
 
 # ── Sign up, log in, log out ────────────────────────────────────
@@ -120,31 +127,31 @@ def register():
         timezone_name = request.form.get("timezone", "UTC")
         error = None
         if not name:
-            error = "Name is required."
+            error = _("Name is required.")
         elif not email or "@" not in email or len(email) > 254:
-            error = "Please enter a valid email address."
+            error = _("Please enter a valid email address.")
         elif len(password) < 8:
-            error = "Password must be at least 8 characters."
+            error = _("Password must be at least 8 characters.")
         elif not is_valid_timezone(timezone_name):
-            error = "Please pick a valid time zone."
+            error = _("Please pick a valid time zone.")
         if error is None:
             try:
                 db = get_db()
                 cursor = db.execute(
-                    "INSERT INTO users (name, email, password_hash, timezone) VALUES (?, ?, ?, ?)",
-                    (name, email, generate_password_hash(password), timezone_name),
+                    "INSERT INTO users (name, email, password_hash, timezone, language) VALUES (?, ?, ?, ?, ?)",
+                    (name, email, generate_password_hash(password), timezone_name, current_language()),
                 )
                 db.execute("INSERT OR IGNORE INTO activity_days (user_id, day) VALUES (?, ?)",
                            (cursor.lastrowid, local_today_for(timezone_name).isoformat()))
                 db.commit()
             except sqlite3.IntegrityError:
-                error = "That email is already registered."
+                error = _("That email is already registered.")
             else:
-                user = db.execute("SELECT id, name, email FROM users WHERE id = ?",
+                user = db.execute("SELECT id, name, email, language FROM users WHERE id = ?",
                                   (cursor.lastrowid,)).fetchone()
                 may_send_email(user["id"])
                 send_verification_email(user)
-                flash("Account created! Please log in. We also sent you an email to confirm your address.",
+                flash(_('Account created! Please log in. We also sent you an email to confirm your address.'),
                       "success")
                 return redirect(url_for("auth.login"))
         flash(error, "error")
@@ -160,10 +167,10 @@ def login():
             "SELECT * FROM users WHERE email = ?", (email,)
         ).fetchone()
         if user is None or not check_password_hash(user["password_hash"], password):
-            flash("Incorrect email or password.", "error")
+            flash(_('Incorrect email or password.'), "error")
         else:
             log_in(user)
-            flash(f"Welcome back, {user['name']}!", "success")
+            flash(_('Welcome back, {name}!', name=user['name']), "success")
             return redirect(url_for("home"))
     return render_template("auth/login.html")
 
@@ -171,7 +178,7 @@ def login():
 @bp.route("/logout", methods=["POST"])
 def logout():
     session.clear()
-    flash("You've been logged out.", "success")
+    flash(_("You've been logged out."), "success")
     return redirect(url_for("auth.login"))
 
 
@@ -180,25 +187,25 @@ def logout():
 def forgot():
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
-        user = get_db().execute("SELECT id, name, email, password_hash FROM users WHERE email = ?",
+        user = get_db().execute("SELECT id, name, email, password_hash, language FROM users WHERE email = ?",
                                 (email,)).fetchone()
         if user is not None and may_send_email(user["id"]):
             token = make_token("password-reset", {
                 "uid": user["id"], "pw": password_fingerprint(user["password_hash"])})
             link = external_url(url_for("auth.reset_password", token=token))
-            send_email(user["email"], "Reset your EM OS password", f"""Hi {user['name']},
+            lang = email_language(user)
+            send_email(user["email"], translate(lang, "Reset your EM OS password"), translate(lang, """Hi {name},
 
 Someone (hopefully you) asked to reset your EM OS password. Choose a new one here:
 
 {link}
 
-This link works for {RESET_LINK_HOURS} hour and only once.
+This link works for 1 hour and only once.
 
 If you didn't ask for this, ignore this email. Your password stays the same.
-""", background=True)
+""", name=user["name"], link=link), background=True)
         # Same answer whether or not the account exists, so nobody can check who uses EM OS
-        flash("If that email has an EM OS account, we've sent a link to reset the password. "
-              "Check your inbox (and spam folder).", "success")
+        flash(_("If that email has an EM OS account, we've sent a link to reset the password. Check your inbox (and spam folder)."), "success")
         return redirect(url_for("auth.login"))
     return render_template("auth/forgot.html")
 
@@ -212,15 +219,15 @@ def reset_password(token):
         user = db.execute("SELECT id, password_hash FROM users WHERE id = ?",
                           (data.get("uid"),)).fetchone()
     if user is None or data.get("pw") != password_fingerprint(user["password_hash"]):
-        flash("This reset link has expired or was already used. Please ask for a new one.", "error")
+        flash(_('This reset link has expired or was already used. Please ask for a new one.'), "error")
         return redirect(url_for("auth.forgot"))
 
     if request.method == "POST":
         new = request.form.get("new_password", "")
         if len(new) < 8:
-            flash("Password must be at least 8 characters.", "error")
+            flash(_('Password must be at least 8 characters.'), "error")
         elif new != request.form.get("confirm_password", ""):
-            flash("The passwords don't match.", "error")
+            flash(_("The passwords don't match."), "error")
         else:
             # New password, email proven, and every old login is signed out
             db.execute("""UPDATE users SET password_hash = ?, email_verified = 1,
@@ -228,7 +235,7 @@ def reset_password(token):
                        (generate_password_hash(new), user["id"]))
             db.commit()
             session.clear()
-            flash("Password changed! 🔒 Please log in with your new password.", "success")
+            flash(_('Password changed! 🔒 Please log in with your new password.'), "success")
             return redirect(url_for("auth.login"))
 
     response = current_app.make_response(render_template("auth/reset.html"))
@@ -247,9 +254,9 @@ def verify_email(token):
                              (data.get("uid"), data.get("email"))).rowcount
         db.commit()
     if updated:
-        flash("✅ Email confirmed. Thanks!", "success")
+        flash(_('✅ Email confirmed. Thanks!'), "success")
     else:
-        flash("This confirmation link has expired. Log in and ask for a new one.", "error")
+        flash(_('This confirmation link has expired. Log in and ask for a new one.'), "error")
     return redirect(url_for("home") if g.user else url_for("auth.login"))
 
 
@@ -257,10 +264,10 @@ def verify_email(token):
 @login_required
 def resend_verification():
     if g.user["email_verified"]:
-        flash("Your email is already confirmed.", "success")
+        flash(_('Your email is already confirmed.'), "success")
     elif may_send_email(g.user["id"]):
         send_verification_email(g.user)
-        flash(f"Sent! Check {g.user['email']} (and your spam folder).", "success")
+        flash(_('Sent! Check {email} (and your spam folder).', email=g.user['email']), "success")
     else:
-        flash("We just sent one. Please wait a minute before asking again.", "error")
+        flash(_('We just sent one. Please wait a minute before asking again.'), "error")
     return redirect(url_for("home"))

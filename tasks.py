@@ -1,6 +1,7 @@
 from datetime import date
 
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
+from i18n import _, _n, N_
 
 from auth import login_required
 from db import get_db
@@ -11,7 +12,7 @@ from timeutil import user_now_str, user_today
 bp = Blueprint("tasks", __name__, url_prefix="/tasks")
 
 STATUSES = ["todo", "doing", "done"]
-PRIORITIES = {1: "High", 2: "Medium", 3: "Low"}
+PRIORITIES = {1: N_("High"), 2: N_("Medium"), 3: N_("Low")}
 
 
 def get_own_task(task_id):
@@ -55,25 +56,25 @@ def read_task_form():
         "repeat": request.form.get("repeat", ""),
     }
     if data["repeat"] not in REPEATS:
-        errors.append("Pick how often it repeats from the list.")
+        errors.append(_('Pick how often it repeats from the list.'))
 
     if not data["title"]:
-        errors.append("Task title is required.")
+        errors.append(_('Task title is required.'))
     if data["status"] not in STATUSES:
-        errors.append("Pick a valid status.")
+        errors.append(_('Pick a valid status.'))
 
     try:
         data["priority"] = int(request.form.get("priority", 2))
         if data["priority"] not in PRIORITIES:
             raise ValueError
     except ValueError:
-        errors.append("Pick a valid priority.")
+        errors.append(_('Pick a valid priority.'))
 
     if data["due_date"]:
         try:
             date.fromisoformat(data["due_date"])
         except ValueError:
-            errors.append("Due date must be a real date.")
+            errors.append(_('Due date must be a real date.'))
 
     raw_project = request.form.get("project_id", "")
     if raw_project:
@@ -85,7 +86,7 @@ def read_task_form():
         if owned:
             data["project_id"] = owned["id"]
         else:
-            errors.append("That project doesn't exist.")
+            errors.append(_("That project doesn't exist."))
 
     raw_goal = request.form.get("goal_id", "")
     if raw_goal:
@@ -95,7 +96,7 @@ def read_task_form():
         if owned:
             data["goal_id"] = owned["id"]
         else:
-            errors.append("That goal doesn't exist.")
+            errors.append(_("That goal doesn't exist."))
 
     if not errors:
         data["repeat"] = store_repeat(data["repeat"], data["due_date"])
@@ -129,7 +130,7 @@ def index():
                  data["priority"], data["due_date"], data["status"], data["repeat"]),
             )
             db.commit()
-            flash(f"Task added: {data['title']}", "success")
+            flash(_('Task added: {title}', title=data['title']), "success")
         return redirect(url_for("tasks.index"))
 
     # Filters from the URL, e.g. /tasks/?show=done&project=2
@@ -212,7 +213,7 @@ def edit(task_id):
             if data["status"] == "doing":
                 db.execute("UPDATE tasks SET status = 'doing' WHERE id = ?", (task_id,))
         db.commit()
-        flash("Task updated.", "success")
+        flash(_('Task updated.'), "success")
         say(messages)
         return redirect(url_for("tasks.index"))
 
@@ -243,5 +244,5 @@ def delete(task_id):
     db = get_db()
     db.execute("DELETE FROM tasks WHERE id = ? AND user_id = ?", (task_id, g.user["id"]))
     db.commit()
-    flash(f"Deleted task: {task['title']}", "success")
+    flash(_('Deleted task: {title}', title=task['title']), "success")
     return redirect(url_for("tasks.index"))

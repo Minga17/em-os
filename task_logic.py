@@ -6,17 +6,20 @@ with its new due date. Undo the finish and that next one disappears again.
 import calendar
 from datetime import date, timedelta
 
+from i18n import N_, _, format_day
+
 REPEATS = {
-    "": "Doesn't repeat",
-    "daily": "Every day",
-    "weekdays": "Every weekday (Mon–Fri)",
-    "weekly": "Every week",
-    "monthly": "Every month",
+    "": N_("Doesn't repeat"),
+    "daily": N_("Every day"),
+    "weekdays": N_("Every weekday (Mon–Fri)"),
+    "weekly": N_("Every week"),
+    "monthly": N_("Every month"),
 }
 
 
 def repeat_label(repeat):
-    return REPEATS.get((repeat or "").split(":")[0], "")
+    label = REPEATS.get((repeat or "").split(":")[0], "")
+    return _(label) if label else ""
 
 
 def store_repeat(repeat, due_date):
@@ -110,7 +113,7 @@ def goal_task_counts(db, goal_id):
 
 def describe_next(next_repeat):
     title, due = next_repeat
-    return f"🔁 Next one: {title} on {due.strftime('%a %b')} {due.day}"
+    return _("🔁 Next one: {title} on {date}", title=title, date=format_day(due, "medium"))
 
 
 def completion_messages(db, task, next_repeat):
@@ -119,5 +122,5 @@ def completion_messages(db, task, next_repeat):
     if next_repeat:
         messages.append(describe_next(next_repeat))
     for title in finished_goals(db, task):
-        messages.append(f"🎯 Every task for “{title}” is done! Mark the goal achieved on the Goals page.")
+        messages.append(_('🎯 Every task for “{title}” is done! Mark the goal achieved on the Goals page.', title=title))
     return messages

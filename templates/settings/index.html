@@ -1,8 +1,8 @@
 {% extends "base.html" %}
-{% block title %}Settings · EM OS{% endblock %}
+{% block title %}{{ _("Settings · EM OS") }}{% endblock %}
 
 {% macro timezone_select(selected) %}
-  <select name="timezone" required>
+  <select name="timezone" aria-label="{{ _("Time zone") }}" required>
     {% for tz in timezones %}
       <option value="{{ tz }}" {% if tz == selected %}selected{% endif %}>{{ tz.replace('_', ' ') }}</option>
     {% endfor %}
@@ -10,25 +10,38 @@
 {% endmacro %}
 
 {% block content %}
-  <h1>Settings</h1>
+  <h1>{{ _("Settings") }}</h1>
 
   <div class="card settings-card">
-    <h2>👤 Profile</h2>
+    <h2>{{ _("👤 Profile") }}</h2>
     <form method="post" action="{{ url_for('settings.profile') }}" class="stack">
-      <label>Name
+      <label>{{ _("Name") }}
         <input name="name" required maxlength="80" value="{{ g.user['name'] }}">
       </label>
-      <label>Time zone
+      <label>{{ _("Time zone") }}
         {{ timezone_select(g.user['timezone']) }}
       </label>
-      <p class="sub">Your "today" is <strong>{{ local_today.strftime('%A, %B %d') }}</strong>.
-        Check-ins, habits and streaks follow this date.</p>
-      <button>Save profile</button>
+      <p class="sub">{{ _("Your “today” is {date}. Check-ins, habits and streaks follow this date.", date=local_today|day('long')) }}</p>
+      <button>{{ _("Save profile") }}</button>
+    </form>
+  </div>
+
+  <div class="card settings-card" id="language">
+    <h2>{{ _("🌍 Language") }}</h2>
+    <form method="post" action="{{ url_for('settings.language') }}" class="stack">
+      <label for="language-select" class="sr-only">{{ _("Language") }}</label>
+      <select id="language-select" name="language">
+        <option value="" {% if not g.user['language'] %}selected{% endif %}>{{ _("Same as my phone") }}</option>
+        {% for code, name in LANGUAGES.items() %}
+          <option value="{{ code }}" lang="{{ code }}" {% if g.user['language'] == code %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+      </select>
+      <button>{{ _("Save language") }}</button>
     </form>
   </div>
 
   <div class="card settings-card" id="theme">
-    <h2>🎨 Theme</h2>
+    <h2>{{ _("🎨 Theme") }}</h2>
     <form method="post" action="{{ url_for('settings.theme') }}" class="theme-picker">
       {% for key, t in themes.items() %}
         {% set locked = level < t.level %}
@@ -36,111 +49,110 @@
           <input type="radio" name="theme" value="{{ key }}" {% if key == current_theme %}checked{% endif %}
                  {% if locked %}disabled{% endif %}>
           <span class="swatch" style="background: linear-gradient(135deg, {{ t.swatch[0] }} 50%, {{ t.swatch[1] }} 50%)"></span>
-          <span class="theme-name">{{ t.emoji }} {{ t.name }}</span>
-          {% if locked %}<span class="sub">🔒 Level {{ t.level }}</span>{% endif %}
+          <span class="theme-name">{{ t.emoji }} {{ _(t.name) }}</span>
+          {% if locked %}<span class="sub">{{ _("🔒 Level {level}", level=t.level) }}</span>{% endif %}
         </label>
       {% endfor %}
-      <button>Use this theme</button>
+      <button>{{ _("Use this theme") }}</button>
     </form>
   </div>
 
   <div class="card settings-card" id="reminders">
-    <h2>🔔 Daily reminders</h2>
-    <p class="muted">Gentle nudges, never more than one each. Each one is skipped if you've already done it.</p>
+    <h2>{{ _("🔔 Daily reminders") }}</h2>
+    <p class="muted">{{ _("Gentle nudges, never more than one each. Each one is skipped if you've already done it.") }}</p>
     <form method="post" action="{{ url_for('reminders.set_time') }}" class="reminder-times">
       <div class="reminder-time">
-        <label for="morning_time">🌅 Morning: plan your top 3</label>
+        <label for="morning_time">{{ _("🌅 Morning: plan your top 3") }}</label>
         <select name="morning_time" id="morning_time">
-          <option value="" {% if not morning_time %}selected{% endif %}>Off</option>
+          <option value="" {% if not morning_time %}selected{% endif %}>{{ _("Off") }}</option>
           {% for value, label in morning_choices %}
             <option value="{{ value }}" {% if value == morning_time %}selected{% endif %}>{{ label }}</option>
           {% endfor %}
         </select>
       </div>
       <div class="reminder-time">
-        <label for="reminder_time">🌙 Evening: check in &amp; close your day</label>
+        <label for="reminder_time">{{ _("🌙 Evening: check in & close your day") }}</label>
         <select name="reminder_time" id="reminder_time">
-          <option value="" {% if not reminder_time %}selected{% endif %}>Off</option>
+          <option value="" {% if not reminder_time %}selected{% endif %}>{{ _("Off") }}</option>
           {% for value, label in reminder_choices %}
             <option value="{{ value }}" {% if value == reminder_time %}selected{% endif %}>{{ label }}</option>
           {% endfor %}
         </select>
       </div>
-      <button>Save reminders</button>
+      <button>{{ _("Save reminders") }}</button>
     </form>
-    <p class="sub">Times follow your time zone ({{ g.user['timezone'].replace('_', ' ') }}).</p>
+    <p class="sub">{{ _("Times follow your time zone ({timezone}).", timezone=g.user['timezone'].replace('_', ' ')) }}</p>
 
     {% if vapid_public_key %}
       <div id="push-panel" class="push-panel" data-key="{{ vapid_public_key }}">
-        <p data-push-status class="muted">Checking this device…</p>
+        <p data-push-status class="muted">{{ _("Checking this device…") }}</p>
         <div class="push-buttons">
-          <button type="button" data-push-on hidden>Turn on for this device</button>
-          <button type="button" data-push-test class="secondary" hidden>Send a test</button>
-          <button type="button" data-push-off class="link" hidden>Turn off for this device</button>
+          <button type="button" data-push-on hidden>{{ _("Turn on for this device") }}</button>
+          <button type="button" data-push-test class="secondary" hidden>{{ _("Send a test") }}</button>
+          <button type="button" data-push-off class="link" hidden>{{ _("Turn off for this device") }}</button>
         </div>
       </div>
-      <p class="sub" data-push-count>{{ devices }} device{{ '' if devices == 1 else 's' }} signed up for reminders.</p>
+      <p class="sub" data-push-count>{{ _n("{n} device signed up for reminders.", "{n} devices signed up for reminders.", devices) }}</p>
     {% else %}
-      <p class="sub">Notifications aren't set up on this server yet.</p>
+      <p class="sub">{{ _("Notifications aren't set up on this server yet.") }}</p>
     {% endif %}
   </div>
 
   <div class="card settings-card" id="security">
-    <h2>🔒 Password & security</h2>
+    <h2>{{ _("🔒 Password & security") }}</h2>
     <p class="sub">
       {% if g.user['email_verified'] %}
-        ✅ Email confirmed: {{ g.user['email'] }}
+        {{ _("✅ Email confirmed: {email}", email=g.user['email']) }}
       {% else %}
-        📧 {{ g.user['email'] }} isn't confirmed yet.
+        {{ _("📧 {email} isn't confirmed yet.", email=g.user['email']) }}
       {% endif %}
     </p>
     {% if not g.user['email_verified'] %}
       <form method="post" action="{{ url_for('auth.resend_verification') }}" class="inline">
-        <button class="link">Send the confirmation email again</button>
+        <button class="link">{{ _("Send the confirmation email again") }}</button>
       </form>
     {% endif %}
-    <h3>Change password</h3>
+    <h3>{{ _("Change password") }}</h3>
     <form method="post" action="{{ url_for('settings.password') }}" class="stack">
-      <label>Current password
+      <label>{{ _("Current password") }}
         <input name="current_password" type="password" required autocomplete="current-password">
       </label>
       <div class="row">
-        <label>New password
+        <label>{{ _("New password") }}
           <input name="new_password" type="password" minlength="8" required autocomplete="new-password">
         </label>
-        <label>Confirm new password
+        <label>{{ _("Confirm new password") }}
           <input name="confirm_password" type="password" minlength="8" required autocomplete="new-password">
         </label>
       </div>
-      <button>Change password</button>
+      <button>{{ _("Change password") }}</button>
     </form>
 
     <div class="logout-others">
       <div>
-        <h3>Logged in somewhere else?</h3>
-        <p class="sub">Log out of EM OS on every other phone and computer. This one stays logged in.</p>
+        <h3>{{ _("Logged in somewhere else?") }}</h3>
+        <p class="sub">{{ _("Log out of EM OS on every other phone and computer. This one stays logged in.") }}</p>
       </div>
       <form method="post" action="{{ url_for('settings.logout_others') }}">
-        <button class="secondary-plain">Log out other devices</button>
+        <button class="secondary-plain">{{ _("Log out other devices") }}</button>
       </form>
     </div>
   </div>
 
   <div class="card settings-card danger-card">
-    <h2>⚠️ Delete account</h2>
-    <p class="muted">This permanently deletes your account and <strong>everything</strong> in it:
-      check-ins, habits, tasks, projects, goals and reviews. It cannot be undone.
-      <a href="{{ url_for('export.index') }}">Export your data first</a> if you want a copy.</p>
+    <h2>{{ _("⚠️ Delete account") }}</h2>
+    <p class="muted">{{ _("This permanently deletes your account and") }} <strong>{{ _("everything") }}</strong> {{ _("in it: check-ins, habits, tasks, projects, goals and reviews. It cannot be undone.") }}
+      <a href="{{ url_for('export.index') }}">{{ _("Export your data first") }}</a> {{ _("if you want a copy.") }}</p>
     <form method="post" action="{{ url_for('settings.delete_account') }}" class="stack">
       <div class="row">
-        <label>Type DELETE to confirm
-          <input name="confirm" required autocomplete="off" placeholder="DELETE">
+        <label>{{ _("Type DELETE to confirm") }}
+          <input name="confirm" required autocomplete="off" placeholder="{{ _("DELETE") }}">
         </label>
-        <label>Your password
+        <label>{{ _("Your password") }}
           <input name="password" type="password" required autocomplete="current-password">
         </label>
       </div>
-      <button class="danger">Permanently delete my account</button>
+      <button class="danger">{{ _("Permanently delete my account") }}</button>
     </form>
   </div>
 {% endblock %}

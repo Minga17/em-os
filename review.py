@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 
 from flask import Blueprint, flash, g, redirect, render_template, request, url_for
+from i18n import _, _n, format_day
 
 from auth import login_required
 from dashboard import change, checkin_summary
@@ -14,7 +15,9 @@ bp = Blueprint("review", __name__, url_prefix="/review")
 
 def short_list(titles, limit=3):
     shown = ", ".join(titles[:limit])
-    return shown + (f" and {len(titles) - limit} more" if len(titles) > limit else "")
+    if len(titles) <= limit:
+        return shown
+    return _("{shown} and {n} more", shown=shown, n=len(titles) - limit)
 
 
 def draft_answers(best_day, finished_tasks, habits, wins, blockers, upcoming):
@@ -22,25 +25,26 @@ def draft_answers(best_day, finished_tasks, habits, wins, blockers, upcoming):
     went_well, hard, focus = [], [], []
     if finished_tasks:
         titles = [t["title"] for t in finished_tasks]
-        went_well.append(f"Finished {len(titles)} task{'s' if len(titles) != 1 else ''}: {short_list(titles)}.")
+        went_well.append(_n("Finished {n} task: {titles}.", "Finished {n} tasks: {titles}.", len(titles),
+                            titles=short_list(titles)))
     if best_day:
         day = date.fromisoformat(best_day["log_date"])
-        went_well.append(f"Best day: {day.strftime('%A')} (score {best_day['score']}).")
+        went_well.append(_("Best day: {day} (score {score}).", day=format_day(day, "weekday"), score=best_day["score"]))
     strong = [h for h in habits if h["possible"] and h["rate"] >= 80]
     if strong:
-        went_well.append("Kept up " + ", ".join(f"{h['icon']} {h['name']} ({h['done']}/{h['possible']})"
-                                                for h in strong[:3]) + ".")
+        went_well.append(_("Kept up {habits}.", habits=", ".join(
+            f"{h['icon']} {h['name']} ({h['done']}/{h['possible']})" for h in strong[:3])))
     went_well += [text for _, text in wins[:2]]
 
     hard += [text for _, text in blockers[:2]]
     weak = [h for h in habits if h["possible"] >= 2 and h["rate"] < 50]
     if weak:
-        hard.append("Slipped on " + ", ".join(f"{h['icon']} {h['name']} ({h['done']}/{h['possible']})"
-                                              for h in weak[:3]) + ".")
+        hard.append(_("Slipped on {habits}.", habits=", ".join(
+            f"{h['icon']} {h['name']} ({h['done']}/{h['possible']})" for h in weak[:3])))
     if upcoming:
-        focus.append("Get done: " + short_list([t["title"] for t in upcoming]) + ".")
+        focus.append(_("Get done: {tasks}.", tasks=short_list([t["title"] for t in upcoming])))
     if weak:
-        focus.append(f"Get back on track with {weak[0]['icon']} {weak[0]['name']}.")
+        focus.append(_("Get back on track with {habit}.", habit=f"{weak[0]['icon']} {weak[0]['name']}"))
     return {"went_well": "\n".join(went_well), "challenges": "\n".join(hard),
             "lessons": "", "next_focus": "\n".join(focus)}
 
@@ -93,7 +97,7 @@ def week():
              request.form.get("next_focus", "").strip()),
         )
         db.commit()
-        flash("Weekly review saved. 📝", "success")
+        flash(_('Weekly review saved. 📝'), "success")
         return redirect(url_for("review.week", week=start.isoformat()))
 
     # ── The week's numbers, calculated from your raw data ────────

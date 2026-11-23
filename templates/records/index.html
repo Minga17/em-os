@@ -1,36 +1,35 @@
 {% extends "base.html" %}
-{% block title %}Records · EM OS{% endblock %}
+{% block title %}{{ _("Records · EM OS") }}{% endblock %}
 
 {% block content %}
-  <h1>🏅 Hall of Fame</h1>
-  <p class="muted">Your personal bests. The only person to beat is you.</p>
+  <h1>{{ _("🏅 Hall of Fame") }}</h1>
+  <p class="muted">{{ _("Your personal bests. The only person to beat is you.") }}</p>
 
   {% if records %}
     <div class="records-grid">
       {% for r in records %}
         <div class="card record {% if r.new %}is-new{% endif %}">
-          {% if r.new %}<span class="new-badge">🆕 This week</span>{% endif %}
+          {% if r.new %}<span class="new-badge">{{ _("🆕 This week") }}</span>{% endif %}
           <div class="record-icon">{{ r.icon }}</div>
           <div class="record-title">{{ r.title }}</div>
           <div class="record-value">{{ r.value }} <span class="muted">{{ r.unit }}</span></div>
           <div class="sub">
             {% if r.detail %}{{ r.detail }}{% endif %}
-            {% if r.when and not r.detail %}{{ r.when.strftime('%a %b') }} {{ r.when.day }}, {{ r.when.year }}{% endif %}
+            {% if r.when and not r.detail %}{{ r.when|day('yMMMEd') }}{% endif %}
           </div>
         </div>
       {% endfor %}
     </div>
   {% else %}
     <div class="card empty-state">
-      <p>No records yet. Check in, tick habits and finish tasks, and your bests will show up here.</p>
+      <p>{{ _("No records yet. Check in, tick habits and finish tasks, and your bests will show up here.") }}</p>
     </div>
   {% endif %}
 
-  <h2>Your year</h2>
-  <p class="sub">{{ heat.active_days }} active day{{ '' if heat.active_days == 1 else 's' }} in the last 12 months.
-    Each square is a day: the brighter, the more you did.</p>
+  <h2>{{ _("Your year") }}</h2>
+  <p class="sub">{{ _n("{n} active day in the last 12 months.", "{n} active days in the last 12 months.", heat.active_days) }} {{ _("Each square is a day: the brighter, the more you did.") }}</p>
   <div class="card heat-card">
-    <div class="heat-scroll" data-scroll-end tabindex="0" aria-label="Activity for the last year, scrolls sideways">
+    <div class="heat-scroll" data-scroll-end tabindex="0" aria-label="{{ _("Activity for the last year, scrolls sideways") }}">
       <div class="heat" style="--weeks: {{ heat.weeks|length }}">
         <div class="heat-months">
           {% for column, name in heat.months %}<span style="grid-column: {{ column + 1 }}">{{ name }}</span>{% endfor %}
@@ -39,7 +38,7 @@
           {% for week in heat.weeks %}
             <div class="heat-week">
               {% for cell in week %}
-                {% if cell %}<span class="heat-cell l{{ cell.level }}" title="{{ cell.label }}" aria-label="{{ cell.label }}"></span>
+                {% if cell %}<span class="heat-cell l{{ cell.level }}" role="img" title="{{ cell.label }}" aria-label="{{ cell.label }}"></span>
                 {% else %}<span class="heat-cell empty"></span>{% endif %}
               {% endfor %}
             </div>
@@ -47,12 +46,12 @@
         </div>
       </div>
     </div>
-    <div class="heat-legend sub">Less
-      {% for n in range(5) %}<span class="heat-cell l{{ n }}"></span>{% endfor %} More</div>
+    <div class="heat-legend sub">{{ _("Less") }}
+      {% for n in range(5) %}<span class="heat-cell l{{ n }}"></span>{% endfor %} {{ _("More") }}</div>
   </div>
 
-  <h2>Lifetime</h2>
-  <p class="sub">{{ days_with_emos }} day{{ '' if days_with_emos == 1 else 's' }} with EM OS · Level {{ progress.level }} {{ progress.title }} · {{ progress.xp }} XP</p>
+  <h2>{{ _("Lifetime") }}</h2>
+  <p class="sub">{{ _n("{n} day with EM OS", "{n} days with EM OS", days_with_emos) }} · {{ _("Level {level} · {title}", level=progress.level, title=progress.title) }} · {{ progress.xp }} XP</p>
   <div class="stats-grid">
     {% for icon, label, value in totals %}
       <div class="card stat"><div class="num">{{ value }}</div><div class="label">{{ icon }} {{ label }}</div></div>

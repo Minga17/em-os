@@ -3,6 +3,7 @@ from datetime import date
 
 from habit_model import all_statuses, frozen_days
 from streaks import day_streak
+from i18n import _
 from timeutil import user_now, user_today
 
 
@@ -10,10 +11,10 @@ def greeting():
     """Good morning / afternoon / evening, on the user's own clock."""
     hour = user_now().hour
     if hour < 12:
-        return "Good morning"
+        return _("Good morning")
     if hour < 18:
-        return "Good afternoon"
-    return "Good evening"
+        return _("Good afternoon")
+    return _("Good evening")
 
 
 def habit_items(db, user_id, today):

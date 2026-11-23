@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
+from i18n import _, _n, N_, weekday_names
 
 from auth import login_required
 from db import get_db
@@ -36,20 +37,20 @@ def read_habit_form(form):
         per_week = int(form.get("per_week") or 3)
         goal_count = int(form.get("goal_count") or 1)
     except ValueError:
-        return None, "Please use whole numbers."
+        return None, _("Please use whole numbers.")
 
     if not name:
-        return None, "Habit name is required."
+        return None, _("Habit name is required.")
     if len(name) > 60:
-        return None, "Keep the habit name under 60 characters."
+        return None, _("Keep the habit name under 60 characters.")
     if kind not in KINDS or schedule not in SCHEDULES:
-        return None, "Please pick from the options."
+        return None, _("Please pick from the options.")
     if kind == "build" and schedule == "days" and not days:
-        return None, "Pick at least one day."
+        return None, _("Pick at least one day.")
     if kind == "build" and schedule == "weekly" and not 1 <= per_week <= 6:
-        return None, "Pick 1 to 6 times a week (7 is every day)."
+        return None, _("Pick 1 to 6 times a week (7 is every day).")
     if not 1 <= goal_count <= 100:
-        return None, "The daily amount must be between 1 and 100."
+        return None, _("The daily amount must be between 1 and 100.")
     if kind == "quit":                      # quitting is simply: every day, clean or not
         schedule, days, goal_count, unit = "daily", [], 1, ""
     return {"name": name, "icon": icon, "kind": kind, "schedule": schedule,
@@ -74,7 +75,7 @@ def index():
                 {"user_id": user_id, **fields},
             )
             db.commit()
-            flash(f"Habit added: {fields['icon']} {fields['name']}", "success")
+            flash(_('Habit added: {icon} {name}', icon=fields['icon'], name=fields['name']), "success")
         return redirect(url_for("habits.index"))
 
     habits = db.execute(
@@ -90,7 +91,7 @@ def index():
         "s": status(h, amounts[h["id"]], slips[h["id"]], frozen, today),
         "week": week_dots(h, amounts[h["id"]], slips[h["id"]], frozen, last_7),
     } for h in habits]
-    return render_template("habits/index.html", cards=cards, day_names=DAY_NAMES,
+    return render_template("habits/index.html", cards=cards, day_names=weekday_names(),
                            form={}, freezes=db.execute("SELECT freezes FROM users WHERE id = ?",
                                                        (user_id,)).fetchone()[0])
 
@@ -109,9 +110,9 @@ def edit(habit_id):
                           days = :days, per_week = :per_week, goal_count = :goal_count, unit = :unit
                           WHERE id = :id""", {"id": habit_id, **fields})
             db.commit()
-            flash(f"Saved: {fields['icon']} {fields['name']}", "success")
+            flash(_('Saved: {icon} {name}', icon=fields['icon'], name=fields['name']), "success")
             return redirect(url_for("habits.index"))
-    return render_template("habits/edit.html", habit=habit, day_names=DAY_NAMES,
+    return render_template("habits/edit.html", habit=habit, day_names=weekday_names(),
                            chosen_days=scheduled_days(habit))
 
 
@@ -125,7 +126,7 @@ def respond(habit_id, message=None):
             if message:
                 toast(message)
                 if summary["all_done"]:
-                    toast("🎉 Everything done today. Amazing!")
+                    toast(_('🎉 Everything done today. Amazing!'))
                     celebrate("confetti")
             return render_template("today/_habit_toggle.html", item=item, summary=summary)
     if message:
@@ -193,8 +194,8 @@ def slip(habit_id):
     if not removed:
         db.execute("INSERT INTO habit_slips (habit_id, log_date) VALUES (?, ?)", (habit_id, today))
     db.commit()
-    message = ("Slip removed. Back on track! 💪" if removed else
-               "Logged. One slip doesn't erase your progress. Your clean days start again today. 💪")
+    message = (_("Slip removed. Back on track! 💪") if removed else
+               _("Logged. One slip doesn't erase your progress. Your clean days start again today. 💪"))
     return respond(habit_id, message)
 
 
@@ -205,5 +206,5 @@ def archive(habit_id):
     db = get_db()
     db.execute("UPDATE habits SET is_active = 0 WHERE id = ?", (habit_id,))
     db.commit()
-    flash(f"Archived: {habit['name']}", "success")
+    flash(_('Archived: {name}', name=habit['name']), "success")
     return redirect(url_for("habits.index"))

@@ -1,18 +1,18 @@
 {% extends "base.html" %}
 {% from "habits/_fields.html" import habit_options with context %}
-{% block title %}Habits · EM OS{% endblock %}
+{% block title %}{{ _("Habits · EM OS") }}{% endblock %}
 
 {% block content %}
-  <h1>Habits</h1>
+  <h1>{{ _("Habits") }}</h1>
 
   <form method="post" class="card add-habit-card">
     <div class="add-habit">
-      <input name="icon" value="✅" maxlength="4" class="icon-input" title="Pick an emoji with Win + ." aria-label="Emoji">
-      <input name="name" placeholder="New habit, e.g. Read 20 minutes" required maxlength="60" aria-label="Habit name">
-      <button>Add habit</button>
+      <input name="icon" value="✅" maxlength="4" class="icon-input" title="{{ _("Pick an emoji with Win + .") }}" aria-label="{{ _("Emoji") }}">
+      <input name="name" placeholder="{{ _("New habit, e.g. Read 20 minutes") }}" required maxlength="60" aria-label="{{ _("Habit name") }}">
+      <button>{{ _("Add habit") }}</button>
     </div>
     <details>
-      <summary>More options: certain days, times a week, amounts, quitting</summary>
+      <summary>{{ _("More options: certain days, times a week, amounts, quitting") }}</summary>
       {{ habit_options() }}
     </details>
   </form>
@@ -25,17 +25,17 @@
         <div>
           <div class="habit-name">{{ h['name'] }}</div>
           <div class="sub">
-            {% if s.progress %}{{ s.progress }} today · {% endif %}{{ s.label }}
-            {% if s.kind == 'build' %} · best {{ s.best }}{% elif s.best %} · best {{ s.best }}{% endif %}
+            {% if s.progress %}{{ _("{progress} today ·", progress=s.progress) }} {% endif %}{{ s.label }}
+            {% if s.kind == 'build' %} {{ _("· best {best}", best=s.best) }}{% elif s.best %} {{ _("· best {best}", best=s.best) }}{% endif %}
           </div>
-          <div class="sub schedule-tag">{{ s.schedule_text }}{% if s.kind == 'build' and not s.due %} · day off today{% endif %}</div>
+          <div class="sub schedule-tag">{{ s.schedule_text }}{% if s.kind == 'build' and not s.due %} {{ _("· day off today") }}{% endif %}</div>
         </div>
       </div>
 
       <div class="week">
         {% for day, state in card.week %}
-          <span class="dot {{ state }}" title="{{ day.isoformat() }}{% if state == 'frozen' %} · freeze used{% elif state == 'off' %} · day off{% elif state == 'slip' %} · slip{% endif %}">
-            {%- if state == 'frozen' %}🧊{% elif state == 'slip' %}✕{% else %}{{ day.strftime('%a')[0] }}{% endif -%}
+          <span class="dot {{ state }}" title="{{ day|day('medium') }}{% if state == 'frozen' %} · {{ _('freeze used') }}{% elif state == 'off' %} · {{ _('day off') }}{% elif state == 'slip' %} · {{ _('slip') }}{% endif %}">
+            {%- if state == 'frozen' %}🧊{% elif state == 'slip' %}✕{% else %}{{ (day|day('short_weekday'))[0] }}{% endif -%}
           </span>
         {% endfor %}
       </div>
@@ -43,13 +43,13 @@
       <div class="habit-actions">
         {% if s.kind == 'quit' %}
           <form method="post" action="{{ url_for('habits.slip', habit_id=h['id']) }}" class="inline"
-                {% if not s.slipped %}onsubmit="return confirm('Log a slip for today? Your clean days will start again.')"{% endif %}>
-            <button class="{{ 'secondary' if s.slipped else 'secondary-plain' }}">{{ 'Undo slip' if s.slipped else 'Log a slip' }}</button>
+                {% if not s.slipped %}onsubmit='return confirm({{ _("Log a slip for today? Your clean days will start again.")|tojson }})'{% endif %}>
+            <button class="{{ 'secondary' if s.slipped else 'secondary-plain' }}">{{ _('Undo slip') if s.slipped else _('Log a slip') }}</button>
           </form>
         {% elif s.counter %}
           {% if s.amount %}
             <form method="post" action="{{ url_for('habits.minus', habit_id=h['id']) }}" class="inline">
-              <button class="secondary-plain" aria-label="One less">−1</button>
+              <button class="secondary-plain" aria-label="{{ _("One less") }}">−1</button>
             </form>
           {% endif %}
           <form method="post" action="{{ url_for('habits.toggle', habit_id=h['id']) }}" class="inline">
@@ -57,27 +57,27 @@
           </form>
         {% else %}
           <form method="post" action="{{ url_for('habits.toggle', habit_id=h['id']) }}" class="inline">
-            {% if s.done %}<button class="secondary">✓ Done</button>{% else %}<button>Mark done</button>{% endif %}
+            {% if s.done %}<button class="secondary">{{ _("✓ Done") }}</button>{% else %}<button>{{ _("Mark done") }}</button>{% endif %}
           </form>
         {% endif %}
-        <a class="link-btn" href="{{ url_for('habits.edit', habit_id=h['id']) }}">Edit</a>
+        <a class="link-btn" href="{{ url_for('habits.edit', habit_id=h['id']) }}">{{ _("Edit") }}</a>
         <form method="post" action="{{ url_for('habits.archive', habit_id=h['id']) }}" class="inline">
-          <button class="link">Archive</button>
+          <button class="link">{{ _("Archive") }}</button>
         </form>
       </div>
     </div>
   {% else %}
-    <p class="muted">No habits yet. Add your first one above.</p>
+    <p class="muted">{{ _("No habits yet. Add your first one above.") }}</p>
   {% endfor %}
 
   <div class="card how-streaks">
-    <h2>How streaks work</h2>
+    <h2>{{ _("How streaks work") }}</h2>
     <ul>
-      <li><strong>Never miss twice.</strong> Missed a day? Your streak is safe if you're back the next day.</li>
-      <li><strong>🧊 Streak freezes</strong> cover a second missed day automatically. You have
-        <strong>{{ freezes }}</strong> (earn 1 every 7 days of check-in streak, hold up to 2).</li>
-      <li>Habits on certain days only count those days. "Times a week" habits count weeks.</li>
-      <li>Quit habits count days clean. A slip starts the count again, but your best stays.</li>
+      <li><strong>{{ _("Never miss twice.") }}</strong> {{ _("Missed a day? Your streak is safe if you're back the next day.") }}</li>
+      <li><strong>{{ _("🧊 Streak freezes") }}</strong> {{ _("cover a second missed day automatically. You have") }}
+        <strong>{{ freezes }}</strong> {{ _("(earn 1 every 7 days of check-in streak, hold up to 2).") }}</li>
+      <li>{{ _("Habits on certain days only count those days. \"Times a week\" habits count weeks.") }}</li>
+      <li>{{ _("Quit habits count days clean. A slip starts the count again, but your best stays.") }}</li>
     </ul>
   </div>
 {% endblock %}

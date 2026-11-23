@@ -190,3 +190,12 @@ CREATE TABLE IF NOT EXISTS insight_votes (
     voted_at    TEXT    NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (user_id, insight_key)
 ) WITHOUT ROWID;
+
+-- An uploaded file waiting for "Import" on the preview page (deleted after 2 hours)
+CREATE TABLE IF NOT EXISTS import_drafts (
+    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token      TEXT    NOT NULL,
+    plan       TEXT    NOT NULL,
+    created_at TEXT    NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (user_id, token)
+) WITHOUT ROWID;

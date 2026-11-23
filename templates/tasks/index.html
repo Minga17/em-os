@@ -1,77 +1,80 @@
 {% extends "base.html" %}
-{% block title %}Tasks · EM OS{% endblock %}
+{% from "quick/_box.html" import quick_add %}
+{% block title %}{{ _("Tasks · EM OS") }}{% endblock %}
 
 {% block content %}
-  <h1>Tasks</h1>
+  <h1>{{ _("Tasks") }}</h1>
+
+  {{ quick_add("tasks") }}
 
   <form method="post" class="card task-add">
-    <input name="title" placeholder="What needs doing?" required maxlength="200">
-    <select name="project_id">
-      <option value="">No project</option>
+    <input aria-label="{{ _("What needs doing") }}" name="title" placeholder="{{ _("What needs doing?") }}" required maxlength="200">
+    <select name="project_id" aria-label="{{ _("Project") }}">
+      <option value="">{{ _("No project") }}</option>
       {% for p in projects %}
         <option value="{{ p['id'] }}">{{ p['title'] }}</option>
       {% endfor %}
     </select>
-    <select name="priority">
+    <select name="priority" aria-label="{{ _("Priority") }}">
       {% for value, label in priorities.items() %}
-        <option value="{{ value }}" {% if value == 2 %}selected{% endif %}>{{ label }}</option>
+        <option value="{{ value }}" {% if value == 2 %}selected{% endif %}>{{ _(label) }}</option>
       {% endfor %}
     </select>
-    <input name="due_date" type="date" aria-label="Due date">
-    <select name="repeat" aria-label="Repeat">
+    <input name="due_date" type="date" aria-label="{{ _("Due date") }}">
+    <select name="repeat" aria-label="{{ _("Repeat") }}">
       {% for value, label in repeats.items() %}
-        <option value="{{ value }}">{{ '🔁 ' if value }}{{ label }}</option>
+        <option value="{{ value }}">{{ '🔁 ' if value }}{{ _(label) }}</option>
       {% endfor %}
     </select>
     {% if goals %}
-      <select name="goal_id" aria-label="Goal">
-        <option value="">No goal</option>
+      <select name="goal_id" aria-label="{{ _("Goal") }}">
+        <option value="">{{ _("No goal") }}</option>
         {% for gl in goals %}<option value="{{ gl['id'] }}">🎯 {{ gl['title'] }}</option>{% endfor %}
       </select>
     {% endif %}
-    <button>Add task</button>
+    <button>{{ _("Add task") }}</button>
   </form>
 
   <form method="get" class="filters">
-    <select name="show">
-      <option value="open" {% if show == 'open' %}selected{% endif %}>Open tasks</option>
-      <option value="done" {% if show == 'done' %}selected{% endif %}>Done</option>
-      <option value="all"  {% if show == 'all'  %}selected{% endif %}>All</option>
+    <select name="show" aria-label="{{ _("Show tasks") }}">
+      <option value="open" {% if show == 'open' %}selected{% endif %}>{{ _("Open tasks") }}</option>
+      <option value="done" {% if show == 'done' %}selected{% endif %}>{{ _("Done") }}</option>
+      <option value="all"  {% if show == 'all'  %}selected{% endif %}>{{ _("All") }}</option>
     </select>
-    <select name="project">
-      <option value="">All projects</option>
-      <option value="none" {% if project_filter == 'none' %}selected{% endif %}>No project</option>
+    <select name="project" aria-label="{{ _("Filter by project") }}">
+      <option value="">{{ _("All projects") }}</option>
+      <option value="none" {% if project_filter == 'none' %}selected{% endif %}>{{ _("No project") }}</option>
       {% for p in projects %}
         <option value="{{ p['id'] }}" {% if project_filter == p['id']|string %}selected{% endif %}>{{ p['title'] }}</option>
       {% endfor %}
     </select>
-    <button class="secondary">Filter</button>
+    <button class="secondary">{{ _("Filter") }}</button>
   </form>
 
   {% for t in tasks %}
     {% set overdue = t['due_date'] and t['due_date'] < today and t['status'] != 'done' %}
     <div class="card task {% if t['status'] == 'done' %}is-done{% endif %} {% if overdue %}overdue{% endif %}">
       <form method="post" action="{{ url_for('tasks.toggle', task_id=t['id']) }}" class="inline">
-        <button class="check" title="Mark done / not done">{% if t['status'] == 'done' %}✓{% endif %}</button>
+        <button class="check" title="{{ _("Mark done / not done") }}">{% if t['status'] == 'done' %}✓{% endif %}</button>
       </form>
 
       <div class="task-body">
         <div class="task-title">{{ t['title'] }}</div>
         <div class="sub">
-          <span class="prio p{{ t['priority'] }}">{{ priorities[t['priority']] }}</span>
-          {% if t['status'] == 'doing' %} · <span class="doing">In progress</span>{% endif %}
+          <span class="prio p{{ t['priority'] }}">{{ _(priorities[t['priority']]) }}</span>
+          {% if t['status'] == 'doing' %} · <span class="doing">{{ _("In progress") }}</span>{% endif %}
           {% if t['project_title'] %} · 📁 {{ t['project_title'] }}{% endif %}
           {% if t['goal_title'] %} · 🎯 {{ t['goal_title'] }}{% endif %}
           {% if t['repeat'] %} · 🔁 {{ t['repeat']|repeat_label }}{% endif %}
           {% if t['due_date'] %}
-            · {% if overdue %}⚠️ Overdue: {% elif t['due_date'] == today %}📅 Due today: {% else %}📅 {% endif %}{{ t['due_date'] }}
+            · {% if overdue %}{{ _("⚠️ Overdue:") }} {% elif t['due_date'] == today %}{{ _("📅 Due today:") }} {% else %}📅 {% endif %}{{ t['due_date'] }}
           {% endif %}
         </div>
       </div>
 
-      <a class="link-btn" href="{{ url_for('tasks.edit', task_id=t['id']) }}">Edit</a>
+      <a class="link-btn" href="{{ url_for('tasks.edit', task_id=t['id']) }}">{{ _("Edit") }}</a>
     </div>
   {% else %}
-    <p class="muted">No tasks here.</p>
+    <p class="muted">{{ _("No tasks here.") }}</p>
   {% endfor %}
 {% endblock %}

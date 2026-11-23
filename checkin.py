@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from flask import Blueprint, flash, g, redirect, render_template, request, url_for
+from i18n import _, _n, N_
 
 from auth import login_required
 from db import get_db
@@ -19,10 +20,10 @@ def parse_rating(value, label, errors):
     try:
         number = int(value)
     except (TypeError, ValueError):
-        errors.append(f"{label} is required.")
+        errors.append(_('{label} is required.', label=label))
         return None
     if not 1 <= number <= 5:
-        errors.append(f"{label} must be between 1 and 5.")
+        errors.append(_('{label} must be between 1 and 5.', label=label))
         return None
     return number
 
@@ -36,16 +37,16 @@ def today():
 
     if request.method == "POST":
         errors = []
-        energy = parse_rating(request.form.get("energy"), "Energy", errors)
-        mood = parse_rating(request.form.get("mood"), "Mood", errors)
-        focus = parse_rating(request.form.get("focus"), "Focus", errors)
+        energy = parse_rating(request.form.get("energy"), _("Energy"), errors)
+        mood = parse_rating(request.form.get("mood"), _("Mood"), errors)
+        focus = parse_rating(request.form.get("focus"), _("Focus"), errors)
 
         try:
             hours = float(request.form.get("focused_hours") or 0)
             if not 0 <= hours <= 24:
-                errors.append("Focused hours must be between 0 and 24.")
+                errors.append(_('Focused hours must be between 0 and 24.'))
         except ValueError:
-            errors.append("Focused hours must be a number.")
+            errors.append(_('Focused hours must be a number.'))
             hours = 0
 
         accomplished = request.form.get("accomplished", "").strip()
@@ -80,7 +81,7 @@ def today():
                  accomplished, wins, blockers, priorities, score),
             )
             db.commit()
-            flash(f"Check-in saved! Today's score: {score}/100", "success")
+            flash(_("Check-in saved! Today's score: {score}/100", score=score), "success")
             earned = award_freeze(db, user_id, user_today())
             if earned:
                 flash(earned, "achievement")
@@ -117,13 +118,13 @@ def quick():
     user_id = g.user["id"]
     today_str = user_today().isoformat()
     errors = []
-    energy = parse_rating(request.form.get("energy"), "Energy", errors)
-    mood = parse_rating(request.form.get("mood"), "Mood", errors)
-    focus = parse_rating(request.form.get("focus"), "Focus", errors)
+    energy = parse_rating(request.form.get("energy"), _("Energy"), errors)
+    mood = parse_rating(request.form.get("mood"), _("Mood"), errors)
+    focus = parse_rating(request.form.get("focus"), _("Focus"), errors)
 
     if errors:
         if request.headers.get("HX-Request"):
-            toast("Pick energy, mood and focus (1 to 5).")
+            toast(_('Pick energy, mood and focus (1 to 5).'))
         else:
             for error in errors:
                 flash(error, "error")
@@ -142,11 +143,11 @@ def quick():
             score = compute_score(energy, mood, focus, hours, "", "")
             db.execute("""INSERT INTO checkins (user_id, log_date, energy, mood, focus, focused_hours, score)
                           VALUES (?, ?, ?, ?, ?, ?, ?)""", (user_id, today_str, energy, mood, focus, hours, score))
-            toast(f"+10 XP · 📝 Checked in! Score {score}/100")
+            toast(_('+10 XP · 📝 Checked in! Score {score}/100', score=score))
         db.commit()
         earned = award_freeze(db, user_id, user_today())
         if not request.headers.get("HX-Request"):
-            flash(f"Check-in saved! Today's score: {score}/100", "success")
+            flash(_("Check-in saved! Today's score: {score}/100", score=score), "success")
             if earned:
                 flash(earned, "achievement")
         elif earned:
@@ -155,7 +156,7 @@ def quick():
     if request.headers.get("HX-Request"):
         summary = today_summary(db, user_id)
         if summary["all_done"]:
-            toast("🎉 Everything done today. Amazing!")
+            toast(_('🎉 Everything done today. Amazing!'))
             celebrate("confetti")
         today_checkin = db.execute("SELECT score FROM checkins WHERE user_id = ? AND log_date = ?",
                                    (user_id, today_str)).fetchone()

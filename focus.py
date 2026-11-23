@@ -7,6 +7,7 @@ to today's focused hours (and the check-in score) automatically.
 from datetime import datetime, timedelta, timezone
 
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
+from i18n import _, _n, N_, translate, translate_n
 
 from auth import login_required
 from db import get_db
@@ -81,9 +82,11 @@ def finish_overdue(db, now=None, user_id=None, sender=None):
                 db.execute("UPDATE focus_sessions SET notified = 1 WHERE id = ?", (session["id"],))
                 db.commit()
                 from reminders import send_to_user          # (here to avoid an import loop)
+                lang = db.execute("SELECT language FROM users WHERE id = ?",
+                                  (session["user_id"],)).fetchone()[0] or "en"
                 send_to_user(db, session["user_id"], {
-                    "title": f"⏰ Focus done: {minutes} minutes!",
-                    "body": "Logged to today. Take a 5-minute break, you earned it.",
+                    "title": translate_n(lang, "⏰ Focus done: {n} minute!", "⏰ Focus done: {n} minutes!", minutes),
+                    "body": translate(lang, "Logged to today. Take a 5-minute break, you earned it."),
                     "url": "/focus/", "tag": "focus"}, sender)
     return finished
 
@@ -131,7 +134,7 @@ def start():
     user_id = g.user["id"]
     minutes = request.form.get("minutes", type=int)
     if minutes not in LENGTHS:
-        flash("Pick 15, 25 or 50 minutes.", "error")
+        flash(_('Pick 15, 25 or 50 minutes.'), "error")
         return redirect(url_for("focus.index"))
     task_id = request.form.get("task_id", type=int)
     if task_id and not db.execute("SELECT 1 FROM tasks WHERE id = ? AND user_id = ?",
@@ -156,9 +159,9 @@ def stop(session_id):
         return redirect(url_for("focus.index"))
     minutes = finish(get_db(), session)
     if minutes:
-        flash(f"⏱ {minutes} minutes of focus logged to today. Nice work!", "success")
+        flash(_('⏱ {minutes} minutes of focus logged to today. Nice work!', minutes=minutes), "success")
     else:
-        flash("Session cancelled. Nothing was logged.", "success")
+        flash(_('Session cancelled. Nothing was logged.'), "success")
     return redirect(url_for("focus.index"))
 
 
@@ -170,5 +173,5 @@ def cancel(session_id):
         db = get_db()
         db.execute("DELETE FROM focus_sessions WHERE id = ?", (session_id,))
         db.commit()
-        flash("Session cancelled. Nothing was logged.", "success")
+        flash(_('Session cancelled. Nothing was logged.'), "success")
     return redirect(url_for("focus.index"))

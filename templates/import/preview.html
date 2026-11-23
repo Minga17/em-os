@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Check your import · EM OS") }}{% endblock %}
+
+{% block content %}
+  <h1>{{ _("Check your import") }}</h1>
+  <p class="muted">{% macro bold(text) %}<strong>{{ text }}</strong>{% endmacro %}{{ _("This looks like {source}. Here's what will be added to your account:", source=bold(source)) }}</p>
+
+  <div class="card import-summary">
+    <ul class="import-counts">
+      {% if counts.habits_new or counts.habit_days %}
+        <li><span class="big">{{ counts.habits_new }}</span> {{ _("new habits") }}
+          {% if counts.habits_merged %}<span class="sub">{{ _("(+ {habits_merged} you already have)", habits_merged=counts.habits_merged) }}</span>{% endif %}</li>
+        <li><span class="big">{{ counts.habit_days }}</span> {{ _("days of habit history") }}</li>
+      {% endif %}
+      {% if plan.tasks %}<li><span class="big">{{ counts.tasks_new }}</span> {{ _("tasks") }}
+        {% if counts.tasks_skipped %}<span class="sub">{{ _("({tasks_skipped} you already have will be skipped)", tasks_skipped=counts.tasks_skipped) }}</span>{% endif %}</li>{% endif %}
+      {% if plan.checkins %}<li><span class="big">{{ counts.checkins_new }}</span> {{ _("check-ins") }}</li>{% endif %}
+      {% if plan.goals %}<li><span class="big">{{ counts.goals_new }}</span> {{ _("goals") }}</li>{% endif %}
+      {% if plan.reviews %}<li><span class="big">{{ counts.reviews_new }}</span> {{ _("weekly reviews") }}</li>{% endif %}
+    </ul>
+  </div>
+
+  {% if sample_habits %}
+    <h2>{{ _("Habits") }}</h2>
+    <ul class="card import-list">
+      {% for h in sample_habits %}
+        <li><span aria-hidden="true">{{ h.icon }}</span> {{ h.name }}
+          <span class="sub">· {{ _n("{n} day", "{n} days", h.logs|length) }}{% if not h.active %} · {{ _("archived") }}{% endif %}</span></li>
+      {% endfor %}
+      {% if plan.habits|length > sample_habits|length %}<li class="sub">{{ _("…and {n} more", n=plan.habits|length - sample_habits|length) }}</li>{% endif %}
+    </ul>
+  {% endif %}
+
+  {% if sample_tasks %}
+    <h2>{{ _("Tasks") }}</h2>
+    <ul class="card import-list">
+      {% for t in sample_tasks %}
+        <li>{{ t.title }}<span class="sub">{% if t.due_date %} · {{ _("due {date}", date=t.due_date|isodate|day('medium')) }}{% endif %}{% if t.repeat %} · 🔁 {{ t.repeat|repeat_label }}{% endif %}{% if t.priority == 1 %} · {{ _("High") }}{% endif %}{% if t.status == 'done' %} · {{ "done"|name }}{% endif %}</span></li>
+      {% endfor %}
+      {% if plan.tasks|length > sample_tasks|length %}<li class="sub">{{ _("…and {n} more", n=plan.tasks|length - sample_tasks|length) }}</li>{% endif %}
+    </ul>
+  {% endif %}
+
+  {% for note in plan.notes %}<p class="sub">{{ note }}</p>{% endfor %}
+
+  <div class="import-actions">
+    <form method="post" action="{{ url_for('importer.confirm') }}">
+      <input type="hidden" name="token" value="{{ token }}">
+      <button>{{ _("Import") }}</button>
+    </form>
+    <form method="post" action="{{ url_for('importer.cancel') }}">
+      <button class="secondary">{{ _("Cancel") }}</button>
+    </form>
+  </div>
+{% endblock %}

@@ -7,7 +7,7 @@
           hx-post="{{ url_for('habits.toggle', habit_id=item.id) }}"
           hx-target="#habit-{{ item.id }}" hx-swap="outerHTML">
       <button class="tick {% if item.counter %}counter{% endif %}"
-              aria-label="{% if item.counter %}Add one{% elif item.done %}Undo{% else %}Mark done{% endif %}: {{ item.name }}">
+              aria-label="{% if item.counter %}{{ _('Add one: {name}', name=item.name) }}{% elif item.done %}{{ _('Undo: {name}', name=item.name) }}{% else %}{{ _('Mark done: {name}', name=item.name) }}{% endif %}">
         {%- if item.done and not item.counter %}✓{% elif item.counter %}{{ '✓' if item.done else (item.amount or '+') }}{% endif -%}
       </button>
     </form>
@@ -20,7 +20,7 @@
   {% if item.counter and item.amount %}
     <form method="post" action="{{ url_for('habits.minus', habit_id=item.id) }}"
           hx-post="{{ url_for('habits.minus', habit_id=item.id) }}" hx-target="#habit-{{ item.id }}" hx-swap="outerHTML">
-      <button class="link remove" aria-label="One less: {{ item.name }}">−</button>
+      <button class="link remove" aria-label="{{ _('One less: {name}', name=item.name) }}">−</button>
     </form>
   {% endif %}
 </li>

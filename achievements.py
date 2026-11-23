@@ -9,6 +9,8 @@ from datetime import date
 
 from flask import Blueprint, flash, g, render_template, request
 
+from i18n import N_, _, _n
+
 from auth import login_required
 from db import get_db
 from habit_model import all_statuses, frozen_days
@@ -22,46 +24,46 @@ bp = Blueprint("achievements", __name__, url_prefix="/achievements")
 # ── Points for each kind of action ──────────────────────────────
 XP_RULES = [
     # (stat,          xp each, label)
-    ("checkins",       10, "check-ins"),
-    ("habit_ticks",     5, "habit ticks"),
-    ("tasks_done",     10, "tasks finished"),
-    ("goals_achieved", 50, "goals achieved"),
-    ("reviews",        20, "weekly reviews"),
-    ("days_closed",     5, "days closed"),
-    ("focus_sessions",  5, "focus sessions"),
-    ("badges",         25, "badges unlocked"),
+    ("checkins",       10, N_("check-ins")),
+    ("habit_ticks",     5, N_("habit ticks")),
+    ("tasks_done",     10, N_("tasks finished")),
+    ("goals_achieved", 50, N_("goals achieved")),
+    ("reviews",        20, N_("weekly reviews")),
+    ("days_closed",     5, N_("days closed")),
+    ("focus_sessions",  5, N_("focus sessions")),
+    ("badges",         25, N_("badges unlocked")),
 ]
 
-LEVEL_TITLES = ["Beginner", "Explorer", "Builder", "Achiever", "Pro",
-                "Expert", "Master", "Grandmaster", "Legend"]
+LEVEL_TITLES = [N_("Beginner"), N_("Explorer"), N_("Builder"), N_("Achiever"), N_("Pro"),
+                N_("Expert"), N_("Master"), N_("Grandmaster"), N_("Legend")]
 
 # ── Every badge: (code, icon, name, description, stat, target, group) ──
 ACHIEVEMENTS = [
-    ("first_checkin",  "📝", "First Step",         "Do your first check-in",              "checkins",          1,  "Consistency"),
-    ("checkins_7",     "🗓️", "Week Warrior",       "Log 7 check-ins",                     "checkins",          7,  "Consistency"),
-    ("checkins_30",    "📅", "Monthly Master",     "Log 30 check-ins",                    "checkins",         30,  "Consistency"),
-    ("checkins_100",   "💯", "Centurion",          "Log 100 check-ins",                   "checkins",        100,  "Consistency"),
-    ("streak_3",       "🔥", "On Fire",            "Reach a 3-day check-in streak",            "checkin_streak",    3,  "Consistency"),
-    ("streak_7",       "⚡", "Unstoppable",        "Reach a 7-day check-in streak",            "checkin_streak",    7,  "Consistency"),
-    ("streak_30",      "🏔️", "Iron Will",          "Reach a 30-day check-in streak",           "checkin_streak",   30,  "Consistency"),
-    ("habit_streak_7", "🌱", "Habit Builder",      "Reach a 7-day streak on any habit",  "habit_streak",      7,  "Habits"),
-    ("habit_streak_30","🌳", "Habit Master",       "Reach a 30-day streak on any habit", "habit_streak",     30,  "Habits"),
-    ("habit_ticks_100","🎖️", "Hundred Habits",     "Tick off 100 habits in total",        "habit_ticks",     100,  "Habits"),
-    ("high_score",     "🚀", "In the Zone",        "Score 90 or more in a day",           "max_score",        90,  "Daily performance"),
-    ("perfect_day",    "⭐", "Perfect Day",        "Score a perfect 100",                 "max_score",       100,  "Daily performance"),
-    ("deep_work",      "🧠", "Deep Work",          "Log 6+ focused hours in one day",     "max_hours",         6,  "Daily performance"),
-    ("first_task",     "✅", "Getting Things Done","Finish your first task",              "tasks_done",        1,  "Productivity"),
-    ("tasks_25",       "🧹", "Task Crusher",       "Finish 25 tasks",                     "tasks_done",       25,  "Productivity"),
-    ("tasks_100",      "🏭", "Productivity Machine","Finish 100 tasks",                   "tasks_done",      100,  "Productivity"),
-    ("first_project",  "📁", "Architect",          "Create your first project",           "projects",          1,  "Productivity"),
-    ("first_goal",     "🎯", "Dreamer",            "Set your first goal",                 "goals",             1,  "Goals & growth"),
-    ("goal_achieved",  "🏆", "Goal Getter",        "Achieve a goal",                      "goals_achieved",    1,  "Goals & growth"),
-    ("goals_5",        "👑", "Visionary",          "Achieve 5 goals",                     "goals_achieved",    5,  "Goals & growth"),
-    ("close_7",        "🌙", "Wind Down",          "Close your day 7 times",              "days_closed",       7,  "Consistency"),
-    ("first_focus",    "🍅", "First Focus",        "Finish a 10+ minute focus session",   "focus_sessions",    1,  "Productivity"),
-    ("focus_25",       "🎧", "Deep Diver",         "Finish 25 focus sessions",            "focus_sessions",   25,  "Productivity"),
-    ("first_review",   "🪞", "Reflective",         "Write your first weekly review",      "reviews",           1,  "Goals & growth"),
-    ("reviews_4",      "📖", "Steady Reflector",   "Write 4 weekly reviews",              "reviews",           4,  "Goals & growth"),
+    ("first_checkin",  "📝", N_("First Step"),         N_("Do your first check-in"),              "checkins",          1,  N_("Consistency")),
+    ("checkins_7",     "🗓️", N_("Week Warrior"),       N_("Log 7 check-ins"),                     "checkins",          7,  N_("Consistency")),
+    ("checkins_30",    "📅", N_("Monthly Master"),     N_("Log 30 check-ins"),                    "checkins",         30,  N_("Consistency")),
+    ("checkins_100",   "💯", N_("Centurion"),          N_("Log 100 check-ins"),                   "checkins",        100,  N_("Consistency")),
+    ("streak_3",       "🔥", N_("On Fire"),            N_("Reach a 3-day check-in streak"),            "checkin_streak",    3,  N_("Consistency")),
+    ("streak_7",       "⚡", N_("Unstoppable"),        N_("Reach a 7-day check-in streak"),            "checkin_streak",    7,  N_("Consistency")),
+    ("streak_30",      "🏔️", N_("Iron Will"),          N_("Reach a 30-day check-in streak"),           "checkin_streak",   30,  N_("Consistency")),
+    ("habit_streak_7", "🌱", N_("Habit Builder"),      N_("Reach a 7-day streak on any habit"),  "habit_streak",      7,  N_("Habits")),
+    ("habit_streak_30","🌳", N_("Habit Master"),       N_("Reach a 30-day streak on any habit"), "habit_streak",     30,  N_("Habits")),
+    ("habit_ticks_100","🎖️", N_("Hundred Habits"),     N_("Tick off 100 habits in total"),        "habit_ticks",     100,  N_("Habits")),
+    ("high_score",     "🚀", N_("In the Zone"),        N_("Score 90 or more in a day"),           "max_score",        90,  N_("Daily performance")),
+    ("perfect_day",    "⭐", N_("Perfect Day"),        N_("Score a perfect 100"),                 "max_score",       100,  N_("Daily performance")),
+    ("deep_work",      "🧠", N_("Deep Work"),          N_("Log 6+ focused hours in one day"),     "max_hours",         6,  N_("Daily performance")),
+    ("first_task",     "✅", N_("Getting Things Done"),N_("Finish your first task"),              "tasks_done",        1,  N_("Productivity")),
+    ("tasks_25",       "🧹", N_("Task Crusher"),       N_("Finish 25 tasks"),                     "tasks_done",       25,  N_("Productivity")),
+    ("tasks_100",      "🏭", N_("Productivity Machine"),N_("Finish 100 tasks"),                   "tasks_done",      100,  N_("Productivity")),
+    ("first_project",  "📁", N_("Architect"),          N_("Create your first project"),           "projects",          1,  N_("Productivity")),
+    ("first_goal",     "🎯", N_("Dreamer"),            N_("Set your first goal"),                 "goals",             1,  N_("Goals & growth")),
+    ("goal_achieved",  "🏆", N_("Goal Getter"),        N_("Achieve a goal"),                      "goals_achieved",    1,  N_("Goals & growth")),
+    ("goals_5",        "👑", N_("Visionary"),          N_("Achieve 5 goals"),                     "goals_achieved",    5,  N_("Goals & growth")),
+    ("close_7",        "🌙", N_("Wind Down"),          N_("Close your day 7 times"),              "days_closed",       7,  N_("Consistency")),
+    ("first_focus",    "🍅", N_("First Focus"),        N_("Finish a 10+ minute focus session"),   "focus_sessions",    1,  N_("Productivity")),
+    ("focus_25",       "🎧", N_("Deep Diver"),         N_("Finish 25 focus sessions"),            "focus_sessions",   25,  N_("Productivity")),
+    ("first_review",   "🪞", N_("Reflective"),         N_("Write your first weekly review"),      "reviews",           1,  N_("Goals & growth")),
+    ("reviews_4",      "📖", N_("Steady Reflector"),   N_("Write 4 weekly reviews"),              "reviews",           4,  N_("Goals & growth")),
 ]
 BY_CODE = {a[0]: a for a in ACHIEVEMENTS}
 
@@ -112,7 +114,7 @@ def level_info(xp):
     start, end = xp_needed_for(level), xp_needed_for(level + 1)
     return {
         "level": level,
-        "title": LEVEL_TITLES[min(level, len(LEVEL_TITLES)) - 1],
+        "title": _(LEVEL_TITLES[min(level, len(LEVEL_TITLES)) - 1]),
         "xp": xp,
         "into_level": xp - start,
         "level_size": end - start,
@@ -153,8 +155,9 @@ def badge_messages(new_badges):
     """One message per new badge, or a single summary if there are many."""
     if len(new_badges) > 3:
         icons = " ".join(badge[1] for badge in new_badges)
-        return [f"🏆 You unlocked {len(new_badges)} achievements! {icons}"]
-    return [f"{icon} Achievement unlocked: {name}!" for code, icon, name, *_ in new_badges]
+        return [_n("🏆 You unlocked {n} achievement! {icons}", "🏆 You unlocked {n} achievements! {icons}",
+                   len(new_badges), icons=icons)]
+    return [_("{icon} Achievement unlocked: {name}!", icon=badge[1], name=_(badge[2])) for badge in new_badges]
 
 
 def celebrate(new_badges):
@@ -203,7 +206,7 @@ def check_level_up(db, user_id):
 def unlocks_at(level):
     """What a new level unlocks (shown on the level-up screen)."""
     from themes import THEMES                           # (here to avoid an import loop)
-    return [f"{t['emoji']} {t['name']} theme" for t in THEMES.values() if t["level"] == level]
+    return [_("{emoji} {name} theme", emoji=t["emoji"], name=_(t["name"])) for t in THEMES.values() if t["level"] == level]
 
 
 # ── Trophies page ───────────────────────────────────────────────
@@ -222,8 +225,8 @@ def index():
 
     groups = defaultdict(list)
     for code, icon, name, description, stat, target, group in ACHIEVEMENTS:
-        groups[group].append({
-            "icon": icon, "name": name, "description": description,
+        groups[_(group)].append({
+            "icon": icon, "name": _(name), "description": _(description),
             "unlocked_at": unlocked.get(code),
             "current": min(stats[stat], target), "target": target,
             "percent": min(stats[stat], target) * 100 // target,

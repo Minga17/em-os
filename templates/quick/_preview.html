@@ -1,0 +1,18 @@
+<div class="qa-preview">
+  <div class="qa-what">
+    <span class="qa-icon" aria-hidden="true">{{ p.icon if kind != 'task' else '📝' }}</span>
+    <strong>{{ p.name }}</strong>
+  </div>
+  <div class="qa-chips">
+    {% for chip in chips %}<span class="qa-chip">{{ chip }}</span>{% endfor %}
+  </div>
+  <fieldset class="qc-chips qa-kind">
+    <legend class="sr-only">{{ _("Add as") }}</legend>
+    {% for value, label in [('habit', _('Habit')), ('quit', _('Quit habit')), ('task', _('Task'))] %}
+      <label><input type="radio" name="kind" value="{{ value }}" {% if kind == value %}checked{% endif %}
+                    hx-get="{{ url_for('quick.preview') }}" hx-trigger="change" hx-target="#qa-preview"
+                    hx-include="#qa-text, [name=kind]:checked"><span>{{ label }}</span></label>
+    {% endfor %}
+  </fieldset>
+  {% if exists %}<p class="sub">{{ _("You already have a habit called “{name}”.", name=p.name) }}</p>{% endif %}
+</div>

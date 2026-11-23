@@ -7,6 +7,8 @@ from datetime import date, timedelta
 
 from flask import Blueprint, g, render_template, request
 
+from i18n import _, format_day
+
 from achievements import player_progress
 from auth import login_required
 from dashboard import checkin_summary
@@ -36,17 +38,18 @@ def week_recap(db, user_id, start, today):
         "SELECT log_date FROM checkins WHERE user_id = ? AND log_date <= ?", (user_id, last.isoformat()))}
     progress = player_progress(db, user_id)
     return {
-        "range": f"{start.strftime('%b')} {start.day} – {end.strftime('%b')} {end.day}, {end.year}",
+        "range": f"{format_day(start, 'day_month')} – {format_day(end, 'yMMMd')}",
         "stats": [
-            ("🔥", "day streak", day_streak(dates, last, frozen_days(db, user_id)).current),
-            ("📝", "check-ins", f"{summary['days_logged']}/7"),
-            ("⭐", "avg score", round(summary["avg_score"]) if summary["avg_score"] is not None else "–"),
-            ("🎯", "habits done", f"{round(done * 100 / possible)}%" if possible else "–"),
-            ("✅", "tasks finished", tasks),
-            ("⏱", "hours focused", round(focus / 60, 1) if focus else round(summary["total_hours"] or 0, 1)),
+            ("🔥", _("day streak"), day_streak(dates, last, frozen_days(db, user_id)).current),
+            ("📝", _("check-ins"), f"{summary['days_logged']}/7"),
+            ("⭐", _("avg score"), round(summary["avg_score"]) if summary["avg_score"] is not None else "–"),
+            ("🎯", _("habits done"), f"{round(done * 100 / possible)}%" if possible else "–"),
+            ("✅", _("tasks finished"), tasks),
+            ("⏱", _("hours focused"), round(focus / 60, 1) if focus else round(summary["total_hours"] or 0, 1)),
         ],
-        "best_day": date.fromisoformat(best["log_date"]).strftime("%A") if best else None,
+        "best_day": format_day(date.fromisoformat(best["log_date"]), "weekday") if best else None,
         "level": progress["level"], "title": progress["title"],
+        "level_line": _("Level {level} · {title}", level=progress["level"], title=progress["title"]),
     }
 
 
@@ -58,6 +61,8 @@ def index():
     start = parse_week(request.args.get("week"))
     recap = week_recap(db, g.user["id"], start, today)
     recap["name"] = g.user["name"].split()[0] if request.args.get("name") == "1" else None
+    recap["heading"] = _("{name}'s week", name=recap["name"]) if recap["name"] else _("My week")
+    recap["best_line"] = _("Best day: {best_day}", best_day=recap["best_day"]) if recap["best_day"] else None
     return render_template("recap/index.html", recap=recap, start=start, show_name=bool(recap["name"]),
                            previous=start - timedelta(weeks=1),
                            following=start + timedelta(weeks=1) if start + timedelta(weeks=1) <= today else None)

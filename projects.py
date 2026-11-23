@@ -1,4 +1,5 @@
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
+from i18n import _, _n, N_
 
 from auth import login_required
 from db import get_db
@@ -30,11 +31,11 @@ def read_project_form():
     }
     errors = []
     if not data["title"]:
-        errors.append("Project title is required.")
+        errors.append(_('Project title is required.'))
     if data["status"] not in STATUSES:
-        errors.append("Pick a valid status.")
+        errors.append(_('Pick a valid status.'))
     if data["github_url"] and not data["github_url"].startswith("https://"):
-        errors.append("GitHub link must start with https://")
+        errors.append(_('GitHub link must start with https://'))
 
     data: dict = {
         "title": request.form.get("title", "").strip(),
@@ -53,7 +54,7 @@ def read_project_form():
         if owned:
             data["goal_id"] = owned["id"]
         else:
-            errors.append("That goal doesn't exist.")
+            errors.append(_("That goal doesn't exist."))
     return data, errors
 
 
@@ -87,7 +88,7 @@ def index():
                  data["next_action"], data["github_url"], data["goal_id"]),
             )
             db.commit()
-            flash(f"Project added: {data['title']}", "success")
+            flash(_('Project added: {title}', title=data['title']), "success")
         return redirect(url_for("projects.index"))
 
     projects = db.execute(
@@ -138,7 +139,7 @@ def edit(project_id):
              data["github_url"], data["goal_id"], project_id, g.user["id"]),
         )
         db.commit()
-        flash("Project updated.", "success")
+        flash(_('Project updated.'), "success")
         return redirect(url_for("projects.index"))
 
     return render_template("projects/edit.html", project=project,
@@ -153,5 +154,5 @@ def delete(project_id):
     db = get_db()
     db.execute("DELETE FROM projects WHERE id = ? AND user_id = ?", (project_id, g.user["id"]))
     db.commit()
-    flash(f"Deleted project: {project['title']}. Its tasks were kept, unassigned.", "success")
+    flash(_('Deleted project: {title}. Its tasks were kept, unassigned.', title=project['title']), "success")
     return redirect(url_for("projects.index"))

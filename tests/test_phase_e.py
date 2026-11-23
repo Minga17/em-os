@@ -154,7 +154,7 @@ def test_heatmap_counts_each_day(app, client, auth):
     client.post("/checkin/quick", data={"energy": 3, "mood": 3, "focus": 3})
     html = client.get("/records/").get_data(as_text=True)
     t = today()
-    label = f"{t.strftime('%a %b')} {t.day}: 1 check-in, 1 habit"
+    label = f"{t.strftime('%a, %b')} {t.day}: 1 check-in, 1 habit"
     assert label in html and "heat-cell l1" in html
     assert "1 active day in the last 12 months" in html
     assert html.count('class="heat-week"') in (53, 54)
@@ -168,7 +168,7 @@ def test_heatmap_brightness_levels(app, client, auth):
                        (f"T{n}", f"{today().isoformat()} 10:00:00"))
     html = client.get("/records/").get_data(as_text=True)
     t = today()
-    assert f'heat-cell l4" title="{t.strftime("%a %b")} {t.day}: 7 tasks"' in html      # today's square, brightest
+    assert f'heat-cell l4" role="img" title="{t.strftime("%a, %b")} {t.day}: 7 tasks"' in html      # today's square, brightest
 
 
 # ── Weekly recap ────────────────────────────────────────────────

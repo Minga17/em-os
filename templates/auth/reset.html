@@ -1,18 +1,18 @@
 {% extends "base.html" %}
-{% block title %}Choose a new password · EM OS{% endblock %}
+{% block title %}{{ _("Choose a new password · EM OS") }}{% endblock %}
 
 {% block content %}
   <div class="card narrow">
-    <h1>Choose a new password</h1>
+    <h1>{{ _("Choose a new password") }}</h1>
     <form method="post" class="stack">
-      <label>New password
+      <label>{{ _("New password") }}
         <input name="new_password" type="password" minlength="8" required autocomplete="new-password" autofocus>
       </label>
-      <label>Confirm new password
+      <label>{{ _("Confirm new password") }}
         <input name="confirm_password" type="password" minlength="8" required autocomplete="new-password">
       </label>
-      <p class="sub">At least 8 characters. Changing it also logs you out on every other device.</p>
-      <button>Save new password</button>
+      <p class="sub">{{ _("At least 8 characters. Changing it also logs you out on every other device.") }}</p>
+      <button>{{ _("Save new password") }}</button>
     </form>
   </div>
 {% endblock %}

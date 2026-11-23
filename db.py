@@ -63,6 +63,7 @@ def run_migrations(db):
         db.commit()
     for table, column, definition in [
         # Flexible habits
+        ("users", "language", "TEXT"),                                # en / es / fr / pt (empty = browser)
         ("habits", "kind", "TEXT NOT NULL DEFAULT 'build'"),         # build / quit
         ("habits", "schedule", "TEXT NOT NULL DEFAULT 'daily'"),     # daily / days / weekly
         ("habits", "days", "TEXT NOT NULL DEFAULT ''"),              # e.g. '0,2,4' = Mon Wed Fri

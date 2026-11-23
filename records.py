@@ -4,6 +4,8 @@ from datetime import date, timedelta
 
 from flask import Blueprint, g, render_template
 
+from i18n import _, _n, format_day
+
 from achievements import player_progress
 from auth import login_required
 from db import get_db
@@ -36,26 +38,26 @@ def gather_records(db, user_id, today):
 
     streak = day_streak(dates, today, frozen_days(db, user_id))
     if streak.best:
-        records.append(record("🔥", "Longest check-in streak", streak.best, "days",
-                              detail=f"Right now: {streak.current} days"))
+        records.append(record("🔥", _("Longest check-in streak"), streak.best, _n("day", "days", streak.best),
+                              detail=_n("Right now: {n} day", "Right now: {n} days", streak.current)))
 
     habits = all_statuses(db, user_id, today, active_only=False)
     daily = [h for h in habits if h["kind"] == "build" and h["schedule"] != "weekly" and h["best"]]
     if daily:
         top = max(daily, key=lambda h: h["best"])
-        records.append(record("🌳", "Longest habit streak", top["best"], "days",
+        records.append(record("🌳", _("Longest habit streak"), top["best"], _n("day", "days", top["best"]),
                               detail=f"{top['icon']} {top['name']}"))
     quits = [h for h in habits if h["kind"] == "quit" and h["best"]]
     if quits:
         top = max(quits, key=lambda h: h["best"])
-        records.append(record("🛡️", "Longest time clean", top["best"], "days",
+        records.append(record("🛡️", _("Longest time clean"), top["best"], _n("day", "days", top["best"]),
                               detail=f"{top['icon']} {top['name']}"))
 
     row = best_row(db, "SELECT log_date, score FROM checkins WHERE user_id = ? "
                        "ORDER BY score DESC, log_date LIMIT 1", (user_id,))
     if row:
         when = date.fromisoformat(row[0])
-        records.append(record("⭐", "Best day", row[1], "/100", when, today=today))
+        records.append(record("⭐", _("Best day"), row[1], "/100", when, today=today))
 
     weeks = defaultdict(list)
     for r in checkins:
@@ -63,32 +65,42 @@ def gather_records(db, user_id, today):
     full_weeks = {w: sum(s) / len(s) for w, s in weeks.items() if len(s) >= MIN_DAYS_FOR_BEST_WEEK}
     if full_weeks:
         week = max(full_weeks, key=lambda w: (full_weeks[w], w))
-        records.append(record("🗓️", "Best week", round(full_weeks[week]), "avg score",
-                              week, detail=f"Week of {week.strftime('%b')} {week.day}", today=today))
+        records.append(record("🗓️", _("Best week"), round(full_weeks[week]), _("avg score"),
+                              week, detail=_("Week of {date}", date=format_day(week, "day_month")), today=today))
 
     row = best_row(db, "SELECT log_date, focused_hours FROM checkins WHERE user_id = ? "
                        "ORDER BY focused_hours DESC, log_date LIMIT 1", (user_id,))
     if row:
-        records.append(record("🧠", "Most focused day", round(row[1], 1), "hours",
+        records.append(record("🧠", _("Most focused day"), round(row[1], 1), _n("hour", "hours", round(row[1], 1)),
                               date.fromisoformat(row[0]), today=today))
 
     row = best_row(db, """SELECT date(completed_at) AS d, COUNT(*) FROM tasks
                           WHERE user_id = ? AND status = 'done' AND completed_at IS NOT NULL
                           GROUP BY d ORDER BY COUNT(*) DESC, d LIMIT 1""", (user_id,))
     if row:
-        records.append(record("✅", "Most tasks in a day", row[1], "tasks", date.fromisoformat(row[0]), today=today))
+        records.append(record("✅", _("Most tasks in a day"), row[1], _n("task", "tasks", row[1]), date.fromisoformat(row[0]), today=today))
 
     row = best_row(db, """SELECT l.log_date, COUNT(*) FROM habit_logs l JOIN habits h ON h.id = l.habit_id
                           WHERE h.user_id = ? AND l.amount >= h.goal_count
                           GROUP BY l.log_date ORDER BY COUNT(*) DESC, l.log_date LIMIT 1""", (user_id,))
     if row:
-        records.append(record("🎯", "Most habits in a day", row[1], "habits", date.fromisoformat(row[0]), today=today))
+        records.append(record("🎯", _("Most habits in a day"), row[1], _n("habit", "habits", row[1]), date.fromisoformat(row[0]), today=today))
 
     row = best_row(db, "SELECT log_date, minutes FROM focus_sessions WHERE user_id = ? AND minutes IS NOT NULL "
                        "ORDER BY minutes DESC, id LIMIT 1", (user_id,))
     if row:
-        records.append(record("⏱", "Longest focus session", row[1], "minutes", date.fromisoformat(row[0]), today=today))
+        records.append(record("⏱", _("Longest focus session"), row[1], _n("minute", "minutes", row[1]), date.fromisoformat(row[0]), today=today))
     return records
+
+
+def heat_part(kind, n):
+    if kind == "checkin":
+        return _n("{n} check-in", "{n} check-ins", n)
+    if kind == "habit":
+        return _n("{n} habit", "{n} habits", n)
+    if kind == "task":
+        return _n("{n} task", "{n} tasks", n)
+    return _n("{n} focus session", "{n} focus sessions", n)
 
 
 def year_heatmap(db, user_id, today, days=365):
@@ -101,7 +113,7 @@ def year_heatmap(db, user_id, today, days=365):
     since = start.isoformat()
     counts = defaultdict(lambda: defaultdict(int))
     for (day,) in db.execute("SELECT log_date FROM checkins WHERE user_id = ? AND log_date >= ?", (user_id, since)):
-        counts[day]["check-in"] += 1
+        counts[day]["checkin"] += 1
     for (day,) in db.execute("""SELECT l.log_date FROM habit_logs l JOIN habits h ON h.id = l.habit_id
                                 WHERE h.user_id = ? AND l.log_date >= ? AND l.amount >= h.goal_count""",
                              (user_id, since)):
@@ -111,7 +123,7 @@ def year_heatmap(db, user_id, today, days=365):
         counts[day]["task"] += 1
     for (day,) in db.execute("SELECT log_date FROM focus_sessions WHERE user_id = ? AND log_date >= ? "
                              "AND minutes IS NOT NULL", (user_id, since)):
-        counts[day]["focus session"] += 1
+        counts[day]["focus"] += 1
 
     def level(total):
         return 0 if total == 0 else 1 if total <= 2 else 2 if total <= 4 else 3 if total <= 6 else 4
@@ -120,20 +132,21 @@ def year_heatmap(db, user_id, today, days=365):
     day = start
     while day <= today:
         column = []
-        for _ in range(7):
+        for _weekday in range(7):
             if day > today:
                 column.append(None)
             else:
                 things = counts.get(day.isoformat(), {})
                 total = sum(things.values())
                 active_days += total > 0
-                parts = [f"{n} {kind}{'s' if n != 1 else ''}" for kind, n in things.items()] or ["nothing logged"]
+                parts = [heat_part(kind, n) for kind, n in things.items()] or [_("nothing logged")]
                 column.append({"date": day, "level": level(total),
-                               "label": f"{day.strftime('%a %b')} {day.day}: {', '.join(parts)}"})
+                               "label": f"{format_day(day, 'medium')}: {', '.join(parts)}"})
             day += timedelta(days=1)
         first = column[0]["date"]
-        if not months or months[-1][1] != first.strftime("%b"):
-            months.append((len(weeks), first.strftime("%b")))
+        month = format_day(first, "MMM")
+        if not months or months[-1][1] != month:
+            months.append((len(weeks), month))
         weeks.append(column)
     return {"weeks": weeks, "months": months, "active_days": active_days}
 
@@ -154,12 +167,12 @@ def index():
                               UNION ALL SELECT date(created_at) FROM users WHERE id = :u)""",
         {"u": user_id}).fetchone()[0]
     totals = [
-        ("📝", "Check-ins", stats["checkins"]),
-        ("🔥", "Habits done", stats["habit_ticks"]),
-        ("✅", "Tasks finished", stats["tasks_done"]),
-        ("⏱", "Hours focused", round(focus_hours, 1)),
-        ("🌙", "Days closed", stats["days_closed"]),
-        ("🏆", "Goals achieved", stats["goals_achieved"]),
+        ("📝", _("Check-ins"), stats["checkins"]),
+        ("🔥", _("Habits done"), stats["habit_ticks"]),
+        ("✅", _("Tasks finished"), stats["tasks_done"]),
+        ("⏱", _("Hours focused"), round(focus_hours, 1)),
+        ("🌙", _("Days closed"), stats["days_closed"]),
+        ("🏆", _("Goals achieved"), stats["goals_achieved"]),
     ]
     return render_template("records/index.html", records=gather_records(db, user_id, today),
                            totals=totals, progress=progress, heat=year_heatmap(db, user_id, today),

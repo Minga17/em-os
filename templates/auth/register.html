@@ -1,28 +1,28 @@
 {% extends "base.html" %}
-{% block title %}Sign up · EM OS{% endblock %}
+{% block title %}{{ _("Sign up · EM OS") }}{% endblock %}
 
 {% block content %}
   <div class="card narrow">
-    <h1>Create your account</h1>
+    <h1>{{ _("Create your account") }}</h1>
     <form method="post" class="stack">
-      <label>Name
+      <label>{{ _("Name") }}
         <input name="name" required value="{{ request.form.get('name', '') }}">
       </label>
-      <label>Email
+      <label>{{ _("Email") }}
         <input name="email" type="email" required value="{{ request.form.get('email', '') }}">
       </label>
-      <label>Password
+      <label>{{ _("Password") }}
         <input name="password" type="password" minlength="8" required>
       </label>
-            <label>Time zone
+            <label>{{ _("Time zone") }}
         <select name="timezone" required>
           {% for tz in timezones %}
             <option value="{{ tz }}" {% if tz == request.form.get('timezone', 'UTC') %}selected{% endif %}>{{ tz.replace('_', ' ') }}</option>
           {% endfor %}
         </select>
       </label>
-      <button>Sign up</button>
+      <button>{{ _("Sign up") }}</button>
     </form>
-    <p class="muted">Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a></p>
+    <p class="muted">{{ _("Already have an account?") }} <a href="{{ url_for('auth.login') }}">{{ _("Log in") }}</a></p>
   </div>
 {% endblock %}

@@ -1,25 +1,25 @@
 {% if today_checkin %}
   <div class="card today" id="checkin-card">
     <div>
-      <div class="muted">Today's score</div>
+      <div class="muted">{{ _("Today's score") }}</div>
       <div class="big">{{ today_checkin['score'] }}<span class="muted">/100</span></div>
     </div>
-    <a class="btn secondary" href="{{ url_for('checkin.today') }}">Add details</a>
+    <a class="btn secondary" href="{{ url_for('checkin.today') }}">{{ _("Add details") }}</a>
   </div>
 {% else %}
   <div class="card quick-checkin" id="checkin-card">
     <div class="qc-head">
       <div>
-        <div class="muted">Daily check-in · 3 taps</div>
-        <strong>How did today go?</strong>
+        <div class="muted">{{ _("Daily check-in · 3 taps") }}</div>
+        <strong>{{ _("How did today go?") }}</strong>
       </div>
-      <a class="link-btn" href="{{ url_for('checkin.today') }}">Full check-in</a>
+      <a class="link-btn" href="{{ url_for('checkin.today') }}">{{ _("Full check-in") }}</a>
     </div>
     <form method="post" action="{{ url_for('checkin.quick') }}" class="qc-form" data-autosubmit
           hx-post="{{ url_for('checkin.quick') }}" hx-target="#checkin-card" hx-swap="outerHTML">
-      {% for name, label, low, high in [("energy", "⚡ Energy", "Drained", "Charged"),
-                                         ("mood", "🙂 Mood", "Low", "Great"),
-                                         ("focus", "🎯 Focus", "Scattered", "Locked in")] %}
+      {% for name, label, low, high in [("energy", _("⚡ Energy"), _("Drained"), _("Charged")),
+                                         ("mood", _("🙂 Mood"), _("Low"), _("Great")),
+                                         ("focus", _("🎯 Focus"), _("Scattered"), _("Locked in"))] %}
         <fieldset class="qc-row">
           <legend>{{ label }}</legend>
           <div class="qc-chips">
@@ -30,7 +30,7 @@
           <div class="qc-scale"><span>{{ low }}</span><span>{{ high }}</span></div>
         </fieldset>
       {% endfor %}
-      <button class="qc-save">Save check-in</button>
+      <button class="qc-save">{{ _("Save check-in") }}</button>
     </form>
   </div>
 {% endif %}

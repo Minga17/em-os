@@ -1,19 +1,19 @@
 {% extends "base.html" %}
-{% block title %}Weekly recap · EM OS{% endblock %}
+{% block title %}{{ _("Weekly recap · EM OS") }}{% endblock %}
 
 {% block content %}
   <div class="dash-head">
-    <h1>📸 Weekly recap</h1>
-    <nav class="tabs">
-      <a href="{{ url_for('recap.index', week=previous.isoformat(), name='1' if show_name else None) }}">← Previous</a>
-      {% if following %}<a href="{{ url_for('recap.index', week=following.isoformat(), name='1' if show_name else None) }}">Next →</a>{% endif %}
+    <h1>{{ _("📸 Weekly recap") }}</h1>
+    <nav class="tabs" aria-label="{{ _("Choose a period") }}">
+      <a href="{{ url_for('recap.index', week=previous.isoformat(), name='1' if show_name else None) }}">{{ _("← Previous") }}</a>
+      {% if following %}<a href="{{ url_for('recap.index', week=following.isoformat(), name='1' if show_name else None) }}">{{ _("Next →") }}</a>{% endif %}
     </nav>
   </div>
 
   <div class="recap-card" id="recap-card">
     <div class="recap-top">
       <div class="recap-brand">EM OS</div>
-      <div class="recap-heading">{% if recap.name %}{{ recap.name }}'s week{% else %}My week{% endif %}</div>
+      <div class="recap-heading">{% if recap.name %}{{ _("{name}'s week", name=recap.name) }}{% else %}{{ _("My week") }}{% endif %}</div>
       <div class="recap-range">{{ recap.range }}</div>
     </div>
     <div class="recap-stats">
@@ -23,21 +23,21 @@
       {% endfor %}
     </div>
     <div class="recap-foot">
-      <span>Level {{ recap.level }} · {{ recap.title }}</span>
-      {% if recap.best_day %}<span>Best day: {{ recap.best_day }}</span>{% endif %}
+      <span>{{ _("Level {level} · {recap}", level=recap.level, recap=recap.title) }}</span>
+      {% if recap.best_day %}<span>{{ _("Best day: {best_day}", best_day=recap.best_day) }}</span>{% endif %}
     </div>
   </div>
 
   <div class="recap-actions">
-    <button type="button" data-recap-share hidden>📤 Share</button>
-    <button type="button" data-recap-save class="secondary-plain">⬇ Save image</button>
+    <button type="button" data-recap-share hidden>{{ _("📤 Share") }}</button>
+    <button type="button" data-recap-save class="secondary-plain">{{ _("⬇ Save image") }}</button>
     {% if show_name %}
-      <a class="link-btn" href="{{ url_for('recap.index', week=start.isoformat()) }}">Hide my name</a>
+      <a class="link-btn" href="{{ url_for('recap.index', week=start.isoformat()) }}">{{ _("Hide my name") }}</a>
     {% else %}
-      <a class="link-btn" href="{{ url_for('recap.index', week=start.isoformat(), name='1') }}">Show my first name</a>
+      <a class="link-btn" href="{{ url_for('recap.index', week=start.isoformat(), name='1') }}">{{ _("Show my first name") }}</a>
     {% endif %}
   </div>
-  <p class="sub">Only these numbers are on the image: no task names, notes or moods.</p>
+  <p class="sub">{{ _("Only these numbers are on the image: no task names, notes or moods.") }}</p>
 
   <script type="application/json" id="recap-data">{{ recap|tojson }}</script>
 {% endblock %}

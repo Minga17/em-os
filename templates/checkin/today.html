@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Daily check-in · EM OS{% endblock %}
+{% block title %}{{ _("Daily check-in · EM OS") }}{% endblock %}
 
 {% macro rating(name, label) %}
   <fieldset class="rating">
@@ -16,38 +16,38 @@
 
 {% block content %}
   <div class="card">
-    <h1>Daily check-in</h1>
+    <h1>{{ _("Daily check-in") }}</h1>
     <p class="muted">{{ today }}</p>
 
     <form method="post" class="stack">
       <div class="ratings">
-        {{ rating("energy", "Energy") }}
-        {{ rating("mood", "Mood") }}
-        {{ rating("focus", "Focus") }}
+        {{ rating("energy", _("Energy")) }}
+        {{ rating("mood", _("Mood")) }}
+        {{ rating("focus", _("Focus")) }}
       </div>
 
-      <label>Focused hours
+      <label>{{ _("Focused hours") }}
         <input name="focused_hours" type="number" step="0.25" min="0" max="24"
                value="{{ values.get('focused_hours', '') }}">
       </label>
 
-      <label>What did you accomplish?
+      <label>{{ _("What did you accomplish?") }}
         <textarea name="accomplished" rows="3">{{ values.get('accomplished') or '' }}</textarea>
       </label>
 
-      <label>Wins 🏆
+      <label>{{ _("Wins 🏆") }}
         <textarea name="wins" rows="2">{{ values.get('wins') or '' }}</textarea>
       </label>
 
-      <label>Blockers
+      <label>{{ _("Blockers") }}
         <textarea name="blockers" rows="2">{{ values.get('blockers') or '' }}</textarea>
       </label>
 
-      <label>Top priorities for tomorrow (one per line)
+      <label>{{ _("Top priorities for tomorrow (one per line)") }}
         <textarea name="priorities" rows="3">{{ values.get('priorities') or '' }}</textarea>
       </label>
 
-      <button>Save check-in</button>
+      <button>{{ _("Save check-in") }}</button>
     </form>
   </div>
 {% endblock %}

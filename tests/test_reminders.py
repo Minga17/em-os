@@ -108,7 +108,8 @@ def test_reminder_routes_need_login(client):
 def test_subscribe_saves_device_and_sets_default_time(app, client, auth):
     auth.register_and_login()
     response = client.post("/reminders/subscribe", json=SUBSCRIPTION)
-    assert response.get_json() == {"ok": True, "reminder_time": "20:00", "devices": 1}
+    assert response.get_json() == {"ok": True, "reminder_time": "20:00", "devices": 1,
+                                   "devices_text": "1 device signed up for reminders."}
     client.post("/reminders/subscribe", json=SUBSCRIPTION)            # again: no duplicate
     with connect(app) as db:
         assert db.execute("SELECT COUNT(*) FROM push_subscriptions").fetchone()[0] == 1

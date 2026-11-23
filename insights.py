@@ -20,6 +20,8 @@ from datetime import date, timedelta
 
 from flask import Blueprint, abort, current_app, g, redirect, render_template, request, url_for
 
+from i18n import N_, _, _n, current_language
+
 from auth import login_required
 from db import get_db
 from habit_model import is_scheduled
@@ -37,12 +39,24 @@ LUCK = 0.05                 # show a pattern only if luck finds one this strong 
 MIN_CORRELATION = 0.4       # for "tends to go together" patterns
 MAX_SHOWN = 6
 
-METRICS = {                 # what we compare, and how to say it
-    "focus": ("focus", "out of 5"),
-    "mood": ("mood", "out of 5"),
-    "energy": ("energy", "out of 5"),
-    "score": ("daily score", "points"),
+METRICS = ("focus", "mood", "energy", "score")       # what we compare
+# Whole sentences (not "Your {measure}…"): in other languages the words around them change
+HABIT_SENTENCES = {
+    ("focus", True): N_("Your focus is {amount} higher on days you do {habit}."),
+    ("focus", False): N_("Your focus is {amount} lower on days you do {habit}."),
+    ("mood", True): N_("Your mood is {amount} higher on days you do {habit}."),
+    ("mood", False): N_("Your mood is {amount} lower on days you do {habit}."),
+    ("energy", True): N_("Your energy is {amount} higher on days you do {habit}."),
+    ("energy", False): N_("Your energy is {amount} lower on days you do {habit}."),
+    ("score", True): N_("Your daily score is {amount} higher on days you do {habit}."),
+    ("score", False): N_("Your daily score is {amount} lower on days you do {habit}."),
 }
+WEEKDAYS_PLURAL = [N_("Mondays"), N_("Tuesdays"), N_("Wednesdays"), N_("Thursdays"), N_("Fridays"),
+                   N_("Saturdays"), N_("Sundays")]
+
+
+def capitalized(text):
+    return text[:1].upper() + text[1:]
 SUPPORT_LINK = "https://findahelpline.com"
 
 
@@ -83,7 +97,7 @@ def chance_of_luck(observed, values, labels, statistic, seed):
     rng = random.Random(seed)
     labels = list(labels)
     as_big = 0
-    for _ in range(SHUFFLES):
+    for _shuffle in range(SHUFFLES):
         rng.shuffle(labels)
         if statistic(values, labels) >= observed:
             as_big += 1
@@ -103,7 +117,7 @@ def compare(metric, with_days, without_days, min_t=CLEAR_T):
     if metric == "score":
         if abs(ma - mb) < 5:
             return None
-        amount = f"{abs(ma - mb):.0f} points"
+        amount = _n("{n} point", "{n} points", round(abs(ma - mb)))
     else:
         if abs(ma - mb) < 0.3:
             return None
@@ -166,13 +180,15 @@ def habit_insights(db, user_id, days):
         luck = chance_of_luck(best[0], rows, labels, statistic, seed=h["id"])
         if luck >= LUCK / len(tested):          # stricter when there are many habits to check
             continue
-        _, metric, r = best
-        label, unit = METRICS[metric]
+        metric, r = best[1], best[2]
+        detail = (_n("{a} vs {b} points · based on {n} day", "{a} vs {b} points · based on {n} days", r["n"],
+                     a=r["with"], b=r["without"]) if metric == "score" else
+                  _n("{a} vs {b} out of 5 · based on {n} day", "{a} vs {b} out of 5 · based on {n} days", r["n"],
+                     a=r["with"], b=r["without"]))
         found.append({
             "key": f"habit:{h['id']}:{metric}", "icon": h["icon"], "strength": r["t"],
-            "text": f"Your {label} is {r['amount']} {'higher' if r['higher'] else 'lower'} "
-                    f"on days you do {h['icon']} {h['name']}.",
-            "detail": f"{r['with']} vs {r['without']} {unit} · based on {r['n']} days",
+            "text": _(HABIT_SENTENCES[(metric, r["higher"])], amount=r["amount"], habit=f"{h['icon']} {h['name']}"),
+            "detail": detail,
         })
     return found
 
@@ -202,12 +218,13 @@ def weekday_insight(days):
     weekdays = [wd for wd in counted for _ in counted[wd]]
     if chance_of_luck(spread, scores, weekdays, weekday_spread, seed=7) >= LUCK:
         return []
-    names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    names = [_(n) for n in WEEKDAYS_PLURAL]
     return [{
         "key": "weekday", "icon": "📅", "strength": abs(welch_t(counted[best], others)),
-        "text": f"{names[best]}s tend to be your best days. {names[worst]}s are usually the hardest.",
-        "detail": f"Average score {mean(counted[best]):.0f} on {names[best]}s vs {mean(counted[worst]):.0f} "
-                  f"on {names[worst]}s",
+        "text": capitalized(_("{best} tend to be your best days. {worst} are usually the hardest.",
+                              best=names[best], worst=names[worst])),
+        "detail": capitalized(_("Average score {a} on {best} vs {b} on {worst}", a=round(mean(counted[best])),
+                                best=names[best], b=round(mean(counted[worst])), worst=names[worst])),
     }]
 
 
@@ -219,8 +236,9 @@ def task_load_insight(days):
         return []
     return [{
         "key": "task_load", "icon": "📋", "strength": r["t"],
-        "text": f"Your mood is {r['amount']} lower on days with 5 or more open tasks.",
-        "detail": f"{r['with']} vs {r['without']} out of 5 · picking a top 3 can make a long list feel lighter",
+        "text": _("Your mood is {amount} lower on days with 5 or more open tasks.", amount=r["amount"]),
+        "detail": _("{a} vs {b} out of 5 · picking a top 3 can make a long list feel lighter",
+                    a=r["with"], b=r["without"]),
     }]
 
 
@@ -231,8 +249,8 @@ def focus_session_insight(days):
         return []
     return [{
         "key": "focus_timer", "icon": "⏱", "strength": r["t"],
-        "text": f"Days with a focus session score {r['amount']} higher.",
-        "detail": f"Average {r['with']} vs {r['without']}",
+        "text": _("Days with a focus session score {amount} higher.", amount=r["amount"]),
+        "detail": _("Average {a} vs {b}", a=r["with"], b=r["without"]),
     }]
 
 
@@ -245,9 +263,9 @@ def hours_mood_insight(days):
         return []
     return [{
         "key": "hours_mood", "icon": "🧠", "strength": abs(r) * 4,
-        "text": ("Days with more focused hours tend to come with a better mood."
-                 if r > 0 else "Long focus days tend to come with a lower mood. Breaks might help."),
-        "detail": f"Based on {len(rows)} check-ins",
+        "text": (_("Days with more focused hours tend to come with a better mood.")
+                 if r > 0 else _("Long focus days tend to come with a lower mood. Breaks might help.")),
+        "detail": _n("Based on {n} check-in", "Based on {n} check-ins", len(rows)),
     }]
 
 
@@ -259,8 +277,8 @@ def energy_focus_insight(days):
     if r < MIN_CORRELATION + 0.1:
         return []
     return [{"key": "energy_focus", "icon": "⚡", "strength": r * 3,
-             "text": "Your focus follows your energy: high-energy days are your sharpest.",
-             "detail": "Worth protecting the things that give you energy"}]
+             "text": _("Your focus follows your energy: high-energy days are your sharpest."),
+             "detail": _("Worth protecting the things that give you energy")}]
 
 
 def trend_insight(days, today):
@@ -274,9 +292,10 @@ def trend_insight(days, today):
     up = change > 0
     return [{
         "key": "trend", "icon": "📈" if up else "📉", "strength": abs(welch_t(recent, before)),
-        "text": (f"Your average score is up {change:.0f} points over the last 2 weeks. Keep it going!" if up else
-                 f"Your average score is down {-change:.0f} points over the last 2 weeks. Small steps count."),
-        "detail": f"{mean(recent):.0f} vs {mean(before):.0f} the 2 weeks before",
+        "text": (_("Your average score is up {n} points over the last 2 weeks. Keep it going!", n=round(change))
+                 if up else
+                 _("Your average score is down {n} points over the last 2 weeks. Small steps count.", n=round(-change))),
+        "detail": _("{a} vs {b} the 2 weeks before", a=round(mean(recent)), b=round(mean(before))),
     }]
 
 
@@ -284,8 +303,8 @@ def support_note(days, today):
     """Gentle and optional. Never a diagnosis."""
     recent = [d["mood"] for d in days.values() if (today - d["date"]).days < 14]
     if len(recent) >= 7 and mean(recent) <= 2.0:
-        return {"text": "Your mood has been low lately. If things feel heavy, talking to someone you trust "
-                        "can help. Free, confidential support is listed for your country at findahelpline.com.",
+        return {"text": _("Your mood has been low lately. If things feel heavy, talking to someone you trust "
+                          "can help. Free, confidential support is listed for your country at findahelpline.com."),
                 "link": SUPPORT_LINK}
     return None
 
@@ -301,7 +320,7 @@ def find_patterns(db, user_id, today):
                   (SELECT COUNT(*) || ':' || COALESCE(SUM(is_active), 0) FROM habits WHERE user_id = :u),
                   (SELECT COUNT(*) FROM tasks WHERE user_id = :u AND status = 'done'),
                   (SELECT COUNT(*) FROM focus_sessions WHERE user_id = :u)""", {"u": user_id}).fetchone()
-    key = (current_app.config["DATABASE"], user_id, today, tuple(fingerprint))
+    key = (current_app.config["DATABASE"], user_id, today, tuple(fingerprint), current_language())
     if key not in _cache:
         if len(_cache) > 2000:
             _cache.clear()

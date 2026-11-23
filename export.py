@@ -3,6 +3,8 @@ import io
 
 from flask import Blueprint, Response, abort, g, render_template
 
+from i18n import N_
+
 from auth import login_required
 from db import get_db
 from timeutil import user_today
@@ -13,7 +15,7 @@ bp = Blueprint("export", __name__, url_prefix="/export")
 # Every query is limited to the logged-in user with  WHERE ... user_id = ?
 DATASETS = {
     "checkins": (
-        "Daily check-ins: ratings, hours, score, notes",
+        N_("Daily check-ins: ratings, hours, score, notes"),
         """
         SELECT log_date, energy, mood, focus, focused_hours, score,
                accomplished, wins, blockers, priorities
@@ -23,7 +25,7 @@ DATASETS = {
         """,
     ),
     "habits": (
-        "Every habit tick, one row per habit per day (amount = how many that day)",
+        N_("Every habit tick, one row per habit per day (amount = how many that day)"),
         """
         SELECT hl.log_date, h.name AS habit, h.icon, hl.amount,
                CASE WHEN h.is_active = 1 THEN 'active' ELSE 'archived' END AS habit_status
@@ -34,7 +36,7 @@ DATASETS = {
         """,
     ),
     "tasks": (
-        "All tasks with project, priority, dates and status",
+        N_("All tasks with project, priority, dates and status"),
         """
         SELECT t.title, p.title AS project, t.status, t.priority,
                t.due_date, date(t.created_at) AS created, date(t.completed_at) AS completed
@@ -45,7 +47,7 @@ DATASETS = {
         """,
     ),
     "goals": (
-        "Goals with life area, status, progress and target date",
+        N_("Goals with life area, status, progress and target date"),
         """
         SELECT gl.title, la.name AS life_area, gl.status, gl.progress,
                gl.target_date, gl.why
@@ -56,7 +58,7 @@ DATASETS = {
         """,
     ),
     "weekly_reviews": (
-        "Your weekly reflections",
+        N_("Your weekly reflections"),
         """
         SELECT week_start, rating, went_well, challenges, lessons, next_focus
         FROM weekly_reviews

@@ -1,11 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Today · EM OS{% endblock %}
+{% from "quick/_box.html" import quick_add %}
+{% block title %}{{ _("Today · EM OS") }}{% endblock %}
 
 {% block content %}
   <!-- Hero: greeting, progress ring, streak -->
   <section class="today-hero">
     <div class="today-text">
-      <div class="muted">{{ summary.today.strftime('%A, %B %d') }}</div>
+      <div class="muted">{{ summary.today|day('long') }}</div>
       <h1>{{ summary.greeting }}, {{ g.user['name'].split()[0] }} 👋</h1>
       {% include "today/_flame.html" %}
     </div>
@@ -14,19 +15,20 @@
 
   <!-- Level strip -->
   <a class="card level-mini" href="{{ url_for('achievements.index') }}">
-    <span class="level-pill">Lv {{ progress.level }}</span>
-    <span class="level-mini-text"><strong>{{ progress.title }}</strong> · {{ progress.xp }} XP</span>
+    <span class="level-pill">{{ _("Lv {level}", level=progress.level) }}</span>
+    <span class="level-mini-text"><strong>{{ progress.title }}</strong> {{ _("· {xp} XP", xp=progress.xp) }}</span>
     <span class="xp-bar small"><span style="width: {{ progress.percent }}%"></span></span>
-    <span class="sub">{{ progress.to_next }} XP to Lv {{ progress.level + 1 }}</span>
+    <span class="sub">{{ _("{to_next} XP to Lv {level}", to_next=progress.to_next, level=progress.level + 1) }}</span>
   </a>
+
+  {{ quick_add("home") }}
 
   {% if not g.user['email_verified'] %}
     <div class="card verify-banner">
       <span>📧</span>
-      <span><strong>Please confirm your email.</strong> We sent a link to {{ g.user['email'] }}.
-        It lets you reset your password if you ever forget it.</span>
+      <span><strong>{{ _("Please confirm your email.") }}</strong> {{ _("We sent a link to {email}. It lets you reset your password if you ever forget it.", email=g.user['email']) }}</span>
       <form method="post" action="{{ url_for('auth.resend_verification') }}">
-        <button class="link">Resend</button>
+        <button class="link">{{ _("Resend") }}</button>
       </form>
     </div>
   {% endif %}
@@ -34,15 +36,15 @@
   {% if reminder_tip %}
     <a class="card reminder-tip" href="{{ url_for('settings.index') }}#reminders">
       <span>🔔</span>
-      <span><strong>Never lose your streak.</strong> Turn on a daily reminder.</span>
-      <span class="muted">Set up →</span>
+      <span><strong>{{ _("Never lose your streak.") }}</strong> {{ _("Turn on a daily reminder.") }}</span>
+      <span class="muted">{{ _("Set up →") }}</span>
     </a>
   {% endif %}
 
   {% if insight %}
     <a class="card insight-today" href="{{ url_for('insights.index') }}">
       <span class="insight-icon">{{ insight.icon }}</span>
-      <span><span class="sub">💡 Did you know?</span><br>{{ insight.text }}</span>
+      <span><span class="sub">{{ _("💡 Did you know?") }}</span><br>{{ insight.text }}</span>
     </a>
   {% endif %}
 
@@ -54,8 +56,8 @@
 
   <!-- Today's habits: one tap, no page reload -->
   <div class="section-head">
-    <h2>Today's habits</h2>
-    <a class="link-btn" href="{{ url_for('habits.index') }}">Manage</a>
+    <h2>{{ _("Today's habits") }}</h2>
+    <a class="link-btn" href="{{ url_for('habits.index') }}">{{ _("Manage") }}</a>
   </div>
   {% if summary.habits or summary.resting %}
     <ul class="habit-list">
@@ -64,12 +66,12 @@
       {% endfor %}
     </ul>
     {% if summary.resting %}
-      <p class="sub resting">Day off today: {% for h in summary.resting %}{{ h.icon }} {{ h.name }}{{ ', ' if not loop.last }}{% endfor %}</p>
+      <p class="sub resting">{{ _("Day off today:") }} {% for h in summary.resting %}{{ h.icon }} {{ h.name }}{{ ', ' if not loop.last }}{% endfor %}</p>
     {% endif %}
   {% else %}
     <div class="card empty-state">
-      <p>No habits yet. Small daily habits are where streaks begin.</p>
-      <a class="btn" href="{{ url_for('habits.index') }}">Add your first habit</a>
+      <p>{{ _("No habits yet. Small daily habits are where streaks begin.") }}</p>
+      <a class="btn" href="{{ url_for('habits.index') }}">{{ _("Add your first habit") }}</a>
     </div>
   {% endif %}
 
@@ -77,14 +79,14 @@
   {% if task_stats['open_tasks'] %}
     <div class="card today">
       <div>
-        <div class="muted">Open tasks</div>
+        <div class="muted">{{ _("Open tasks") }}</div>
         <div class="big">{{ task_stats['open_tasks'] }}</div>
         <div class="sub">
-          {% if task_stats['overdue'] %}<span class="overdue-text">⚠️ {{ task_stats['overdue'] }} overdue</span>{% endif %}
-          {% if task_stats['due_today'] %} 📅 {{ task_stats['due_today'] }} due today{% endif %}
+          {% if task_stats['overdue'] %}<span class="overdue-text">{{ _("⚠️ {overdue} overdue", overdue=task_stats['overdue']) }}</span>{% endif %}
+          {% if task_stats['due_today'] %} {{ _("📅 {due_today} due today", due_today=task_stats['due_today']) }}{% endif %}
         </div>
       </div>
-      <a class="btn secondary" href="{{ url_for('tasks.index') }}">Open tasks</a>
+      <a class="btn secondary" href="{{ url_for('tasks.index') }}">{{ _("Open tasks") }}</a>
     </div>
   {% endif %}
 
@@ -92,21 +94,21 @@
   {% if active_goals %}
     <div class="card today">
       <div>
-        <div class="muted">Active goals</div>
+        <div class="muted">{{ _("Active goals") }}</div>
         <div class="big">{{ active_goals }}</div>
         {% if next_goal %}
-          <div class="sub">Next target: 🎯 {{ next_goal['title'] }} · {{ next_goal['target_date'] }}</div>
+          <div class="sub">{{ _("Next target: 🎯 {title} · {target_date}", title=next_goal['title'], target_date=next_goal['target_date']) }}</div>
         {% endif %}
       </div>
-      <a class="btn secondary" href="{{ url_for('goals.index') }}">Open goals</a>
+      <a class="btn secondary" href="{{ url_for('goals.index') }}">{{ _("Open goals") }}</a>
     </div>
   {% endif %}
 
   <!-- History -->
-  <h2>Last 7 check-ins</h2>
+  <h2>{{ _("Last 7 check-ins") }}</h2>
   {% if recent %}
     <table>
-      <tr><th>Date</th><th>Energy</th><th>Mood</th><th>Focus</th><th>Hours</th><th>Score</th></tr>
+      <tr><th>{{ _("Date") }}</th><th>{{ _("Energy") }}</th><th>{{ _("Mood") }}</th><th>{{ _("Focus") }}</th><th>{{ _("Hours") }}</th><th>{{ _("Score") }}</th></tr>
       {% for c in recent %}
         <tr>
           <td>{{ c['log_date'] }}<div class="sub">{{ c['log_date']|day_label }}</div></td>
@@ -119,6 +121,6 @@
       {% endfor %}
     </table>
   {% else %}
-    <p class="muted">No check-ins yet. Your history will show up here.</p>
+    <p class="muted">{{ _("No check-ins yet. Your history will show up here.") }}</p>
   {% endif %}
 {% endblock %}

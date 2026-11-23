@@ -4,15 +4,15 @@
   {% set schedule = h['schedule'] if h else 'daily' %}
   <div class="habit-options">
     <fieldset class="opt-group">
-      <legend>Type</legend>
-      <label class="opt"><input type="radio" name="kind" value="build" {% if kind == 'build' %}checked{% endif %}> ✅ Build a habit</label>
-      <label class="opt"><input type="radio" name="kind" value="quit" {% if kind == 'quit' %}checked{% endif %}> 🚫 Quit something <span class="sub">(counts days clean)</span></label>
+      <legend>{{ _("Type") }}</legend>
+      <label class="opt"><input type="radio" name="kind" value="build" {% if kind == 'build' %}checked{% endif %}> {{ _("✅ Build a habit") }}</label>
+      <label class="opt"><input type="radio" name="kind" value="quit" {% if kind == 'quit' %}checked{% endif %}> {{ _("🚫 Quit something") }} <span class="sub">{{ _("(counts days clean)") }}</span></label>
     </fieldset>
 
     <fieldset class="opt-group build-only">
-      <legend>How often</legend>
-      <label class="opt"><input type="radio" name="schedule" value="daily" {% if schedule == 'daily' %}checked{% endif %}> Every day</label>
-      <label class="opt"><input type="radio" name="schedule" value="days" {% if schedule == 'days' %}checked{% endif %}> On certain days</label>
+      <legend>{{ _("How often") }}</legend>
+      <label class="opt"><input type="radio" name="schedule" value="daily" {% if schedule == 'daily' %}checked{% endif %}> {{ _("Every day") }}</label>
+      <label class="opt"><input type="radio" name="schedule" value="days" {% if schedule == 'days' %}checked{% endif %}> {{ _("On certain days") }}</label>
       <div class="day-picks">
         {% for name in day_names %}
           <label class="day-pick"><input type="checkbox" name="days" value="{{ loop.index0 }}"
@@ -20,18 +20,18 @@
         {% endfor %}
       </div>
       <label class="opt"><input type="radio" name="schedule" value="weekly" {% if schedule == 'weekly' %}checked{% endif %}>
-        <select name="per_week" aria-label="Times a week">
+        <select name="per_week" aria-label="{{ _("Times a week") }}">
           {% for n in range(1, 7) %}<option value="{{ n }}" {% if h and h['per_week'] == n or not h and n == 3 %}selected{% endif %}>{{ n }}</option>{% endfor %}
-        </select> times a week, any days</label>
+        </select> {{ _("times a week, any days") }}</label>
     </fieldset>
 
     <fieldset class="opt-group build-only">
-      <legend>Amount each day</legend>
+      <legend>{{ _("Amount each day") }}</legend>
       <div class="amount-row">
-        <input type="number" name="goal_count" min="1" max="100" value="{{ h['goal_count'] if h else 1 }}" aria-label="How many">
-        <input name="unit" maxlength="20" placeholder="e.g. glasses, pages" value="{{ h['unit'] if h else '' }}" aria-label="Unit">
+        <input type="number" name="goal_count" min="1" max="100" value="{{ h['goal_count'] if h else 1 }}" aria-label="{{ _("How many") }}">
+        <input name="unit" maxlength="20" placeholder="{{ _("e.g. glasses, pages") }}" value="{{ h['unit'] if h else '' }}" aria-label="{{ _("Unit") }}">
       </div>
-      <p class="sub">Leave it at 1 for a simple tick. For "8 glasses of water", put 8 and "glasses".</p>
+      <p class="sub">{{ _("Leave it at 1 for a simple tick. For \"8 glasses of water\", put 8 and \"glasses\".") }}</p>
     </fieldset>
   </div>
 {% endmacro %}

@@ -1,5 +1,6 @@
 from flask import (Blueprint, current_app, flash, g, redirect, render_template, request,
                    session, url_for)
+from i18n import LANGUAGES, _, browser_language, force_language
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from auth import login_required, sign_out_other_devices
@@ -46,15 +47,15 @@ def profile():
     name = request.form.get("name", "").strip()
     timezone = request.form.get("timezone", "")
     if not name:
-        flash("Name can't be empty.", "error")
+        flash(_("Name can't be empty."), "error")
     elif not is_valid_timezone(timezone):
-        flash("Please pick a valid time zone.", "error")
+        flash(_('Please pick a valid time zone.'), "error")
     else:
         db = get_db()
         db.execute("UPDATE users SET name = ?, timezone = ? WHERE id = ?",
                    (name, timezone, g.user["id"]))
         db.commit()
-        flash("Profile saved.", "success")
+        flash(_('Profile saved.'), "success")
     return redirect(url_for("settings.index"))
 
 
@@ -65,19 +66,34 @@ def password():
     new = request.form.get("new_password", "")
     confirm = request.form.get("confirm_password", "")
     if not current_password_ok(current):
-        flash("Your current password is incorrect.", "error")
+        flash(_('Your current password is incorrect.'), "error")
     elif len(new) < 8:
-        flash("New password must be at least 8 characters.", "error")
+        flash(_('New password must be at least 8 characters.'), "error")
     elif new != confirm:
-        flash("The new passwords don't match.", "error")
+        flash(_("The new passwords don't match."), "error")
     else:
         db = get_db()
         db.execute("UPDATE users SET password_hash = ? WHERE id = ?",
                    (generate_password_hash(new), g.user["id"]))
         db.commit()
         sign_out_other_devices(g.user["id"])
-        flash("Password changed. 🔒 Any other devices have been logged out.", "success")
+        flash(_('Password changed. 🔒 Any other devices have been logged out.'), "success")
     return redirect(url_for("settings.index"))
+
+
+@bp.route("/language", methods=["POST"])
+@login_required
+def language():
+    choice = request.form.get("language", "")
+    if choice not in LANGUAGES and choice != "":
+        flash(_("Please pick a language from the list."), "error")
+        return redirect(url_for("settings.index") + "#language")
+    db = get_db()
+    db.execute("UPDATE users SET language = ? WHERE id = ?", (choice or None, g.user["id"]))
+    db.commit()
+    with force_language(choice or browser_language()):
+        flash(_("Language saved."), "success")
+    return redirect(url_for("settings.index") + "#language")
 
 
 @bp.route("/theme", methods=["POST"])
@@ -87,14 +103,14 @@ def theme():
     choice = request.form.get("theme", "")
     level = player_progress(get_db(), g.user["id"])["level"]
     if choice not in THEMES:
-        flash("Pick a theme from the list.", "error")
+        flash(_('Pick a theme from the list.'), "error")
     elif not unlocked(choice, level):
-        flash(f"{THEMES[choice]['name']} unlocks at level {THEMES[choice]['level']}. Keep going!", "error")
+        flash(_('{name} unlocks at level {level}. Keep going!', name=_(THEMES[choice]['name']), level=THEMES[choice]['level']), "error")
     else:
         db = get_db()
         db.execute("UPDATE users SET theme = ? WHERE id = ?", (choice, g.user["id"]))
         db.commit()
-        flash(f"{THEMES[choice]['emoji']} {THEMES[choice]['name']} theme on.", "success")
+        flash(_('{emoji} {name} theme on.', emoji=THEMES[choice]['emoji'], name=_(THEMES[choice]['name'])), "success")
     return redirect(url_for("settings.index") + "#theme")
 
 
@@ -102,7 +118,7 @@ def theme():
 @login_required
 def logout_others():
     sign_out_other_devices(g.user["id"])
-    flash("Logged out of all other devices. This one stays logged in.", "success")
+    flash(_('Logged out of all other devices. This one stays logged in.'), "success")
     return redirect(url_for("settings.index") + "#security")
 
 
@@ -110,15 +126,15 @@ def logout_others():
 @login_required
 def delete_account():
     if request.form.get("confirm") != "DELETE":
-        flash('Type DELETE (in capitals) to confirm.', "error")
+        flash(_('Type DELETE (in capitals) to confirm.'), "error")
     elif not current_password_ok(request.form.get("password", "")):
-        flash("Incorrect password. Your account was NOT deleted.", "error")
+        flash(_('Incorrect password. Your account was NOT deleted.'), "error")
     else:
         db = get_db()
         # ON DELETE CASCADE removes every check-in, habit, task, goal... of this user
         db.execute("DELETE FROM users WHERE id = ?", (g.user["id"],))
         db.commit()
         session.clear()
-        flash("Your account and all your data have been permanently deleted. 👋", "success")
+        flash(_('Your account and all your data have been permanently deleted. 👋'), "success")
         return redirect(url_for("auth.login"))
     return redirect(url_for("settings.index"))
