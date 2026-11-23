@@ -90,6 +90,8 @@ def gather(db, today):
                                 WHERE l.log_date >= ? AND l.amount >= h.goal_count""", week_ago),
         "tasks_done": one("SELECT COUNT(*) FROM tasks WHERE status = 'done'"),
         "goals": one("SELECT COUNT(*) FROM goals"),
+        "insights_helpful": one("SELECT COUNT(*) FROM insight_votes WHERE helpful = 1"),
+        "insights_hidden": one("SELECT COUNT(*) FROM insight_votes WHERE helpful = 0"),
         "last_14": last_14,
         "max_daily": max([n for _, n in last_14] + [1]),
     }

@@ -777,3 +777,19 @@ a.focus-mini { text-decoration: none; font-size: 15px; padding: 4px 6px; }
 /* Light themes: darker amber so the streak text is easy to read */
 [data-theme="light"] .flame.lit { color: #92400e; background: #f59e0b26; }
 @media (prefers-color-scheme: light) { [data-theme="auto"] .flame.lit { color: #92400e; background: #f59e0b26; } }
+
+/* ── Phase F: insights ───────────────────────────────────────── */
+.insight { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 12px; }
+.insight-icon { font-size: 28px; flex: none; line-height: 1.2; }
+.insight-body { flex: 1; min-width: 0; }
+.insight-text { margin: 0 0 4px; font-size: 16px; font-weight: 600; overflow-wrap: anywhere; }
+.insight-body .sub { margin: 0; }
+.insight-vote { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 8px; }
+.insight-vote button.link { font-size: 14px; }
+.insight-locked h2 { margin-top: 0; }
+.support-note { border-color: #38bdf866; background: #38bdf812; margin-bottom: 12px; }
+.support-note p { margin: 0 0 8px; }
+.insight-today { display: flex; gap: 12px; align-items: center; padding: 14px 18px; margin-bottom: 16px;
+  text-decoration: none; color: var(--text); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+.insight-today:hover { border-color: var(--accent); }
+.insight-today > span:last-child { min-width: 0; overflow-wrap: anywhere; }

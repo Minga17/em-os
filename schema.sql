@@ -181,3 +181,12 @@ CREATE TABLE IF NOT EXISTS focus_sessions (
     notified        INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_focus_user ON focus_sessions(user_id, log_date);
+
+-- "Was this insight helpful?" (not helpful = hidden for that person)
+CREATE TABLE IF NOT EXISTS insight_votes (
+    user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    insight_key TEXT    NOT NULL,
+    helpful     INTEGER NOT NULL CHECK (helpful IN (0, 1)),
+    voted_at    TEXT    NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (user_id, insight_key)
+) WITHOUT ROWID;

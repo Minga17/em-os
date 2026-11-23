@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Insights · EM OS{% endblock %}
+
+{% block content %}
+  <h1>💡 Insights</h1>
+  <p class="muted">Patterns in your own data from the last 90 days. They show what tends to go together,
+    not what causes what. You know your life best.</p>
+
+  {% if result.locked %}
+    <div class="card insight-locked">
+      <h2>🔒 Unlocks after {{ result.needed }} check-ins</h2>
+      <p>You have {{ result.checkins }} so far. A few more weeks of check-ins and habits, and EM OS can start
+        showing what really makes your good days good.</p>
+      <div class="progress"><div style="width: {{ (result.checkins * 100 // result.needed) }}%"></div></div>
+      <p class="sub">{{ result.needed - result.checkins }} to go. The 3-tap check-in on Today counts.</p>
+    </div>
+  {% else %}
+    {% if result.support %}
+      <div class="card support-note">
+        <p>💙 {{ result.support.text }}</p>
+        <a href="{{ result.support.link }}" target="_blank" rel="noopener">Find support near you →</a>
+      </div>
+    {% endif %}
+
+    {% for item in result['items'] %}
+      <div class="card insight">
+        <div class="insight-icon">{{ item.icon }}</div>
+        <div class="insight-body">
+          <p class="insight-text">{{ item.text }}</p>
+          <p class="sub">{{ item.detail }}</p>
+          <form method="post" action="{{ url_for('insights.vote') }}" class="insight-vote">
+            <input type="hidden" name="key" value="{{ item.key }}">
+            {% if votes.get(item.key) == 1 %}
+              <span class="sub">👍 Thanks!</span>
+            {% else %}
+              <span class="sub">Useful?</span>
+              <button name="helpful" value="1" class="link">👍 Yes</button>
+              <button name="helpful" value="0" class="link">👎 Hide this</button>
+            {% endif %}
+          </form>
+        </div>
+      </div>
+    {% else %}
+      <div class="card empty-state">
+        <p>No clear patterns yet. That's normal: it can take a few weeks of check-ins and habits.
+          We only show a pattern when the numbers really support it.</p>
+      </div>
+    {% endfor %}
+
+    {% if votes.values()|select('equalto', 0)|list %}
+      <form method="post" action="{{ url_for('insights.reset') }}">
+        <button class="link">Show hidden insights again</button>
+      </form>
+    {% endif %}
+  {% endif %}
+{% endblock %}

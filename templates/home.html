@@ -39,6 +39,13 @@
     </a>
   {% endif %}
 
+  {% if insight %}
+    <a class="card insight-today" href="{{ url_for('insights.index') }}">
+      <span class="insight-icon">{{ insight.icon }}</span>
+      <span><span class="sub">💡 Did you know?</span><br>{{ insight.text }}</span>
+    </a>
+  {% endif %}
+
   <!-- Check-in: 3 taps, saves by itself -->
   {% include "today/_checkin_card.html" %}
 

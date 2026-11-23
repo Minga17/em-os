@@ -11,6 +11,7 @@ from feedback import bp as feedback_bp
 from focus import bp as focus_bp
 from records import bp as records_bp
 from recap import bp as recap_bp
+from insights import bp as insights_bp, insight_of_the_day
 from freezes import bp as freezes_bp
 from jobs import any_jobs, start_background_jobs
 from auth import bp as auth_bp, login_required
@@ -103,6 +104,7 @@ def create_app(test_config=None):
     app.register_blueprint(focus_bp)
     app.register_blueprint(records_bp)
     app.register_blueprint(recap_bp)
+    app.register_blueprint(insights_bp)
 
     # Reminders and backups run in the background (only online, where they're set up)
     reloader_parent = app.debug and os.environ.get("WERKZEUG_RUN_MAIN") != "true"
@@ -214,6 +216,7 @@ def create_app(test_config=None):
             task_stats=task_stats,
             reminder_tip=reminder_tip,
             plan=day_plan(db, user_id),
+            insight=insight_of_the_day(db, user_id, summary["today"]),
         )
 
     # ── App install (PWA) files: must be served from the site root ──
